@@ -24,11 +24,6 @@ internal class LaTeXEquationParser {
       /// - Example: `$x^2$`
       case inlineEquation
       
-      /// A multiline equation component.
-      ///
-      /// - Example: `\[x^2\]`
-      case multilineEquation
-      
       /// A named equation component.
       ///
       /// - Example: `\begin{equation}x^2\end{equation}`
@@ -44,7 +39,6 @@ internal class LaTeXEquationParser {
         switch self {
         case .text: return ""
         case .inlineEquation: return "$"
-        case .multilineEquation: return "\\["
         case .namedEquation: return "\\begin{equation}"
         }
       }
@@ -54,7 +48,6 @@ internal class LaTeXEquationParser {
         switch self {
         case .text: return ""
         case .inlineEquation: return "$"
-        case .multilineEquation: return "\\]"
         case .namedEquation: return "\\end{equation}"
         }
       }
@@ -133,13 +126,6 @@ internal class LaTeXEquationParser {
     equation: .inlineEquation,
     supportsRecursion: false)
   
-  /// A multiline equation component.
-  static let multiline = EquationComponent(
-    regex: #/\\\[(.|\s)*\\\]/#,
-    terminatingRegex: #/\\\]/#,
-    equation: .multilineEquation,
-    supportsRecursion: true)
-  
   /// A named equation component.
   static let named = EquationComponent(
     regex: #/\\begin{equation}(.|\s)*\\end{equation}/#,
@@ -148,7 +134,7 @@ internal class LaTeXEquationParser {
     supportsRecursion: true)
   
   // Order matters
-  static let allEquations = [inline, multiline, named]
+  static let allEquations = [inline, named]
   
 }
 

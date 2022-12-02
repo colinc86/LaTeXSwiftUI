@@ -14,17 +14,38 @@ import SVGView
 struct LaTeX: View {
   
   enum RenderingStyle {
+    
+    /// Render the entire text as the equation.
     case all
+    
+    /// Find equations in the text and only render the equations.
     case equations
   }
   
-  @Environment(\.displayScale) var displayScale
-  @Environment(\.colorScheme) var colorScheme
+  /// The display scale.
+  @Environment(\.displayScale) private var displayScale
   
+  /// The view's color scheme.
+  @Environment(\.colorScheme) private var colorScheme
+  
+  /// The components to display in the view.
   @State private var components: [LaTeXEquationParser.LaTeXComponent]
+  
+  /// The view's MathJax instance.
   private let mathjax: MathJax?
+  
+  /// The view's font size.
   private let fontSize: CGFloat
   
+  // MARK: Initializers
+  
+  /// Creates a LaTeX text view.
+  ///
+  /// - Parameters:
+  ///   - text: The text input.
+  ///   - style: Whether or not the entire input, or only equations, should be
+  ///     parsed.
+  ///   - fontSize: The size of the view's font.
   init(_ text: String, style: RenderingStyle = .equations, fontSize: CGFloat = UIFont.systemFontSize) {
     self.fontSize = fontSize
     self.mathjax = try? MathJax(preferredOutputFormat: .svg)
@@ -32,19 +53,6 @@ struct LaTeX: View {
   }
   
   // MARK: View body
-  
-  var text: some View {
-    var text = Text("")
-    for component in components {
-      if let image = component.svg {
-        text = text + Text(Image(uiImage: image)).baselineOffset(-(fontSize / 4.0))
-      }
-      else {
-        text = text + Text(component.text)
-      }
-    }
-    return text
-  }
   
   var body: some View {
     text
@@ -54,11 +62,28 @@ struct LaTeX: View {
       .onChange(of: colorScheme, perform: changedColorScheme)
   }
   
+  // MARK: Private views
+  
+  /// The text to draw in the view.
+  private var text: some View {
+    var text = Text("")
+    for component in components {
+      if let image = component.svg {
+        text = text + Text(Image(uiImage: image)).baselineOffset(-(fontSize / 3.6))
+      }
+      else {
+        text = text + Text(component.text)
+      }
+    }
+    return text
+  }
+  
 }
 
 @available(iOS 16.1, *)
 extension LaTeX {
   
+  /// Called when the view appears.
   private func appeared() {
     Task {
       do {
@@ -70,10 +95,14 @@ extension LaTeX {
     }
   }
   
+  /// Called when the color scheme changes.
+  ///
+  /// - Parameter newValue: The new color scheme.
   private func changedColorScheme(to newValue: ColorScheme) {
     appeared()
   }
   
+  /// Called when the math components should be (re)rendered.
   @MainActor private func render() async throws {
     var newComponents = [LaTeXEquationParser.LaTeXComponent]()
     for component in components {
@@ -89,11 +118,9 @@ extension LaTeX {
       let svgData = svgString.data(using: .utf8)!
       
       let svg = SVG(data: svgData)
-      
-      
 
       let size = svg?.size ?? .zero
-      let newSize = CGSize(width: size.width * (fontSize / 2.0), height: size.height * (fontSize / 2.0))
+      let newSize = CGSize(width: size.width * (fontSize / 1.8), height: size.height * (fontSize / 1.8))
       
       let view = SVGView(data: svgData)
       
@@ -123,13 +150,59 @@ extension LaTeX {
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
-      LaTeX("It's working! $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$", fontSize: 24.0)
+      HStack {
+        Text("Input Text:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
+      Text("It's working! $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$")
+        .font(.system(size: 14))
+        .padding([.bottom], 8)
+      
+      HStack {
+        Text("LaTeX Image:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
       LaTeX("\\text{It's working! }\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}", style: .all, fontSize: 24.0)
+      
+      HStack {
+        Text("SwiftUI View:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
+      LaTeX("It's working! $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$", fontSize: 24.0)
     }
     
     VStack {
-      LaTeX("It's working! $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$", fontSize: 24.0)
-      LaTeX("\\text{It's working! }\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}", style: .all, fontSize: 24.0)
+      HStack {
+        Text("Input Text:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
+      Text("This is a cool title that talks about $\\zeta(3)$ and how hard it is.")
+        .font(.system(size: 14))
+        .padding([.bottom], 8)
+      
+      HStack {
+        Text("LaTeX Image:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
+      LaTeX("\\text{This is a cool title that talks about }\\zeta(3)\\text{ and how hard it is to solve.}", style: .all, fontSize: 24.0)
+      
+      HStack {
+        Text("SwiftUI View:")
+        Spacer()
+      }
+      .font(.subheadline)
+      
+      LaTeX("This is a cool title that talks about $\\zeta(3)$ and how hard it is to solve.", fontSize: 24.0)
     }
     .preferredColorScheme(.dark)
   }
