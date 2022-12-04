@@ -44,8 +44,15 @@ internal class LaTeXRenderer {
   }
   
   /// Called when the math components should be (re)rendered.
-  func render(_ components: [LaTeXComponent], xHeight: CGFloat, displayScale: CGFloat) async throws -> [LaTeXComponent] {
-    print("rendering!!!!")
+  func render(_ components: [LaTeXComponent], xHeight: CGFloat, displayScale: CGFloat, textColor: Color) async throws -> [LaTeXComponent] {
+    let cgColor = UIColor(textColor).cgColor
+    guard let colorComponents = cgColor.components, colorComponents.count >= 3 else {
+      return components
+    }
+    
+    let red: CGFloat = colorComponents[0]
+    let green: CGFloat = colorComponents[1]
+    let blue: CGFloat = colorComponents[2]
     
     var newComponents = [LaTeXComponent]()
     for component in components {
@@ -54,7 +61,8 @@ internal class LaTeXRenderer {
         continue
       }
 
-      guard let svgString = try await mathjax?.tex2svg(component.text, inline: component.type.inline) else {
+      let colorComponent = "\\definecolor{custom}{rgb}{\(red), \(green), \(blue)} \\color{custom} \(component.text)"
+      guard let svgString = try await mathjax?.tex2svg(colorComponent, inline: component.type.inline) else {
         newComponents.append(component)
         continue
       }
