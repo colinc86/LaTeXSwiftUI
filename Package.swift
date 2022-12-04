@@ -16,7 +16,6 @@ let package = Package(
   ],
   dependencies: [
      .package(url: "https://github.com/colinc86/MathJaxSwift", from: "3.2.2"),
-     .package(url: "https://github.com/swhitty/SwiftDraw", from: "0.13.2"),
      .package(url: "https://github.com/exyte/SVGView", from: "1.0.4")
   ],
   targets: [
@@ -24,7 +23,6 @@ let package = Package(
       name: "LaTeXSwiftUI",
       dependencies: [
         "MathJaxSwift",
-        "SwiftDraw",
         "SVGView"
       ]),
     .testTarget(

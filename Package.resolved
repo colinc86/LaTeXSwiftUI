@@ -17,15 +17,6 @@
         "revision" : "18bf73efc2f2dede5dfa73f517ddf4e054061294",
         "version" : "1.0.4"
       }
-    },
-    {
-      "identity" : "swiftdraw",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swhitty/SwiftDraw",
-      "state" : {
-        "revision" : "1201e6cca64dc88a4982251e94a5a04ff7da5caa",
-        "version" : "0.13.2"
-      }
     }
   ],
   "version" : 2
