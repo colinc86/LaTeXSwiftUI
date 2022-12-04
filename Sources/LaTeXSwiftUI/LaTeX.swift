@@ -10,9 +10,18 @@ import SwiftUI
 @available(iOS 16.1, *)
 struct LaTeX: View {
   
+  enum RenderingMode {
+    
+    /// Render the entire text as the equation.
+    case all
+    
+    /// Find equations in the text and only render the equations.
+    case onlyEquations
+  }
+  
   private struct Block: Identifiable {
     let id = UUID()
-    let components: [LaTeXComponent]
+    let components: [Component]
     var isEquationBlock: Bool {
       components.count == 1 && !components[0].type.inline
     }
@@ -27,6 +36,8 @@ struct LaTeX: View {
   @Environment(\.font) private var font
   
   @State private var blocks: [Block]
+  
+  @State private var id = UUID()
 
   // MARK: Initializers
 
@@ -36,10 +47,10 @@ struct LaTeX: View {
   ///   - text: The text input.
   ///   - style: Whether or not the entire input, or only equations, should be
   ///     parsed.
-  init(_ text: String, style: LaTeXRenderer.RenderingStyle = .equations) {
-    let components = style == .all ? [LaTeXComponent(text: text, type: .inlineEquation)] : LaTeXEquationParser.parse(text)
+  init(_ text: String, style: RenderingMode = .onlyEquations) {
+    let components = style == .all ? [Component(text: text, type: .inlineEquation)] : Parser.parse(text)
     var blocks = [Block]()
-    var blockComponents = [LaTeXComponent]()
+    var blockComponents = [Component]()
     for component in components {
       if component.type.inline {
         blockComponents.append(component)
@@ -57,22 +68,16 @@ struct LaTeX: View {
   // MARK: View body
 
   var body: some View {
-    VStack(alignment: .leading) {
-      ForEach(blocks) { block in
-        if block.isEquationBlock {
-          HStack {
-            Spacer()
-            text(for: block)
-            Spacer()
-          }
-        }
-        else {
-          text(for: block)
-        }
-      }
+    content
+      .id(id)
+      .task(render)
+      .onChange(of: colorScheme, perform: changedColorScheme)
+  }
+  
+  @ViewBuilder var content: some View {
+    ForEach(blocks) { block in
+      text(for: block)
     }
-    .task(render)
-    .onChange(of: colorScheme, perform: changedColorScheme)
   }
 
 }
@@ -84,13 +89,17 @@ extension LaTeX {
     var text = Text("")
     for component in block.components {
       if let image = component.renderedImage, let offset = component.imageOffset {
+#if os(iOS)
         text = text + Text(Image(uiImage: image)).baselineOffset(offset)
+#else
+        text = text + Text(Image(nsImage: image)).baselineOffset(offset)
+#endif
       }
       else {
         text = text + Text(component.text)
       }
     }
-    return text.fontDesign(.serif)
+    return text
   }
 
   /// Called when the color scheme changes.
@@ -106,9 +115,9 @@ extension LaTeX {
       var newBlocks = [Block]()
       for block in blocks {
         do {
-          let newComponents = try await LaTeXRenderer.shared.render(
+          let newComponents = try await Renderer.shared.render(
             block.components,
-            xHeight: font == nil ? UIFont.preferredFont(from: .body).xHeight : UIFont.preferredFont(from: font!).xHeight,
+            xHeight: font == nil ? _Font.preferredFont(from: .body).xHeight : _Font.preferredFont(from: font!).xHeight,
             displayScale: displayScale,
             textColor: .primary
           )
@@ -124,6 +133,7 @@ extension LaTeX {
       await MainActor.run {
         withAnimation {
           blocks = newBlocksCopy
+          id = UUID()
         }
       }
     }
@@ -136,17 +146,25 @@ struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
       LaTeX("""
-The quadratic formula is...
+The quadratic formula is
 \\begin{equation}
   \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}
 \\end{equation}
-And this is a multiline block.
 """)
-      .font(.title)
+      .font(.body)
+      
+      Divider()
+      
       LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
         .font(.title2)
+      
+      Divider()
+      
       LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
         .font(.title3)
+      
+      Divider()
+      
       LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
         .font(.footnote)
     }

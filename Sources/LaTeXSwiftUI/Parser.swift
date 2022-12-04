@@ -7,13 +7,13 @@
 
 import Foundation
 
-internal class LaTeXEquationParser {
+internal struct Parser {
   
   /// An equation component.
   struct EquationComponent<T, U> {
     let regex: Regex<T>
     let terminatingRegex: Regex<U>
-    let equation: LaTeXComponent.ComponentType
+    let equation: Component.ComponentType
     let supportsRecursion: Bool
   }
   
@@ -36,13 +36,13 @@ internal class LaTeXEquationParser {
   
 }
 
-extension LaTeXEquationParser {
+extension Parser {
   
   /// Parses an input string for LaTeX components.
   ///
   /// - Parameter input: The input string.
   /// - Returns: An array of LaTeX components.
-  static func parse(_ input: String) -> [LaTeXComponent] {
+  static func parse(_ input: String) -> [Component] {
     let matches = allEquations.map({ ($0, input.firstMatch(of: $0.regex)) }).filter { match in
       guard let firstIndex = match.1?.range.lowerBound,
             let lastIndex = match.1?.range.upperBound else { return false }
@@ -59,7 +59,7 @@ extension LaTeXEquationParser {
     
     let allStart = matches.map({ $0.1?.range.lowerBound })
     var equationRange: Range<String.Index>?
-    var equation: LaTeXComponent.ComponentType = .text
+    var equation: Component.ComponentType = .text
     
     for match in matches {
       guard isSmallest(match.1?.range.lowerBound, outOf: allStart) else {
@@ -94,11 +94,11 @@ extension LaTeXEquationParser {
       let stringBeforeEquation = String(input[..<equationRange.lowerBound])
       let equationString = String(input[equationRange])
       let remainingString = String(input[equationRange.upperBound...])
-      var components = [LaTeXComponent]()
+      var components = [Component]()
       if !stringBeforeEquation.isEmpty {
-        components.append(LaTeXComponent(text: stringBeforeEquation, type: .text))
+        components.append(Component(text: stringBeforeEquation, type: .text))
       }
-      components.append(LaTeXComponent(text: equationString, type: equation))
+      components.append(Component(text: equationString, type: equation))
       if remainingString.isEmpty {
         return components
       }
@@ -107,7 +107,7 @@ extension LaTeXEquationParser {
       }
     }
     
-    return input.isEmpty ? [] : [LaTeXComponent(text: input, type: .text)]
+    return input.isEmpty ? [] : [Component(text: input, type: .text)]
   }
   
   /// Determines if an index is smaller than all of the indexes in another

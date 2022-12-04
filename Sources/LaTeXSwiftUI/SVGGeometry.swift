@@ -6,10 +6,9 @@
 //
 
 import Foundation
-import UIKit
 import SwiftUI
 
-struct SVGGeometry {
+internal struct SVGGeometry {
   
   typealias XHeight = CGFloat
   
@@ -125,47 +124,18 @@ extension SVGGeometry.XHeight {
     xHeight * self
   }
   
-  func toPoints(_ font: UIFont) -> CGFloat {
+  func toPoints(_ font: _Font) -> CGFloat {
     toPoints(font.xHeight)
   }
   
   func toPoints(_ font: Font) -> CGFloat {
-    toPoints(UIFont.preferredFont(from: font))
+    #if os(iOS)
+    toPoints(_Font.preferredFont(from: font))
+    #else
+    toPoints(_Font.preferredFont(from: font))
+    #endif
   }
   
 }
 
-extension UIFont {
-  class func preferredFont(from font: Font) -> UIFont {
-    let uiFont: UIFont
-    
-    switch font {
-    case .largeTitle:
-      uiFont = UIFont.preferredFont(forTextStyle: .largeTitle)
-    case .title:
-      uiFont = UIFont.preferredFont(forTextStyle: .title1)
-    case .title2:
-      uiFont = UIFont.preferredFont(forTextStyle: .title2)
-    case .title3:
-      uiFont = UIFont.preferredFont(forTextStyle: .title3)
-    case .headline:
-      uiFont = UIFont.preferredFont(forTextStyle: .headline)
-    case .subheadline:
-      uiFont = UIFont.preferredFont(forTextStyle: .subheadline)
-    case .callout:
-      uiFont = UIFont.preferredFont(forTextStyle: .callout)
-    case .caption:
-      uiFont = UIFont.preferredFont(forTextStyle: .caption1)
-    case .caption2:
-      uiFont = UIFont.preferredFont(forTextStyle: .caption2)
-    case .footnote:
-      uiFont = UIFont.preferredFont(forTextStyle: .footnote)
-    case .body:
-      fallthrough
-    default:
-      uiFont = UIFont.preferredFont(forTextStyle: .body)
-    }
-    
-    return uiFont
-  }
-}
+

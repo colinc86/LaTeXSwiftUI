@@ -16,19 +16,10 @@ import UIKit
 import Cocoa
 #endif
 
-internal class LaTeXRenderer {
-  
-  enum RenderingStyle {
-    
-    /// Render the entire text as the equation.
-    case all
-    
-    /// Find equations in the text and only render the equations.
-    case equations
-  }
+internal class Renderer {
   
   /// The shared renderer.
-  static let shared = LaTeXRenderer()
+  static let shared = Renderer()
   
   /// The MathJax instance.
   private let mathjax: MathJax?
@@ -44,8 +35,8 @@ internal class LaTeXRenderer {
   }
   
   /// Called when the math components should be (re)rendered.
-  func render(_ components: [LaTeXComponent], xHeight: CGFloat, displayScale: CGFloat, textColor: Color) async throws -> [LaTeXComponent] {
-    let cgColor = UIColor(textColor).cgColor
+  func render(_ components: [Component], xHeight: CGFloat, displayScale: CGFloat, textColor: Color) async throws -> [Component] {
+    let cgColor = _Color(textColor).cgColor
     guard let colorComponents = cgColor.components, colorComponents.count >= 3 else {
       return components
     }
@@ -54,7 +45,7 @@ internal class LaTeXRenderer {
     let green: CGFloat = colorComponents[1]
     let blue: CGFloat = colorComponents[2]
     
-    var newComponents = [LaTeXComponent]()
+    var newComponents = [Component]()
     for component in components {
       guard component.type.isEquation else {
         newComponents.append(component)
@@ -78,19 +69,23 @@ internal class LaTeXRenderer {
       
       let image = await createImage(from: svgData, geometry: geometry, xHeight: xHeight, displayScale: displayScale)
 
-      newComponents.append(LaTeXComponent(text: component.text, type: component.type, renderedImage: image, imageOffset: offset))
+      newComponents.append(Component(text: component.text, type: component.type, renderedImage: image, imageOffset: offset))
     }
 
     return newComponents
   }
   
-  @MainActor private func createImage(from svgData: Data, geometry: SVGGeometry, xHeight: CGFloat, displayScale: CGFloat) -> UIImage? {
+  @MainActor private func createImage(from svgData: Data, geometry: SVGGeometry, xHeight: CGFloat, displayScale: CGFloat) -> _Image? {
     let width = geometry.width.toPoints(xHeight)
     let height = geometry.height.toPoints(xHeight)
     let view = SVGView(data: svgData)
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
     renderer.scale = displayScale
+#if os(iOS)
     return renderer.uiImage
+#else
+    return renderer.nsImage
+#endif
   }
   
 }

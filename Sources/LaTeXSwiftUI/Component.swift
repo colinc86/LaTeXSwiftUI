@@ -7,16 +7,8 @@
 
 import Foundation
 
-#if os(iOS)
-import UIKit
-typealias ComponentImage = UIImage
-#else
-import Cocoa
-typealias ComponentImage = NSImage
-#endif
-
 /// A LaTeX component.
-struct LaTeXComponent: CustomStringConvertible, Equatable, Hashable {
+struct Component: CustomStringConvertible, Equatable, Hashable {
   
   /// A LaTeX component type.
   enum ComponentType: String, Equatable, CustomStringConvertible {
@@ -78,7 +70,7 @@ struct LaTeXComponent: CustomStringConvertible, Equatable, Hashable {
   let type: ComponentType
   
   /// The component's SVG image.
-  let renderedImage: ComponentImage?
+  let renderedImage: _Image?
   
   /// The component image's offset.
   let imageOffset: CGFloat?
@@ -95,7 +87,7 @@ struct LaTeXComponent: CustomStringConvertible, Equatable, Hashable {
   ///   - type: The component's type.
   ///   - renderedImage: The rendered image (only applies to equations).
   ///   - imageOffset: The amount of verticle offset to apply to the image.
-  init(text: String, type: ComponentType, renderedImage: ComponentImage? = nil, imageOffset: CGFloat? = nil) {
+  init(text: String, type: ComponentType, renderedImage: _Image? = nil, imageOffset: CGFloat? = nil) {
     if type.isEquation {
       var text = text
       if text.hasPrefix(type.leftTerminator) {

@@ -3,33 +3,33 @@ import XCTest
 
 final class LaTeXSwiftUITests: XCTestCase {
   
-  func assertComponent(_ component: LaTeXComponent, _ text: String, _ type: LaTeXComponent.ComponentType, file: StaticString = #file, line: UInt = #line) {
-    XCTAssertEqual(component, LaTeXComponent(text: text, type: type))
+  func assertComponent(_ component: Component, _ text: String, _ type: Component.ComponentType, file: StaticString = #file, line: UInt = #line) {
+    XCTAssertEqual(component, Component(text: text, type: type))
   }
   
   func testParseEmpty() {
     let input = ""
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 0)
   }
   
   func testParseTextOnly() {
     let input = "Hello, World!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     XCTAssertEqual(components[0].text, input)
   }
   
   func testParseDollarOnly() {
     let input = "$\\TeX$"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], "\\TeX", .inlineEquation)
   }
   
   func testParseDollarOnly_Normal() {
     let input = "Hello, $\\TeX$!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 3)
     assertComponent(components[0], "Hello, ", .text)
     assertComponent(components[1], "\\TeX", .inlineEquation)
@@ -38,49 +38,49 @@ final class LaTeXSwiftUITests: XCTestCase {
   
   func testParseDollarOnly_LeftEscaped() {
     let input = "Hello, \\$\\TeX$!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseDollarOnly_RightEscaped() {
     let input = "Hello, $\\TeX\\$!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBracketsOnly_LeftEscaped() {
     let input = "Hello, \\\\[\\TeX\\]!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBracketsOnly_RightEscaped() {
     let input = "Hello, \\[\\TeX\\\\]!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBracketsOnly_LineBreak() {
     let input = "Hello, \\[\\TeX\n\\\\]!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBeginEndOnly() {
     let input = "\\begin{equation}\\TeX\\end{equation}"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], "\\TeX", .namedEquation)
   }
   
   func testParseBeginEndOnly_Normal() {
     let input = "Hello, \\begin{equation}\\TeX\\end{equation}!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 3)
     assertComponent(components[0], "Hello, ", .text)
     assertComponent(components[1], "\\TeX", .namedEquation)
@@ -89,21 +89,21 @@ final class LaTeXSwiftUITests: XCTestCase {
   
   func testParseBeginEndOnly_LeftEscaped() {
     let input = "Hello, \\\\begin{equation}\\TeX\\end{equation}!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBeginEndOnly_RightEscaped() {
     let input = "Hello, \\begin{equation}\\TeX\\\\end{equation}!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
   
   func testParseBeginEndOnly_LineBreak() {
     let input = "Hello, \\begin{equation}\\TeX\n\\\\end{equation}!"
-    let components = LaTeXEquationParser.parse(input)
+    let components = Parser.parse(input)
     XCTAssertEqual(components.count, 1)
     assertComponent(components[0], input, .text)
   }
