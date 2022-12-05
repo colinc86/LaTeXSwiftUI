@@ -169,33 +169,8 @@ extension LaTeX {
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack(spacing: 12) {
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title2)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title3)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.body)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.subheadline)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.caption)
-        .fontDesign(.serif)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.caption2)
-        .fontDesign(.serif)
+      LaTeX("Probabilistic $X^2$")
+        .background(Color.green)
     }
   }
 }

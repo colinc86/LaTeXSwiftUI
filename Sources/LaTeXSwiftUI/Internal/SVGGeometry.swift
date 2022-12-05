@@ -161,7 +161,6 @@ extension SVGGeometry.XHeight {
   ///
   /// - Parameter stringValue: The x-height.
   init?(stringValue: String) {
-    guard stringValue.hasSuffix("ex") else { return nil }
     let trimmed = stringValue.trimmingCharacters(in: CharacterSet(charactersIn: "ex"))
     if let value = Double(trimmed) {
       self = CGFloat(value)

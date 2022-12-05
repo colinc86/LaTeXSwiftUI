@@ -115,6 +115,12 @@ final class LaTeXSwiftUITests: XCTestCase {
     XCTAssertEqual(value, -1.602)
   }
   
+  func testSVGGeometry_parseAlignmentZero() {
+    let input = "\"vertical-align: 0;\""
+    let value = SVGGeometry.parseAlignment(from: input)
+    XCTAssertEqual(value, 0)
+  }
+  
   func testSVGGeometry_parseXHeight() {
     let input = "\"-1.602ex\""
     let value = SVGGeometry.parseXHeight(from: input)
