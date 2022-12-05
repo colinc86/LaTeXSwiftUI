@@ -154,9 +154,13 @@ extension LaTeX {
     if let textColor = textColor {
       return textColor
     }
+#if os(iOS)
     return colorScheme == .dark ?
-      Color(uiColor: .lightText) :
-      Color(uiColor: .darkText)
+    Color(uiColor: .lightText) :
+    Color(uiColor: .darkText)
+#else
+    return Color(nsColor: .textColor)
+#endif
   }
 
 }
