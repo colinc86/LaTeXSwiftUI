@@ -1,6 +1,7 @@
 import XCTest
 @testable import LaTeXSwiftUI
 
+@available(iOS 16.1, *)
 final class LaTeXSwiftUITests: XCTestCase {
   
   func assertComponent(_ component: Component, _ text: String, _ type: Component.ComponentType, file: StaticString = #file, line: UInt = #line) {

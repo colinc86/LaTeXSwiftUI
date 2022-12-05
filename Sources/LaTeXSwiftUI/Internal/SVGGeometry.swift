@@ -8,22 +8,44 @@
 import Foundation
 import SwiftUI
 
+/// The geometry of a SVG.
 internal struct SVGGeometry {
   
+  // MARK: Types
+  
+  /// A unit of height that defines the height of the `x` character
+  /// of a font.
   typealias XHeight = CGFloat
   
+  /// A parsing error.
   enum ParsingError: Error {
     case missingSVGElement
     case missingGeometry
   }
   
-  static let svgRegex = #/<svg.*?>/#
-  static let attributeRegex = #/\w*:*\w+=".*?"/#
+  // MARK: Static properties
   
+  /// The SVG element regex.
+  private static let svgRegex = #/<svg.*?>/#
+  
+  /// The attribute regex.
+  private static let attributeRegex = #/\w*:*\w+=".*?"/#
+  
+  // MARK: Public properties
+  
+  /// The SVG's vertical alignment (offset).
   let verticalAlignment: XHeight
+  
+  /// The SVG's width.
   let width: XHeight
+  
+  /// The SVG's height.
   let height: XHeight
+  
+  /// The SVG's frame.
   let frame: CGRect
+  
+  // MARK: Initializers
   
   init(verticalAlignment: XHeight, width: XHeight, height: XHeight, frame: CGRect) {
     self.verticalAlignment = verticalAlignment
@@ -32,6 +54,9 @@ internal struct SVGGeometry {
     self.frame = frame
   }
   
+  /// Initializes a geometry from an SVG.
+  ///
+  /// - Parameter svg: The SVG.
   init(svg: String) throws {
     // Find the SVG element
     guard let match = svg.firstMatch(of: SVGGeometry.svgRegex) else {
@@ -76,8 +101,19 @@ internal struct SVGGeometry {
       frame: frame)
   }
   
+}
+
+// MARK: Static methods
+
+extension SVGGeometry {
+  
+  /// Parses the alignment from the style attribute.
+  ///
+  /// "vertical-align: -1.602ex;"
+  ///
+  /// - Parameter string: The input string.
+  /// - Returns: The alignment's x-height.
   static func parseAlignment(from string: String) -> XHeight? {
-    //"vertical-align: -1.602ex;"
     let trimmed = string.trimmingCharacters(in: CharacterSet(charactersIn: "\";"))
     let components = trimmed.components(separatedBy: CharacterSet(charactersIn: ":"))
     guard components.count == 2 else { return nil }
@@ -85,14 +121,24 @@ internal struct SVGGeometry {
     return XHeight(stringValue: value)
   }
   
+  /// Parses the x-height value from an attribute.
+  ///
+  /// "2.127ex"
+  ///
+  /// - Parameter string: The input string.
+  /// - Returns: The x-height.
   static func parseXHeight(from string: String) -> XHeight? {
-    // "2.127ex"
     let trimmed = string.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
     return XHeight(stringValue: trimmed)
   }
   
+  /// Parses the view-box from an attribute.
+  ///
+  /// "0 -1342 940 2050"
+  ///
+  /// - Parameter string: The input string.
+  /// - Returns: The view-box.
   static func parseViewBox(from string: String) -> CGRect? {
-    // "0 -1342 940 2050"
     let trimmed = string.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
     let components = trimmed.components(separatedBy: CharacterSet.whitespaces)
     guard components.count == 4 else { return nil }
@@ -109,6 +155,11 @@ internal struct SVGGeometry {
 
 extension SVGGeometry.XHeight {
   
+  /// Initializes a x-height value.
+  ///
+  /// "2.127ex"
+  ///
+  /// - Parameter stringValue: The x-height.
   init?(stringValue: String) {
     guard stringValue.hasSuffix("ex") else { return nil }
     let trimmed = stringValue.trimmingCharacters(in: CharacterSet(charactersIn: "ex"))
@@ -120,14 +171,26 @@ extension SVGGeometry.XHeight {
     }
   }
   
+  /// Converts the x-height to points.
+  ///
+  /// - Parameter xHeight: The height of 1 x-height unit.
+  /// - Returns: The points.
   func toPoints(_ xHeight: CGFloat) -> CGFloat {
     xHeight * self
   }
   
+  /// Converts the x-height to points.
+  ///
+  /// - Parameter font: The font.
+  /// - Returns: The points.
   func toPoints(_ font: _Font) -> CGFloat {
     toPoints(font.xHeight)
   }
   
+  /// Converts the x-height to points.
+  ///
+  /// - Parameter font: The font.
+  /// - Returns: The points.
   func toPoints(_ font: Font) -> CGFloat {
     #if os(iOS)
     toPoints(_Font.preferredFont(from: font))

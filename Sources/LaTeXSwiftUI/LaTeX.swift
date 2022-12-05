@@ -8,9 +8,12 @@
 import SwiftUI
 
 @available(iOS 16.1, *)
-struct LaTeX: View {
+public struct LaTeX: View {
   
-  enum RenderingMode {
+  // MARK: Types
+  
+  /// The view's rendering mode.
+  public enum RenderingMode {
     
     /// Render the entire text as the equation.
     case all
@@ -19,13 +22,9 @@ struct LaTeX: View {
     case onlyEquations
   }
   
-  private struct Block: Identifiable {
-    let id = UUID()
-    let components: [Component]
-    var isEquationBlock: Bool {
-      components.count == 1 && !components[0].type.inline
-    }
-  }
+  // MARK: Private properties
+  
+  @Environment(\.textColor) private var textColor
 
   /// The display scale.
   @Environment(\.displayScale) private var displayScale
@@ -33,11 +32,11 @@ struct LaTeX: View {
   /// The view's color scheme.
   @Environment(\.colorScheme) private var colorScheme
   
+  /// The view's font.
   @Environment(\.font) private var font
   
-  @State private var blocks: [Block]
-  
-  @State private var id = UUID()
+  /// The blocks to render.
+  @State private var blocks: [ComponentBlock]
 
   // MARK: Initializers
 
@@ -45,39 +44,22 @@ struct LaTeX: View {
   ///
   /// - Parameters:
   ///   - text: The text input.
-  ///   - style: Whether or not the entire input, or only equations, should be
-  ///     parsed.
-  init(_ text: String, style: RenderingMode = .onlyEquations) {
-    let components = style == .all ? [Component(text: text, type: .inlineEquation)] : Parser.parse(text)
-    var blocks = [Block]()
-    var blockComponents = [Component]()
-    for component in components {
-      if component.type.inline {
-        blockComponents.append(component)
-      }
-      else {
-        blocks.append(Block(components: blockComponents))
-        blocks.append(Block(components: [component]))
-        blockComponents.removeAll()
-      }
-    }
-    blocks.append(Block(components: blockComponents))
-    _blocks = State(wrappedValue: blocks)
+  ///   - mode: Whether or not the entire input, or only equations, should be
+  ///     parsed and rendered.
+  public init(_ text: String, mode: RenderingMode = .onlyEquations) {
+    _blocks = State(wrappedValue: Parser.parse(text, mode: mode))
   }
 
   // MARK: View body
 
-  var body: some View {
-    content
-      .id(id)
-      .task(render)
-      .onChange(of: colorScheme, perform: changedColorScheme)
-  }
-  
-  @ViewBuilder var content: some View {
-    ForEach(blocks) { block in
-      text(for: block)
+  public var body: some View {
+    VStack {
+      ForEach(blocks) { block in
+        text(for: block)
+      }
     }
+    .onAppear(perform: appeared)
+    .onChange(of: colorScheme, perform: changedColorScheme)
   }
 
 }
@@ -85,15 +67,38 @@ struct LaTeX: View {
 @available(iOS 16.1, *)
 extension LaTeX {
   
-  private func text(for block: Block) -> Text {
+  /// Sets the LaTeX view's text color.
+  ///
+  /// - Parameter color: The text color.
+  /// - Returns: A LaTeX view.
+  public func textColor(_ color: Color) -> some View {
+    environment(\.textColor, color)
+      .foregroundColor(color)
+  }
+}
+
+@available(iOS 16.1, *)
+extension LaTeX {
+  
+  /// Called when the view appears.
+  private func appeared() {
+    render(colorScheme: colorScheme)
+  }
+  
+  /// Creats the text view for the given block.
+  ///
+  /// - Parameter block: The block.
+  /// - Returns: The text view.
+  private func text(for block: ComponentBlock) -> Text {
     var text = Text("")
     for component in block.components {
       if let image = component.renderedImage, let offset = component.imageOffset {
 #if os(iOS)
-        text = text + Text(Image(uiImage: image)).baselineOffset(offset)
+        let swiftUIImage = Image(uiImage: image)
 #else
-        text = text + Text(Image(nsImage: image)).baselineOffset(offset)
+        let swiftUIImage = Image(nsImage: image)
 #endif
+        text = text + Text(swiftUIImage).baselineOffset(offset)
       }
       else {
         text = text + Text(component.text)
@@ -106,23 +111,26 @@ extension LaTeX {
   ///
   /// - Parameter newValue: The new color scheme.
   private func changedColorScheme(to newValue: ColorScheme) {
-    render()
+    render(colorScheme: newValue)
   }
-
-  /// Called when the math components should be (re)rendered.
-  @Sendable func render() {
+  
+  /// Renders the view's components.
+  ///
+  /// - Parameter colorScheme: The color scheme to render.
+  @Sendable private func render(colorScheme: ColorScheme = .light) {
     Task {
-      var newBlocks = [Block]()
+      var newBlocks = [ComponentBlock]()
       for block in blocks {
         do {
           let newComponents = try await Renderer.shared.render(
             block.components,
-            xHeight: font == nil ? _Font.preferredFont(from: .body).xHeight : _Font.preferredFont(from: font!).xHeight,
+            xHeight: font == nil ?
+              _Font.preferredFont(from: .body).xHeight :
+              _Font.preferredFont(from: font!).xHeight,
             displayScale: displayScale,
-            textColor: .primary
-          )
+            textColor: textColor(for: colorScheme))
           
-          newBlocks.append(Block(components: newComponents))
+          newBlocks.append(ComponentBlock(components: newComponents))
         }
         catch {
           continue
@@ -133,10 +141,22 @@ extension LaTeX {
       await MainActor.run {
         withAnimation {
           blocks = newBlocksCopy
-          id = UUID()
         }
       }
     }
+  }
+  
+  /// Gets the text color to use.
+  ///
+  /// - Parameter colorScheme: The current color scheme.
+  /// - Returns: A color.
+  private func textColor(for colorScheme: ColorScheme) -> Color {
+    if let textColor = textColor {
+      return textColor
+    }
+    return colorScheme == .dark ?
+      Color(uiColor: .lightText) :
+      Color(uiColor: .darkText)
   }
 
 }
@@ -144,29 +164,34 @@ extension LaTeX {
 @available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
-    VStack {
-      LaTeX("""
-The quadratic formula is
-\\begin{equation}
-  \\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}
-\\end{equation}
-""")
-      .font(.body)
+    VStack(spacing: 12) {
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title)
+        .fontDesign(.serif)
       
-      Divider()
-      
-      LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
+      LaTeX("Hello, $\\LaTeX$!")
         .font(.title2)
+        .fontDesign(.serif)
       
-      Divider()
-      
-      LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
+      LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
+        .fontDesign(.serif)
       
-      Divider()
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.body)
+        .fontDesign(.serif)
       
-      LaTeX("The quadratic formula is $\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$.")
-        .font(.footnote)
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.subheadline)
+        .fontDesign(.serif)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption)
+        .fontDesign(.serif)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption2)
+        .fontDesign(.serif)
     }
   }
 }

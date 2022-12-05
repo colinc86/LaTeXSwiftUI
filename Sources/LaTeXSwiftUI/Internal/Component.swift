@@ -1,5 +1,5 @@
 //
-//  LaTeXComponent.swift
+//  Component.swift
 //  LaTeXSwiftUI
 //
 //  Created by Colin Campbell on 12/3/22.
@@ -7,8 +7,27 @@
 
 import Foundation
 
+/// A block of components.
+internal struct ComponentBlock: Identifiable {
+  
+  /// The component's identifier.
+  ///
+  /// Unique to every instance.
+  let id = UUID()
+  
+  /// The block's components.
+  let components: [Component]
+  
+  /// True iff this block has only one component and that component is
+  /// not inline.
+  var isEquationBlock: Bool {
+    components.count == 1 && !components[0].type.inline
+  }
+  
+}
+
 /// A LaTeX component.
-struct Component: CustomStringConvertible, Equatable, Hashable {
+internal struct Component: CustomStringConvertible, Equatable, Hashable {
   
   /// A LaTeX component type.
   enum ComponentType: String, Equatable, CustomStringConvertible {

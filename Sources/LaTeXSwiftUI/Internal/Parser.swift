@@ -1,5 +1,5 @@
 //
-//  LaTeXEquationParser.swift
+//  Parser.swift
 //  LaTeXSwiftUI
 //
 //  Created by Colin Campbell on 11/30/22.
@@ -7,36 +7,71 @@
 
 import Foundation
 
+/// Parses LaTeX equations.
+@available(iOS 16.1, *)
 internal struct Parser {
   
+  // MARK: Types
+  
   /// An equation component.
-  struct EquationComponent<T, U> {
+  private struct EquationComponent<T, U> {
     let regex: Regex<T>
     let terminatingRegex: Regex<U>
     let equation: Component.ComponentType
     let supportsRecursion: Bool
   }
   
+  // MARK: Private properties
+  
   /// An inline equation component.
-  static let inline = EquationComponent(
+  private static let inline = EquationComponent(
     regex: #/\$(.|\s)*?\$/#,
     terminatingRegex: #/\$/#,
     equation: .inlineEquation,
     supportsRecursion: false)
   
   /// A named equation component.
-  static let named = EquationComponent(
+  private static let named = EquationComponent(
     regex: #/\\begin{equation}(.|\s)*\\end{equation}/#,
     terminatingRegex: #/\\end{equation}/#,
     equation: .namedEquation,
     supportsRecursion: true)
   
   // Order matters
-  static let allEquations = [inline, named]
+  private static let allEquations = [inline, named]
   
 }
 
+// MARK: Static methods
+
+@available(iOS 16.1, *)
 extension Parser {
+  
+  /// Parses the input text for component blocks.
+  ///
+  /// - Parameters:
+  ///   - text: The input text.
+  ///   - mode: The rendering mode.
+  /// - Returns: An array of component blocks.
+  static func parse(_ text: String, mode: LaTeX.RenderingMode) -> [ComponentBlock] {
+    let components = mode == .all ? [Component(text: text, type: .inlineEquation)] : parse(text)
+    var blocks = [ComponentBlock]()
+    var blockComponents = [Component]()
+    for component in components {
+      if component.type.inline {
+        blockComponents.append(component)
+      }
+      else {
+        blocks.append(ComponentBlock(components: blockComponents))
+        blocks.append(ComponentBlock(components: [component]))
+        blockComponents.removeAll()
+      }
+    }
+    if !blockComponents.isEmpty {
+      blocks.append(ComponentBlock(components: blockComponents))
+    }
+    return blocks
+  }
   
   /// Parses an input string for LaTeX components.
   ///
@@ -110,6 +145,13 @@ extension Parser {
     return input.isEmpty ? [] : [Component(text: input, type: .text)]
   }
   
+}
+
+// MARK: Private static methods
+
+@available(iOS 16.1, *)
+extension Parser {
+  
   /// Determines if an index is smaller than all of the indexes in another
   /// array.
   ///
@@ -117,7 +159,7 @@ extension Parser {
   ///   - index: The index to compare.
   ///   - indexes: The indexes. The value `index` should not be present in this.
   /// - Returns: A boolean.
-  static func isSmallest(_ index: String.Index?, outOf indexes: [String.Index?]) -> Bool {
+  private static func isSmallest(_ index: String.Index?, outOf indexes: [String.Index?]) -> Bool {
     guard let index = index else { return false }
     let indexes = indexes.filter({ $0 != nil }).map({ $0! }) as! [String.Index]
     return indexes.first(where: { $0 < index }) == nil
