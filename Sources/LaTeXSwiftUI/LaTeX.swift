@@ -53,13 +53,9 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    VStack {
-      ForEach(blocks) { block in
-        text(for: block)
-      }
-    }
-    .onAppear(perform: appeared)
-    .onChange(of: colorScheme, perform: changedColorScheme)
+    text(for: blocks)
+      .onAppear(perform: appeared)
+      .onChange(of: colorScheme, perform: changedColorScheme)
   }
 
 }
@@ -83,6 +79,14 @@ extension LaTeX {
   /// Called when the view appears.
   private func appeared() {
     render(colorScheme: colorScheme)
+  }
+  
+  private func text(for blocks: [ComponentBlock]) -> Text {
+    var blockText = Text("")
+    for block in blocks {
+      blockText = blockText + text(for: block)
+    }
+    return blockText
   }
   
   /// Creats the text view for the given block.
@@ -169,8 +173,30 @@ extension LaTeX {
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack(spacing: 12) {
-      LaTeX("Probabilistic $X^2$")
-        .background(Color.green)
+      LaTeX("This is a title with vertical alignment equal to zero in the SVG geometry object. $X^2$.")
+      
+      LaTeX("This is a title with vertical alignment equal to zero in the SVG geometry object. $X^2$.")
+        .lineLimit(1)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .textColor(.red)
+        .font(.title2)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title3)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption2)
+      
+      LaTeX("""
+This is some $\\LaTeX$ with an inline equation and a block equation.
+\\begin{equation}
+  (x-2)(x+2)=x^2-4
+\\end{equation}
+""")
     }
   }
 }
