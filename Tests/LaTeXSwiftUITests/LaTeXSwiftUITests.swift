@@ -51,6 +51,37 @@ final class LaTeXSwiftUITests: XCTestCase {
     assertComponent(components[0], input, .text)
   }
   
+  func testParseDoubleDollarOnly() {
+    let input = "$$\\TeX$$"
+    let components = Parser.parse(input)
+    print(components)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components[0], "\\TeX", .texBlockEquation)
+  }
+  
+  func testParseDoubleDollarOnly_Normal() {
+    let input = "Hello, $$\\TeX$$!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components[0], "Hello, ", .text)
+    assertComponent(components[1], "\\TeX", .texBlockEquation)
+    assertComponent(components[2], "!", .text)
+  }
+  
+  func testParseDoubleDollarOnly_LeftEscaped() {
+    let input = "Hello, \\$$\\TeX$$!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components[0], input, .text)
+  }
+  
+  func testParseDoubleDollarOnly_RightEscaped() {
+    let input = "Hello, $$\\TeX\\$$!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components[0], input, .text)
+  }
+  
   func testParseBracketsOnly_LeftEscaped() {
     let input = "Hello, \\\\[\\TeX\\]!"
     let components = Parser.parse(input)

@@ -40,6 +40,11 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     /// - Example: `$x^2$`
     case inlineEquation
     
+    /// A TeX-style block equation.
+    ///
+    /// - Example: `$$x^2$$`.
+    case texBlockEquation
+    
     /// A named equation component.
     ///
     /// - Example: `\begin{equation}x^2\end{equation}`
@@ -55,6 +60,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       switch self {
       case .text: return ""
       case .inlineEquation: return "$"
+      case .texBlockEquation: return "$$"
       case .namedEquation: return "\\begin{equation}"
       }
     }
@@ -64,6 +70,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       switch self {
       case .text: return ""
       case .inlineEquation: return "$"
+      case .texBlockEquation: return "$$"
       case .namedEquation: return "\\end{equation}"
       }
     }

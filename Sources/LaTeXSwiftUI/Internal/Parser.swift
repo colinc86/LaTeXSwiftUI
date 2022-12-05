@@ -25,9 +25,16 @@ internal struct Parser {
   
   /// An inline equation component.
   private static let inline = EquationComponent(
-    regex: #/\$(.|\s)*?\$/#,
+    regex: #/\$(.|\s)*?\$/#, //\$\$(.|\s)*?\$\$
     terminatingRegex: #/\$/#,
     equation: .inlineEquation,
+    supportsRecursion: false)
+  
+  /// An TeX-style block equation component.
+  private static let texBlock = EquationComponent(
+    regex: #/\$\$(.|\s)*?\$\$/#,
+    terminatingRegex: #/\$\$/#,
+    equation: .texBlockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
@@ -38,7 +45,7 @@ internal struct Parser {
     supportsRecursion: true)
   
   // Order matters
-  private static let allEquations = [inline, named]
+  private static let allEquations = [inline, texBlock, named]
   
 }
 
@@ -79,17 +86,18 @@ extension Parser {
   /// - Returns: An array of LaTeX components.
   static func parse(_ input: String) -> [Component] {
     let matches = allEquations.map({ ($0, input.firstMatch(of: $0.regex)) }).filter { match in
-      guard let firstIndex = match.1?.range.lowerBound,
-            let lastIndex = match.1?.range.upperBound else { return false }
-      
+      guard let range = match.1?.range else { return false }
+      let firstIndex = range.lowerBound
+      let lastIndex = range.upperBound
+      let componentIsEmpty = Component(text: String(input[range]), type: match.0.equation).text.isEmpty
       let previousIndexLast = input.index(lastIndex, offsetBy: -1 - match.0.equation.rightTerminator.count)
       
       if firstIndex == input.startIndex {
-        return input[previousIndexLast] != "\\"
+        return input[previousIndexLast] != "\\" && !componentIsEmpty
       }
       
       let previousIndexFirst = input.index(before: firstIndex)
-      return input[previousIndexFirst] != "\\" && input[previousIndexLast] != "\\"
+      return input[previousIndexFirst] != "\\" && input[previousIndexLast] != "\\" && !componentIsEmpty
     }
     
     let allStart = matches.map({ $0.1?.range.lowerBound })
