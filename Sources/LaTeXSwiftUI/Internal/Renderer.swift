@@ -7,7 +7,7 @@
 
 import Foundation
 import MathJaxSwift
-import PocketSVG
+import SwiftDraw
 import SwiftUI
 
 #if os(iOS)
@@ -157,45 +157,7 @@ extension Renderer {
     // Get the image's width and height
     let width = geometry.width.toPoints(xHeight)
     let height = geometry.height.toPoints(xHeight)
-    
-    /*
-     private func snapshotImage(for layer: CALayer) -> UIImage? {
-     UIGraphicsBeginImageContextWithOptions(layer.bounds.size, false, UIScreen.main.scale)
-     guard let context = UIGraphicsGetCurrentContext() else { return nil }
-     layer.render(in: context)
-     let image = UIGraphicsGetImageFromCurrentImageContext()
-     UIGraphicsEndImageContext()
-     return image
-     }
-     
-     DispatchQueue.global(qos: .background).async {
-     let url = Bundle.main.url(forResource: "tiger", withExtension: "svg")!
-     let frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-     let svgLayer = SVGLayer(contentsOf: url)
-     svgLayer.frame = frame
-     
-     let image = self.snapshotImage(for: svgLayer)
-     
-     DispatchQueue.main.async {
-     imageView.image = image
-     }
-     }
-     */
-    
-    let frame = CGRect(x: 0, y: 0, width: width, height: height)
-    let svgLayer = SVGLayer(contentsOf: <#T##URL#>)
-    
-    // Render the view
-    let view = SVGView(data: svgData)
-    let renderer = ImageRenderer(content: view.frame(width: width, height: height))
-    renderer.scale = displayScale
-    
-    // Return the rendered image
-#if os(iOS)
-    return renderer.uiImage
-#else
-    return renderer.nsImage
-#endif
+    return SVG(data: svgData)?.rasterize(with: CGSize(width: width, height: height))
   }
   
   private func snapshotImage(for layer: CALayer) -> _Image? {

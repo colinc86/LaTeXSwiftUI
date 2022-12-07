@@ -10,12 +10,12 @@
       }
     },
     {
-      "identity" : "pocketsvg",
+      "identity" : "swiftdraw",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pocketsvg/PocketSVG",
+      "location" : "https://github.com/swhitty/SwiftDraw",
       "state" : {
-        "revision" : "d30bf6678ae93763782a4e19973dc64762d42c4a",
-        "version" : "2.7.2"
+        "revision" : "1201e6cca64dc88a4982251e94a5a04ff7da5caa",
+        "version" : "0.13.2"
       }
     }
   ],
