@@ -7,7 +7,7 @@
 
 import Foundation
 import MathJaxSwift
-import SVGView
+import PocketSVG
 import SwiftUI
 
 #if os(iOS)
@@ -77,7 +77,8 @@ extension Renderer {
       }
       
       // Colorize the component and get the SVG output
-      guard let svgString = try await mathjax?.tex2svg("\(colorComponent)\(component.text)", inline: component.type.inline) else {
+      let conversionOptions = ConversionOptions(display: !component.type.inline)
+      guard let svgString = try await mathjax?.tex2svg("\(colorComponent)\(component.text)", styles: false, conversionOptions: conversionOptions) else {
         renderedComponents.append(component)
         continue
       }
@@ -131,10 +132,10 @@ extension Renderer {
       return nil
     }
     if colorComponents.count == 2 {
-      return "\\definecolor{custom}{rgb}{\(colorComponents[0]), \(colorComponents[0]), \(colorComponents[0])} \\color{custom} "
+      return "\\definecolor{custom}{rgb}{\(colorComponents[0]), \(colorComponents[0]), \(colorComponents[0])} \\color{custom}"
     }
     else if colorComponents.count >= 3 {
-      return "\\definecolor{custom}{rgb}{\(colorComponents[0]), \(colorComponents[1]), \(colorComponents[2])} \\color{custom} "
+      return "\\definecolor{custom}{rgb}{\(colorComponents[0]), \(colorComponents[1]), \(colorComponents[2])} \\color{custom}"
     }
     return nil
   }
@@ -147,7 +148,7 @@ extension Renderer {
   ///   - xHeight: The height of the `x` character to render.
   ///   - displayScale: The current display scale.
   /// - Returns: An image.
-  @MainActor private func createImage(
+  private func createImage(
     from svgData: Data,
     geometry: SVGGeometry,
     xHeight: CGFloat,
@@ -156,6 +157,33 @@ extension Renderer {
     // Get the image's width and height
     let width = geometry.width.toPoints(xHeight)
     let height = geometry.height.toPoints(xHeight)
+    
+    /*
+     private func snapshotImage(for layer: CALayer) -> UIImage? {
+     UIGraphicsBeginImageContextWithOptions(layer.bounds.size, false, UIScreen.main.scale)
+     guard let context = UIGraphicsGetCurrentContext() else { return nil }
+     layer.render(in: context)
+     let image = UIGraphicsGetImageFromCurrentImageContext()
+     UIGraphicsEndImageContext()
+     return image
+     }
+     
+     DispatchQueue.global(qos: .background).async {
+     let url = Bundle.main.url(forResource: "tiger", withExtension: "svg")!
+     let frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+     let svgLayer = SVGLayer(contentsOf: url)
+     svgLayer.frame = frame
+     
+     let image = self.snapshotImage(for: svgLayer)
+     
+     DispatchQueue.main.async {
+     imageView.image = image
+     }
+     }
+     */
+    
+    let frame = CGRect(x: 0, y: 0, width: width, height: height)
+    let svgLayer = SVGLayer(contentsOf: <#T##URL#>)
     
     // Render the view
     let view = SVGView(data: svgData)
@@ -168,6 +196,15 @@ extension Renderer {
 #else
     return renderer.nsImage
 #endif
+  }
+  
+  private func snapshotImage(for layer: CALayer) -> _Image? {
+    UIGraphicsBeginImageContextWithOptions(layer.bounds.size, false, UIScreen.main.scale)
+    guard let context = UIGraphicsGetCurrentContext() else { return nil }
+    layer.render(in: context)
+    let image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return image
   }
   
 }

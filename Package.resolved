@@ -5,17 +5,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/colinc86/MathJaxSwift",
       "state" : {
-        "revision" : "e8e64bd7fb1a503197d3ed9f1004ea460cd5d3c5",
-        "version" : "3.2.2"
+        "branch" : "main",
+        "revision" : "7e560a6b83c626550fe2113d9307f1481b3eaf28"
       }
     },
     {
-      "identity" : "svgview",
+      "identity" : "pocketsvg",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/exyte/SVGView",
+      "location" : "https://github.com/pocketsvg/PocketSVG",
       "state" : {
-        "revision" : "18bf73efc2f2dede5dfa73f517ddf4e054061294",
-        "version" : "1.0.4"
+        "revision" : "d30bf6678ae93763782a4e19973dc64762d42c4a",
+        "version" : "2.7.2"
       }
     }
   ],
