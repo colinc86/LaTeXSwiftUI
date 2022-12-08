@@ -8,17 +8,6 @@
 import Foundation
 import SwiftUI
 
-extension CGRect: Hashable {
-  
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine("x\(origin.x)")
-    hasher.combine("y\(origin.y)")
-    hasher.combine("w\(size.width)")
-    hasher.combine("h\(size.height)")
-  }
-  
-}
-
 /// The geometry of a SVG.
 internal struct SVGGeometry: Equatable, Hashable {
   
@@ -57,13 +46,6 @@ internal struct SVGGeometry: Equatable, Hashable {
   let frame: CGRect
   
   // MARK: Initializers
-  
-  init(verticalAlignment: XHeight, width: XHeight, height: XHeight, frame: CGRect) {
-    self.verticalAlignment = verticalAlignment
-    self.width = width
-    self.height = height
-    self.frame = frame
-  }
   
   /// Initializes a geometry from an SVG.
   ///
@@ -105,11 +87,10 @@ internal struct SVGGeometry: Equatable, Hashable {
       throw ParsingError.missingGeometry
     }
     
-    self.init(
-      verticalAlignment: verticalAlignment,
-      width: width,
-      height: height,
-      frame: frame)
+    self.verticalAlignment = verticalAlignment
+    self.width = width
+    self.height = height
+    self.frame = frame
   }
   
 }

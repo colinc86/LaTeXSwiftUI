@@ -5,6 +5,7 @@
 //  Created by Colin Campbell on 11/29/22.
 //
 
+import MathJaxSwift
 import SwiftUI
 
 @available(iOS 16.1, *)
@@ -13,7 +14,7 @@ public struct LaTeX: View {
   // MARK: Types
   
   /// The view's rendering mode.
-  public enum RenderingMode {
+  public enum ParsingMode {
     
     /// Render the entire text as the equation.
     case all
@@ -22,15 +23,14 @@ public struct LaTeX: View {
     case onlyEquations
   }
   
-  // MARK: Private properties
+  // MARK: Public properties
   
-  @Environment(\.textColor) private var textColor
+  
+  
+  // MARK: Private properties
 
   /// The display scale.
   @Environment(\.displayScale) private var displayScale
-
-  /// The view's color scheme.
-  @Environment(\.colorScheme) private var colorScheme
   
   /// The view's font.
   @Environment(\.font) private var font
@@ -38,6 +38,13 @@ public struct LaTeX: View {
   /// The blocks to render.
   @State private var blocks: [ComponentBlock] = []
   
+  /// The rendering mode to use with LaTeX rendered images.
+  private let renderingMode: Image.TemplateRenderingMode
+  
+  /// The MathJax TeX input processor options.
+  private let options: TexInputProcessorOptions
+  
+  /// The current font's x-height.
   private var xHeight: CGFloat {
     if let font = font {
       return _Font.preferredFont(from: font).xHeight
@@ -53,19 +60,35 @@ public struct LaTeX: View {
   ///
   /// - Parameters:
   ///   - text: The text input.
-  ///   - mode: Whether or not the entire input, or only equations, should be
-  ///     parsed and rendered.
-  public init(_ text: String, mode: RenderingMode = .onlyEquations) {
-    let parsedBlocks = Parser.parse(text, mode: mode)
-    let renderedBlocks = Renderer.shared.render(blocks: parsedBlocks, xHeight: xHeight, displayScale: displayScale, color: textColor, colorScheme: colorScheme)
-    _blocks = State(wrappedValue: renderedBlocks)
+  ///   - parsingMode: Whether or not the entire input, or only equations,
+  ///     should be parsed. Only equations are parsed by default.
+  ///   - renderingMode: The image rendering mode to use with images rendered
+  ///     from LaTeX equations. The default behavior is to use the `template`
+  ///     rendering mode so that equations match their surrounding font color,
+  ///     but you may use `original` to use the image colors rendered by
+  ///     MathJax.
+  ///   - options: The MathJax TeX input processor options. The default options
+  ///     are used, but you can customize this value to modify the rendering
+  ///     subsystem.
+  public init(
+    _ text: String,
+    parsingMode: ParsingMode = .onlyEquations,
+    renderingMode: Image.TemplateRenderingMode = .template,
+    options: TexInputProcessorOptions = TexInputProcessorOptions()
+  ) {
+    self.renderingMode = renderingMode
+    self.options = options
+    _blocks = State(wrappedValue: Renderer.shared.render(
+        blocks: Parser.parse(text, mode: parsingMode),
+        xHeight: xHeight,
+        displayScale: displayScale,
+        options: options))
   }
 
   // MARK: View body
 
   public var body: some View {
-    text(for: blocks)
-      .onChange(of: colorScheme, perform: changedColorScheme)
+    text()
   }
 
 }
@@ -73,26 +96,18 @@ public struct LaTeX: View {
 @available(iOS 16.1, *)
 extension LaTeX {
   
-  /// Sets the LaTeX view's text color.
-  ///
-  /// - Parameter color: The text color.
-  /// - Returns: A LaTeX view.
-  public func textColor(_ color: Color) -> some View {
-    environment(\.textColor, color)
-      .foregroundColor(color)
-  }
-}
-
-@available(iOS 16.1, *)
-extension LaTeX {
-  
-  @MainActor private func text(for blocks: [ComponentBlock]) -> Text {
+  @MainActor public func text() -> Text {
     var blockText = Text("")
     for block in blocks {
       blockText = blockText + text(for: block)
     }
     return blockText
   }
+  
+}
+
+@available(iOS 16.1, *)
+extension LaTeX {
   
   /// Creats the text view for the given block.
   ///
@@ -103,30 +118,20 @@ extension LaTeX {
     for component in block.components {
       if let svgData = component.svgData,
          let svgGeometry = component.svgGeometry,
-         let image = Renderer.shared.convertToImage(svgData: svgData, geometry: svgGeometry, xHeight: xHeight, displayScale: displayScale) {
-#if os(iOS)
-        let swiftUIImage = Image(uiImage: image)
-#else
-        let swiftUIImage = Image(nsImage: image)
-#endif
-        
+         let image = Renderer.shared.convertToImage(
+          svgData: svgData,
+          geometry: svgGeometry,
+          xHeight: xHeight,
+          displayScale: displayScale,
+          renderingMode: renderingMode) {
         let offset = svgGeometry.verticalAlignment.toPoints(xHeight)
-        text = text + Text(swiftUIImage).baselineOffset(offset)
+        text = text + Text(image).baselineOffset(offset)
       }
       else {
         text = text + Text(component.text)
       }
     }
     return text
-  }
-
-  /// Called when the color scheme changes.
-  ///
-  /// - Parameter newValue: The new color scheme.
-  private func changedColorScheme(to newValue: ColorScheme) {
-    withAnimation {
-      blocks = Renderer.shared.render(blocks: blocks, xHeight: xHeight, displayScale: displayScale, color: textColor, colorScheme: colorScheme) // render(blocks: blocks, colorScheme: newValue)
-    }
   }
 
 }
@@ -144,8 +149,8 @@ struct LaTeX_Previews: PreviewProvider {
         .font(.title)
       
       LaTeX("Hello, $\\LaTeX$!")
-        .textColor(.red)
         .font(.title2)
+        .foregroundColor(.red)
       
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
@@ -160,5 +165,33 @@ This is some $\\LaTeX$ with an inline equation and a block equation.
 \\end{equation}
 """)
     }
+    
+    VStack(spacing: 12) {
+      LaTeX("This is a title with vertical alignment equal to zero in the SVG geometry object. $X^2$.")
+      
+      LaTeX("This is a title with vertical alignment equal to zero in the SVG geometry object. $X^2$.")
+        .lineLimit(1)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title2)
+        .foregroundColor(.red)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title3)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption2)
+      
+      LaTeX("""
+This is some $\\LaTeX$ with an inline equation and a block equation.
+\\begin{equation}
+  (x-2)(x+2)=x^2-4
+\\end{equation}
+""")
+    }
+    .fontDesign(.serif)
   }
 }

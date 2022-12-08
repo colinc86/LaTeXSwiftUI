@@ -31,10 +31,17 @@ internal struct Parser {
     supportsRecursion: false)
   
   /// An TeX-style block equation component.
-  private static let texBlock = EquationComponent(
+  private static let tex = EquationComponent(
     regex: #/\$\$(.|\s)*?\$\$/#,
     terminatingRegex: #/\$\$/#,
-    equation: .texBlockEquation,
+    equation: .texEquation,
+    supportsRecursion: false)
+  
+  /// A block equation.
+  private static let block = EquationComponent(
+    regex: #/\\\[(.|\s)*\\\]/#,
+    terminatingRegex: #/\\\]/#,
+    equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
@@ -45,7 +52,12 @@ internal struct Parser {
     supportsRecursion: true)
   
   // Order matters
-  private static let allEquations = [inline, texBlock, named]
+  private static let allEquations: [EquationComponent] = [
+    inline,
+    tex,
+    block,
+    named
+  ]
   
 }
 
@@ -60,7 +72,7 @@ extension Parser {
   ///   - text: The input text.
   ///   - mode: The rendering mode.
   /// - Returns: An array of component blocks.
-  static func parse(_ text: String, mode: LaTeX.RenderingMode) -> [ComponentBlock] {
+  static func parse(_ text: String, mode: LaTeX.ParsingMode) -> [ComponentBlock] {
     let components = mode == .all ? [Component(text: text, type: .inlineEquation)] : parse(text)
     var blocks = [ComponentBlock]()
     var blockComponents = [Component]()

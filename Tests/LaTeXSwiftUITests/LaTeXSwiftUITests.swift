@@ -54,9 +54,8 @@ final class LaTeXSwiftUITests: XCTestCase {
   func testParseDoubleDollarOnly() {
     let input = "$$\\TeX$$"
     let components = Parser.parse(input)
-    print(components)
     XCTAssertEqual(components.count, 1)
-    assertComponent(components[0], "\\TeX", .texBlockEquation)
+    assertComponent(components[0], "\\TeX", .texEquation)
   }
   
   func testParseDoubleDollarOnly_Normal() {
@@ -64,7 +63,7 @@ final class LaTeXSwiftUITests: XCTestCase {
     let components = Parser.parse(input)
     XCTAssertEqual(components.count, 3)
     assertComponent(components[0], "Hello, ", .text)
-    assertComponent(components[1], "\\TeX", .texBlockEquation)
+    assertComponent(components[1], "\\TeX", .texEquation)
     assertComponent(components[2], "!", .text)
   }
   
