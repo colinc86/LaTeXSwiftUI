@@ -39,14 +39,7 @@ public struct LaTeX: View {
   
   /// The current font's x-height.
   private var xHeight: CGFloat {
-    let fontXHeight: CGFloat
-    if let font = font {
-      fontXHeight = _Font.preferredFont(from: font).xHeight
-    }
-    else {
-      fontXHeight = _Font.preferredFont(from: .body).xHeight
-    }
-    return UIFontMetrics.default.scaledValue(for: fontXHeight, compatibleWith: .current)
+    _Font.preferredFont(from: font ?? .body).xHeight
   }
 
   // MARK: Initializers
@@ -82,24 +75,26 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    text()
+    VStack(spacing: 0) {
+      ForEach(Array(blocks.enumerated()), id: \.offset) { i, block in
+        let blockText = text(for: block)
+        if block.isEquationBlock {
+          blockText.multilineTextAlignment(.center)
+        }
+        else if i < blocks.count - 1 {
+          blockText + Text("\n")
+        }
+        else {
+          blockText
+        }
+      }
+    }
   }
 
 }
 
 @available(iOS 16.1, *)
 extension LaTeX {
-  
-  /// Creates the text view for the given blocks.
-  ///
-  /// - Returns: Rendered text.
-  @MainActor private func text() -> Text {
-    var blockText = Text("")
-    for block in blocks {
-      blockText = blockText + text(for: block)
-    }
-    return blockText
-  }
   
   /// Creats the text view for the given block.
   ///
@@ -120,7 +115,11 @@ extension LaTeX {
         text = text + Text(image).baselineOffset(offset)
       }
       else {
-        text = text + Text(component.text)
+        var componentText = component.text
+        while componentText.hasSuffix("\n") {
+          componentText.removeLast(1)
+        }
+        text = text + Text(componentText)
       }
     }
     return text
@@ -132,6 +131,9 @@ extension LaTeX {
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.largeTitle)
+      
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title)
         .foregroundColor(.red)
@@ -161,5 +163,16 @@ struct LaTeX_Previews: PreviewProvider {
     }
     .fontDesign(.serif)
     .previewDisplayName("Basic Usage")
+    .previewLayout(.sizeThatFits)
+    
+    LaTeX("Lorem ipsum $\\LaTeX$ sit amet, consectetur $\\LaTeX$ elit, sed do $\\frac{2}{3}$ tempor incididunt ut $\\LaTeX$ et dolore magna $\\LaTeX$. Ut enim ad $\\LaTeX$ veniam, quis nostrud $\\LaTeX$ ullamco laboris nisi $\\LaTeX$ aliquip ex ea consequat. Duis aute dolor in reprehenderit voluptate velit esse dolore eu fugiat pariatur. Excepteur sint $\\LaTeX$ cupidatat non proident, $\\int_a^b \\! x^2 \\mathrm{d}x$ in culpa qui $\\LaTeX$ deserunt mollit anim $\\LaTeX$ est laborum.")
+      .previewDisplayName("Word Wrapping")
+    
+//    LaTeX("""
+//Euler's Identity is a cool identity that has all of the most interesting constants in math in the same equation!
+//\\begin{equation}
+//  e^{i\\pi}-1=0
+//\\end{equation}
+//""")
   }
 }

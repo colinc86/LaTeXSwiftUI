@@ -8,7 +8,7 @@
 import Foundation
 
 /// A block of components.
-internal struct ComponentBlock: Identifiable {
+internal struct ComponentBlock: Hashable, Identifiable {
   
   /// The component's identifier.
   ///

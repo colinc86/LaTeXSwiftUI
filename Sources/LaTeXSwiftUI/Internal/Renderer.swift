@@ -116,7 +116,7 @@ extension Renderer {
       image = Image(uiImage: uiImage)
     }
 #else
-    renderer.scale = NSScreen.main?.scale
+    renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
     if let nsImage = renderer.nsImage {
       image = Image(nsImage: nsImage)
     }
