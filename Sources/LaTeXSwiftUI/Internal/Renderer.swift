@@ -155,8 +155,10 @@ extension Renderer {
         continue
       }
       
-      // Colorize the component and get the SVG output
+      // Create our options
       let conversionOptions = ConversionOptions(display: !component.type.inline)
+      
+      // Perform the conversion
       guard let svgString = try mathjax?.tex2svg(
         component.text,
         styles: false,

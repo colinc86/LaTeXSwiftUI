@@ -2,7 +2,7 @@
 
 An easy-to-use SwiftUI view that renders LaTeX.
 
-![iOS Version](https://img.shields.io/badge/iOS-%3E%3D16.1-informational) ![macOS Version](https://img.shields.io/badge/macOS-%3E%3D13-informational)
+![iOS Version](https://img.shields.io/badge/iOS-6.1-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
 ## Installation
 
@@ -27,3 +27,5 @@ struct MyView: View {
 
 }
 ```
+
+The `LaTeX` view's body
