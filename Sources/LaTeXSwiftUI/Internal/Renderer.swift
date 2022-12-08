@@ -7,8 +7,8 @@
 
 import Foundation
 import MathJaxSwift
-import SwiftDraw
 import SwiftUI
+import SVGView
 
 #if os(iOS)
 import UIKit
@@ -148,7 +148,7 @@ extension Renderer {
   ///   - xHeight: The height of the `x` character to render.
   ///   - displayScale: The current display scale.
   /// - Returns: An image.
-  private func createImage(
+  @MainActor private func createImage(
     from svgData: Data,
     geometry: SVGGeometry,
     xHeight: CGFloat,
@@ -157,16 +157,18 @@ extension Renderer {
     // Get the image's width and height
     let width = geometry.width.toPoints(xHeight)
     let height = geometry.height.toPoints(xHeight)
-    return SVG(data: svgData)?.rasterize(with: CGSize(width: width, height: height))
-  }
-  
-  private func snapshotImage(for layer: CALayer) -> _Image? {
-    UIGraphicsBeginImageContextWithOptions(layer.bounds.size, false, UIScreen.main.scale)
-    guard let context = UIGraphicsGetCurrentContext() else { return nil }
-    layer.render(in: context)
-    let image = UIGraphicsGetImageFromCurrentImageContext()
-    UIGraphicsEndImageContext()
-    return image
+    
+    // Render the view
+    let view = SVGView(data: svgData)
+    let renderer = ImageRenderer(content: view.frame(width: width, height: height))
+    renderer.scale = displayScale
+    
+    // Return the rendered image
+#if os(iOS)
+    return renderer.uiImage
+#else
+    return renderer.nsImage
+#endif
   }
   
 }

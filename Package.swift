@@ -16,14 +16,14 @@ let package = Package(
   ],
   dependencies: [
      .package(url: "https://github.com/colinc86/MathJaxSwift", branch: "main"),
-     .package(url: "https://github.com/swhitty/SwiftDraw", from: "0.13.2")
+     .package(url: "https://github.com/exyte/SVGView", from: "1.0.4")
   ],
   targets: [
     .target(
       name: "LaTeXSwiftUI",
       dependencies: [
         "MathJaxSwift",
-        "SwiftDraw"
+        "PocketSVG"
       ]),
     .testTarget(
       name: "LaTeXSwiftUITests",
