@@ -76,12 +76,13 @@ public struct LaTeX: View {
 
   public var body: some View {
     VStack(spacing: 0) {
-      ForEach(blocks, id: \.self) { block in
+      ForEach(blocks) { block in
+        let text = text(for: block)
         if block.isEquationBlock {
-          text(for: block).multilineTextAlignment(.center)
+          text.multilineTextAlignment(.center)
         }
         else {
-          text(for: block)
+          text
         }
       }
     }
@@ -98,7 +99,8 @@ extension LaTeX {
   /// - Returns: The text view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
     var text = Text("")
-    for component in block.components {
+    for i in 0 ..< block.components.count {
+      let component = block.components[i]
       if let svgData = component.svgData,
          let svgGeometry = component.svgGeometry,
          let image = Renderer.shared.convertToImage(
@@ -109,6 +111,9 @@ extension LaTeX {
           renderingMode: renderingMode) {
         let offset = svgGeometry.verticalAlignment.toPoints(xHeight)
         text = text + Text(image).baselineOffset(offset)
+      }
+      else if i < block.components.count - 1 {
+        text = text + Text(component.text)
       }
       else {
         var componentText = component.text
