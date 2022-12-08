@@ -36,7 +36,16 @@ public struct LaTeX: View {
   @Environment(\.font) private var font
   
   /// The blocks to render.
-  @State private var blocks: [ComponentBlock]
+  @State private var blocks: [ComponentBlock] = []
+  
+  private var xHeight: CGFloat {
+    if let font = font {
+      return _Font.preferredFont(from: font).xHeight
+    }
+    else {
+      return _Font.preferredFont(from: .body).xHeight
+    }
+  }
 
   // MARK: Initializers
 
@@ -47,14 +56,15 @@ public struct LaTeX: View {
   ///   - mode: Whether or not the entire input, or only equations, should be
   ///     parsed and rendered.
   public init(_ text: String, mode: RenderingMode = .onlyEquations) {
-    _blocks = State(wrappedValue: Parser.parse(text, mode: mode))
+    let parsedBlocks = Parser.parse(text, mode: mode)
+    let renderedBlocks = Renderer.shared.render(blocks: parsedBlocks, xHeight: xHeight, displayScale: displayScale, color: textColor, colorScheme: colorScheme)
+    _blocks = State(wrappedValue: renderedBlocks)
   }
 
   // MARK: View body
 
   public var body: some View {
     text(for: blocks)
-      .onAppear(perform: appeared)
       .onChange(of: colorScheme, perform: changedColorScheme)
   }
 
@@ -76,12 +86,7 @@ extension LaTeX {
 @available(iOS 16.1, *)
 extension LaTeX {
   
-  /// Called when the view appears.
-  private func appeared() {
-    render(colorScheme: colorScheme)
-  }
-  
-  private func text(for blocks: [ComponentBlock]) -> Text {
+  @MainActor private func text(for blocks: [ComponentBlock]) -> Text {
     var blockText = Text("")
     for block in blocks {
       blockText = blockText + text(for: block)
@@ -93,15 +98,19 @@ extension LaTeX {
   ///
   /// - Parameter block: The block.
   /// - Returns: The text view.
-  private func text(for block: ComponentBlock) -> Text {
+  @MainActor private func text(for block: ComponentBlock) -> Text {
     var text = Text("")
     for component in block.components {
-      if let image = component.renderedImage, let offset = component.imageOffset {
+      if let svgData = component.svgData,
+         let svgGeometry = component.svgGeometry,
+         let image = Renderer.shared.convertToImage(svgData: svgData, geometry: svgGeometry, xHeight: xHeight, displayScale: displayScale) {
 #if os(iOS)
         let swiftUIImage = Image(uiImage: image)
 #else
         let swiftUIImage = Image(nsImage: image)
 #endif
+        
+        let offset = svgGeometry.verticalAlignment.toPoints(xHeight)
         text = text + Text(swiftUIImage).baselineOffset(offset)
       }
       else {
@@ -115,56 +124,9 @@ extension LaTeX {
   ///
   /// - Parameter newValue: The new color scheme.
   private func changedColorScheme(to newValue: ColorScheme) {
-    render(colorScheme: newValue)
-  }
-  
-  /// Renders the view's components.
-  ///
-  /// - Parameter colorScheme: The color scheme to render.
-  @Sendable private func render(colorScheme: ColorScheme = .light) {
-    Task {
-      var newBlocks = [ComponentBlock]()
-      for block in blocks {
-        do {
-          let newComponents = try await Renderer.shared.render(
-            block.components,
-            xHeight: font == nil ?
-              _Font.preferredFont(from: .body).xHeight :
-              _Font.preferredFont(from: font!).xHeight,
-            displayScale: displayScale,
-            textColor: textColor(for: colorScheme))
-          
-          newBlocks.append(ComponentBlock(components: newComponents))
-        }
-        catch {
-          continue
-        }
-      }
-      
-      let newBlocksCopy = newBlocks
-      await MainActor.run {
-        withAnimation {
-          blocks = newBlocksCopy
-        }
-      }
+    withAnimation {
+      blocks = Renderer.shared.render(blocks: blocks, xHeight: xHeight, displayScale: displayScale, color: textColor, colorScheme: colorScheme) // render(blocks: blocks, colorScheme: newValue)
     }
-  }
-  
-  /// Gets the text color to use.
-  ///
-  /// - Parameter colorScheme: The current color scheme.
-  /// - Returns: A color.
-  private func textColor(for colorScheme: ColorScheme) -> Color {
-    if let textColor = textColor {
-      return textColor
-    }
-#if os(iOS)
-    return colorScheme == .dark ?
-    Color(uiColor: .lightText) :
-    Color(uiColor: .darkText)
-#else
-    return Color(nsColor: .textColor)
-#endif
   }
 
 }

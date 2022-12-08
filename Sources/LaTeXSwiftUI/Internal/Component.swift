@@ -96,10 +96,10 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   let type: ComponentType
   
   /// The component's SVG image.
-  let renderedImage: _Image?
+  let svgData: Data?
   
   /// The component image's offset.
-  let imageOffset: CGFloat?
+  let svgGeometry: SVGGeometry?
   
   // MARK: Initializers
   
@@ -111,9 +111,9 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   /// - Parameters:
   ///   - text: The component's text.
   ///   - type: The component's type.
-  ///   - renderedImage: The rendered image (only applies to equations).
-  ///   - imageOffset: The amount of verticle offset to apply to the image.
-  init(text: String, type: ComponentType, renderedImage: _Image? = nil, imageOffset: CGFloat? = nil) {
+  ///   - svgData: The rendered SVG image data (only applies to equations).
+  ///   - svgGeometry: The SVG's geometry information.
+  init(text: String, type: ComponentType, svgData: Data? = nil, svgGeometry: SVGGeometry? = nil) {
     if type.isEquation {
       var text = text
       if text.hasPrefix(type.leftTerminator) {
@@ -129,8 +129,8 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     }
     
     self.type = type
-    self.renderedImage = renderedImage
-    self.imageOffset = imageOffset
+    self.svgData = svgData
+    self.svgGeometry = svgGeometry
   }
   
   /// The component's description.

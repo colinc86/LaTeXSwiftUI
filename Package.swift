@@ -23,7 +23,7 @@ let package = Package(
       name: "LaTeXSwiftUI",
       dependencies: [
         "MathJaxSwift",
-        "PocketSVG"
+        "SVGView"
       ]),
     .testTarget(
       name: "LaTeXSwiftUITests",

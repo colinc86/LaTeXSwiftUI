@@ -48,6 +48,29 @@ internal class Renderer {
 
 extension Renderer {
   
+  /// Renders the view's component blocks.
+  ///
+  /// - Parameter colorScheme: The color scheme to render.
+  func render(blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, color: Color?, colorScheme: ColorScheme = .light) -> [ComponentBlock] {
+    var newBlocks = [ComponentBlock]()
+    for block in blocks {
+      do {
+        let newComponents = try Renderer.shared.render(
+          block.components,
+          xHeight: xHeight,
+          displayScale: displayScale,
+          textColor: color ?? textColor(for: colorScheme))
+        
+        newBlocks.append(ComponentBlock(components: newComponents))
+      }
+      catch {
+        continue
+      }
+    }
+    
+    return newBlocks
+  }
+  
   /// Renders the components and stores the new images in a new set of components.
   ///
   /// - Parameters:
@@ -61,7 +84,7 @@ extension Renderer {
     xHeight: CGFloat,
     displayScale: CGFloat,
     textColor: Color
-  ) async throws -> [Component] {
+  ) throws -> [Component] {
     // Get the text color components
     guard let colorComponent = colorComponent(from: textColor) else {
       return components
@@ -78,14 +101,13 @@ extension Renderer {
       
       // Colorize the component and get the SVG output
       let conversionOptions = ConversionOptions(display: !component.type.inline)
-      guard let svgString = try await mathjax?.tex2svg("\(colorComponent)\(component.text)", styles: false, conversionOptions: conversionOptions) else {
+      guard let svgString = try mathjax?.tex2svg("\(colorComponent)\(component.text)", styles: false, conversionOptions: conversionOptions) else {
         renderedComponents.append(component)
         continue
       }
       
-      // Get the SVG's geometry and offset
+      // Get the SVG's geometry
       let geometry = try SVGGeometry(svg: svgString)
-      let offset = geometry.verticalAlignment.toPoints(xHeight)
       
       // Get the SVG data
       guard let svgData = svgString.data(using: .utf8) else {
@@ -93,23 +115,47 @@ extension Renderer {
         continue
       }
       
-      // Convert the SVG to an image and save it
-      let image = await createImage(
-        from: svgData,
-        geometry: geometry,
-        xHeight: xHeight,
-        displayScale: displayScale)
-      
       // Save the rendered component
       renderedComponents.append(Component(
         text: component.text,
         type: component.type,
-        renderedImage: image,
-        imageOffset: offset))
+        svgData: svgData,
+        svgGeometry: geometry))
     }
     
     // All done
     return renderedComponents
+  }
+  
+  /// Creates an image from an SVG.
+  ///
+  /// - Parameters:
+  ///   - svgData: The SVG data.
+  ///   - geometry: The SVG's geometry.
+  ///   - xHeight: The height of the `x` character to render.
+  ///   - displayScale: The current display scale.
+  /// - Returns: An image.
+  @MainActor func convertToImage(
+    svgData: Data,
+    geometry: SVGGeometry,
+    xHeight: CGFloat,
+    displayScale: CGFloat
+  ) -> _Image? {
+    // Get the image's width and height
+    let width = geometry.width.toPoints(xHeight)
+    let height = geometry.height.toPoints(xHeight)
+    
+    // Render the view
+    let view = SVGView(data: svgData)
+    let renderer = ImageRenderer(content: view.frame(width: width, height: height))
+    renderer.scale = displayScale
+    
+    // Return the rendered image
+#if os(iOS)
+    return renderer.uiImage
+#else
+    return renderer.nsImage
+#endif
   }
   
 }
@@ -140,34 +186,17 @@ extension Renderer {
     return nil
   }
   
-  /// Creates an image from an SVG.
+  /// Gets the text color to use.
   ///
-  /// - Parameters:
-  ///   - svgData: The SVG data.
-  ///   - geometry: The SVG's geometry.
-  ///   - xHeight: The height of the `x` character to render.
-  ///   - displayScale: The current display scale.
-  /// - Returns: An image.
-  @MainActor private func createImage(
-    from svgData: Data,
-    geometry: SVGGeometry,
-    xHeight: CGFloat,
-    displayScale: CGFloat
-  ) -> _Image? {
-    // Get the image's width and height
-    let width = geometry.width.toPoints(xHeight)
-    let height = geometry.height.toPoints(xHeight)
-    
-    // Render the view
-    let view = SVGView(data: svgData)
-    let renderer = ImageRenderer(content: view.frame(width: width, height: height))
-    renderer.scale = displayScale
-    
-    // Return the rendered image
+  /// - Parameter colorScheme: The current color scheme.
+  /// - Returns: A color.
+  private func textColor(for colorScheme: ColorScheme) -> Color {
 #if os(iOS)
-    return renderer.uiImage
+    return colorScheme == .dark ?
+      Color(uiColor: .lightText) :
+      Color(uiColor: .darkText)
 #else
-    return renderer.nsImage
+    return Color(nsColor: .textColor)
 #endif
   }
   

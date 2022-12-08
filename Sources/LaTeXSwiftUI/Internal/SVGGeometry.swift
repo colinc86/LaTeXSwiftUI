@@ -8,8 +8,19 @@
 import Foundation
 import SwiftUI
 
+extension CGRect: Hashable {
+  
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine("x\(origin.x)")
+    hasher.combine("y\(origin.y)")
+    hasher.combine("w\(size.width)")
+    hasher.combine("h\(size.height)")
+  }
+  
+}
+
 /// The geometry of a SVG.
-internal struct SVGGeometry {
+internal struct SVGGeometry: Equatable, Hashable {
   
   // MARK: Types
   
