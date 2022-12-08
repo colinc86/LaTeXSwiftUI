@@ -76,16 +76,12 @@ public struct LaTeX: View {
 
   public var body: some View {
     VStack(spacing: 0) {
-      ForEach(Array(blocks.enumerated()), id: \.offset) { i, block in
-        let blockText = text(for: block)
+      ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock {
-          blockText.multilineTextAlignment(.center)
-        }
-        else if i < blocks.count - 1 {
-          blockText + Text("\n")
+          text(for: block).multilineTextAlignment(.center)
         }
         else {
-          blockText
+          text(for: block)
         }
       }
     }
