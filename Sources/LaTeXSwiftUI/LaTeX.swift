@@ -25,10 +25,8 @@ public struct LaTeX: View {
   
   // MARK: Private properties
 
-  /// The display scale.
   @Environment(\.displayScale) private var displayScale
-  
-  /// The view's font.
+  @Environment(\.lineSpacing) private var lineSpacing
   @Environment(\.font) private var font
   
   /// The blocks to render.
@@ -75,15 +73,10 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    VStack(spacing: 0) {
+    VStack(spacing: lineSpacing) {
       ForEach(blocks) { block in
-        let text = text(for: block)
-        if block.isEquationBlock {
-          text.multilineTextAlignment(.center)
-        }
-        else {
-          text
-        }
+        text(for: block)
+          .multilineTextAlignment(block.isEquationBlock ? .center : .leading)
       }
     }
   }
@@ -98,9 +91,7 @@ extension LaTeX {
   /// - Parameter block: The block.
   /// - Returns: The text view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
-    var text = Text("")
-    for i in 0 ..< block.components.count {
-      let component = block.components[i]
+    return block.components.enumerated().map { i, component in
       if let svgData = component.svgData,
          let svgGeometry = component.svgGeometry,
          let image = Renderer.shared.convertToImage(
@@ -110,20 +101,19 @@ extension LaTeX {
           displayScale: displayScale,
           renderingMode: renderingMode) {
         let offset = svgGeometry.verticalAlignment.toPoints(xHeight)
-        text = text + Text(image).baselineOffset(offset)
+        return Text(image).baselineOffset(offset)
       }
       else if i < block.components.count - 1 {
-        text = text + Text(component.text)
+        return Text(component.text)
       }
       else {
         var componentText = component.text
         while componentText.hasSuffix("\n") {
           componentText.removeLast(1)
         }
-        text = text + Text(componentText)
+        return Text(componentText)
       }
-    }
-    return text
+    }.reduce(Text(""), +)
   }
 
 }
@@ -164,16 +154,16 @@ struct LaTeX_Previews: PreviewProvider {
     }
     .fontDesign(.serif)
     .previewDisplayName("Basic Usage")
-    .previewLayout(.sizeThatFits)
     
     LaTeX("Lorem ipsum $\\LaTeX$ sit amet, consectetur $\\LaTeX$ elit, sed do $\\frac{2}{3}$ tempor incididunt ut $\\LaTeX$ et dolore magna $\\LaTeX$. Ut enim ad $\\LaTeX$ veniam, quis nostrud $\\LaTeX$ ullamco laboris nisi $\\LaTeX$ aliquip ex ea consequat. Duis aute dolor in reprehenderit voluptate velit esse dolore eu fugiat pariatur. Excepteur sint $\\LaTeX$ cupidatat non proident, $\\int_a^b \\! x^2 \\mathrm{d}x$ in culpa qui $\\LaTeX$ deserunt mollit anim $\\LaTeX$ est laborum.")
       .previewDisplayName("Word Wrapping")
     
-//    LaTeX("""
-//Euler's Identity is a cool identity that has all of the most interesting constants in math in the same equation!
-//\\begin{equation}
-//  e^{i\\pi}-1=0
-//\\end{equation}
-//""")
+    LaTeX("""
+Euler's Identity is a cool identity that has all of the most interesting constants in math in the same equation!
+\\begin{equation}
+  e^{i\\pi}-1=0
+\\end{equation}
+""")
+    .previewDisplayName("Block Equations")
   }
 }
