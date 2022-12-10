@@ -1,3 +1,4 @@
+import MathJaxSwift
 import XCTest
 @testable import LaTeXSwiftUI
 

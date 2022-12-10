@@ -17,7 +17,8 @@ let package = Package(
   dependencies: [
      .package(url: "https://github.com/colinc86/MathJaxSwift", branch: "main"),
      .package(url: "https://github.com/exyte/SVGView", from: "1.0.4"),
-     .package(url: "https://github.com/apple/swift-log", from: "1.4.4")
+     .package(url: "https://github.com/apple/swift-log", from: "1.4.4"),
+     .package(url: "https://github.com/Kitura/swift-html-entities", from: "4.0.1")
   ],
   targets: [
     .target(
@@ -25,7 +26,8 @@ let package = Package(
       dependencies: [
         "MathJaxSwift",
         "SVGView",
-        .product(name: "Logging", package: "swift-log")
+        .product(name: "Logging", package: "swift-log"),
+        .product(name: "HTMLEntities", package: "swift-html-entities")
       ]),
     .testTarget(
       name: "LaTeXSwiftUITests",

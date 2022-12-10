@@ -108,6 +108,11 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   /// The component image's offset.
   let svgGeometry: SVGGeometry?
   
+  /// The original input text that created this component.
+  var originalText: String {
+    "\(type.leftTerminator)\(text)\(type.rightTerminator)"
+  }
+  
   // MARK: Initializers
   
   /// Initializes a component.

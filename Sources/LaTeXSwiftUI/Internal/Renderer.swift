@@ -55,13 +55,13 @@ extension Renderer {
   ///   - blocks: The component blocks.
   ///   - xHeight: The font's ex value.
   ///   - displayScale: The display scale to render at.
-  ///   - options: The MathJax Tex input processor options.
+  ///   - texOptions: The MathJax Tex input processor options.
   /// - Returns: An array of rendered blocks.
   func render(
     blocks: [ComponentBlock],
     xHeight: CGFloat,
     displayScale: CGFloat,
-    options: TexInputProcessorOptions
+    texOptions: TexInputProcessorOptions
   ) -> [ComponentBlock] {
     var newBlocks = [ComponentBlock]()
     for block in blocks {
@@ -70,7 +70,7 @@ extension Renderer {
           block.components,
           xHeight: xHeight,
           displayScale: displayScale,
-          options: options)
+          texOptions: texOptions)
         
         newBlocks.append(ComponentBlock(components: newComponents))
       }
@@ -138,14 +138,18 @@ extension Renderer {
   ///   - components: The components to render.
   ///   - xHeight: The xHeight of the font to use.
   ///   - displayScale: The current display scale.
-  ///   - options: The MathJax TeX input processor options.
+  ///   - texOptions: The MathJax TeX input processor options.
   /// - Returns: An array of components.
   private func render(
     _ components: [Component],
     xHeight: CGFloat,
     displayScale: CGFloat,
-    options: TexInputProcessorOptions
+    texOptions: TexInputProcessorOptions
   ) throws -> [Component] {
+    guard let mathjax = mathjax else {
+      return components
+    }
+    
     // Iterate through the input components and render
     var renderedComponents = [Component]()
     for component in components {
@@ -159,14 +163,25 @@ extension Renderer {
       let conversionOptions = ConversionOptions(display: !component.type.inline)
       
       // Perform the conversion
-      guard let svgString = try mathjax?.tex2svg(
-        component.text,
-        styles: false,
-        conversionOptions: conversionOptions,
-        inputOptions: options
-      ) else {
-        renderedComponents.append(component)
-        continue
+      let svgString: String
+      do {
+        svgString = try mathjax.tex2svg(
+          component.text,
+          styles: false,
+          conversionOptions: conversionOptions,
+          inputOptions: texOptions)
+      }
+      catch let error as MJError {
+        if case .conversionError = error {
+          renderedComponents.append(component)
+          continue
+        }
+        else {
+          throw error
+        }
+      }
+      catch {
+        throw error
       }
       
       // Get the SVG's geometry
