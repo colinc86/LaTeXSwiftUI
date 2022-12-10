@@ -163,18 +163,51 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
 
 extension Component {
   
+  @available(iOS 16.1, *)
+  /// Converts the component to a `Text` view.
+  ///
+  /// - Parameters:
+  ///   - font: The font to use.
+  ///   - displayScale: The view's display scale.
+  ///   - renderingMode: The image rendering mode.
+  ///   - errorMode: The error handling mode.
+  ///   - isLastComponentInBlock: Whether or not this is the last component in
+  ///     the block that contains it.
+  /// - Returns: A text view.
   @MainActor func convertToText(
-    xHeight: CGFloat,
+    font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
+    errorMode: LaTeX.ErrorMode,
     isLastComponentInBlock: Bool
   ) -> Text {
+    if let svg = svg, let errorText = svg.errorText {
+      switch errorMode {
+      case .rendered:
+        // Use the rendered image (if available)
+        break
+      case .original:
+        // Use the original tex input
+        if isLastComponentInBlock {
+          return Text(originalTextTrimmingNewlineSuffix)
+        }
+        else {
+          return Text(originalText)
+        }
+      case .error:
+        // Use the error text
+        return Text(errorText)
+      }
+    }
+    
     if let svg = svg,
        let image = Renderer.shared.convertToImage(
         svg: svg,
-        xHeight: xHeight,
+        font: font,
         displayScale: displayScale,
         renderingMode: renderingMode) {
+      // We have an SVG image
+      let xHeight = _Font.preferredFont(from: font).xHeight
       let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
       return Text(image).baselineOffset(offset)
     }

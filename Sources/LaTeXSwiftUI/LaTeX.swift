@@ -24,25 +24,48 @@ public struct LaTeX: View {
     case onlyEquations
   }
   
+  /// The view's error mode.
   public enum ErrorMode {
+    
+    /// The rendered image should be displayed (if available).
     case rendered
+    
+    /// The original LaTeX input should be displayed.
     case original
+    
+    /// The error text should be displayed.
     case error
   }
   
   // MARK: Public properties
   
+  /// The view's LaTeX input string.
   let latex: String
   
   // MARK: Private properties
-
+  
+  /// The rendering mode to use with the rendered MathJax images.
   @Environment(\.imageRenderingMode) private var imageRenderingMode
+  
+  /// What to do in the case of an error.
   @Environment(\.errorMode) private var errorMode
+  
+  /// Whether or not we should unencode the input.
   @Environment(\.unencodeHTML) private var unencodeHTML
+  
+  /// Should the view parse the entire input string or only equations?
   @Environment(\.parsingMode) private var parsingMode
+  
+  /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
+  
+  /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
+  
+  /// The current line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
+  
+  /// The view's font.
   @Environment(\.font) private var font
   
   /// The blocks to render.
@@ -50,18 +73,16 @@ public struct LaTeX: View {
     Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex,
         mode: parsingMode),
-      xHeight: xHeight,
+      font: font ?? .body,
       displayScale: displayScale,
       texOptions: texOptions)
   }
   
-  /// The current font's x-height.
-  private var xHeight: CGFloat {
-    _Font.preferredFont(from: font ?? .body).xHeight
-  }
-  
   // MARK: Initializers
   
+  /// Initializes a view with a LaTeX input string.
+  ///
+  /// - Parameter latex: The LaTeX input.
   init(_ latex: String) {
     self.latex = latex
   }
@@ -89,9 +110,10 @@ extension LaTeX {
   @MainActor private func text(for block: ComponentBlock) -> Text {
     return block.components.enumerated().map { i, component in
       return component.convertToText(
-        xHeight: xHeight,
+        font: font ?? .body,
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
+        errorMode: errorMode,
         isLastComponentInBlock: i == block.components.count - 1)
     }.reduce(Text(""), +)
   }

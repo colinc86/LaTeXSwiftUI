@@ -53,16 +53,17 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - blocks: The component blocks.
-  ///   - xHeight: The font's ex value.
+  ///   - font: The view's font.
   ///   - displayScale: The display scale to render at.
   ///   - texOptions: The MathJax Tex input processor options.
   /// - Returns: An array of rendered blocks.
   func render(
     blocks: [ComponentBlock],
-    xHeight: CGFloat,
+    font: Font,
     displayScale: CGFloat,
     texOptions: TexInputProcessorOptions
   ) -> [ComponentBlock] {
+    let xHeight = _Font.preferredFont(from: font).xHeight
     var newBlocks = [ComponentBlock]()
     for block in blocks {
       do {
@@ -88,17 +89,18 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - svg: The SVG.
-  ///   - xHeight: The height of the `x` character to render.
+  ///   - font: The view's font.
   ///   - displayScale: The current display scale.
   ///   - renderingMode: The image's rendering mode.
   /// - Returns: An image.
   @MainActor func convertToImage(
     svg: SVG,
-    xHeight: CGFloat,
+    font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode
   ) -> Image? {
     // Get the image's width, height, and offset
+    let xHeight = _Font.preferredFont(from: font).xHeight
     let width = svg.geometry.width.toPoints(xHeight)
     let height = svg.geometry.height.toPoints(xHeight)
     
@@ -144,6 +146,7 @@ extension Renderer {
     displayScale: CGFloat,
     texOptions: TexInputProcessorOptions
   ) throws -> [Component] {
+    // Make sure we have a MathJax instance!
     guard let mathjax = mathjax else {
       return components
     }
@@ -173,40 +176,8 @@ extension Renderer {
         throw error
       }
       
-//      // Get the SVG data
-//      guard let svgData = svgString.data(using: .utf8) else {
-//        renderedComponents.append(component)
-//        continue
-//      }
-      
       // Create the SVG
       let svg = try SVG(svgString: svgString, errorText: errorText)
-      
-//      let svgString: String
-//      do {
-//        svgString = try mathjax.tex2svg(
-//          component.text,
-//          styles: false,
-//          conversionOptions: conversionOptions,
-//          inputOptions: texOptions)
-//      }
-//      catch let error as MJError {
-//        if case .conversionError = error {
-//          renderedComponents.append(component)
-//          continue
-//        }
-//        else {
-//          throw error
-//        }
-//      }
-//      catch {
-//        throw error
-//      }
-//      
-//      // Get the SVG's geometry
-//      let geometry = try SVGGeometry(svg: svgString)
-//      
-//      
       
       // Save the rendered component
       renderedComponents.append(Component(
