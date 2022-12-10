@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// A block of components.
 internal struct ComponentBlock: Hashable, Identifiable {
@@ -103,14 +104,27 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   let type: ComponentType
   
   /// The component's SVG image.
-  let svgData: Data?
-  
-  /// The component image's offset.
-  let svgGeometry: SVGGeometry?
+  let svg: SVG?
   
   /// The original input text that created this component.
   var originalText: String {
     "\(type.leftTerminator)\(text)\(type.rightTerminator)"
+  }
+  
+  /// The component's text but with all trailing newlines trimmed.
+  var originalTextTrimmingNewlineSuffix: String {
+    let newlineRegex = #"\\n+"#
+    let text = originalText
+    let ranges = text.ranges(of: newlineRegex)
+    guard let last = ranges.last, last.upperBound == text.endIndex else {
+      return originalText
+    }
+    return String(text[..<last.lowerBound])
+  }
+  
+  /// The component's description.
+  var description: String {
+    return "(\(type), \"\(text)\")"
   }
   
   // MARK: Initializers
@@ -123,9 +137,8 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   /// - Parameters:
   ///   - text: The component's text.
   ///   - type: The component's type.
-  ///   - svgData: The rendered SVG image data (only applies to equations).
-  ///   - svgGeometry: The SVG's geometry information.
-  init(text: String, type: ComponentType, svgData: Data? = nil, svgGeometry: SVGGeometry? = nil) {
+  ///   - svg: The rendered SVG (only applies to equations).
+  init(text: String, type: ComponentType, svg: SVG? = nil) {
     if type.isEquation {
       var text = text
       if text.hasPrefix(type.leftTerminator) {
@@ -141,13 +154,36 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     }
     
     self.type = type
-    self.svgData = svgData
-    self.svgGeometry = svgGeometry
+    self.svg = svg
   }
   
-  /// The component's description.
-  var description: String {
-    return "(\(type), \"\(text)\")"
+}
+
+// MARK: Methods
+
+extension Component {
+  
+  @MainActor func convertToText(
+    xHeight: CGFloat,
+    displayScale: CGFloat,
+    renderingMode: Image.TemplateRenderingMode,
+    isLastComponentInBlock: Bool
+  ) -> Text {
+    if let svg = svg,
+       let image = Renderer.shared.convertToImage(
+        svg: svg,
+        xHeight: xHeight,
+        displayScale: displayScale,
+        renderingMode: renderingMode) {
+      let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
+      return Text(image).baselineOffset(offset)
+    }
+    else if isLastComponentInBlock {
+      return Text(originalTextTrimmingNewlineSuffix)
+    }
+    else {
+      return Text(originalText)
+    }
   }
   
 }

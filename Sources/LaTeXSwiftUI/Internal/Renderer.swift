@@ -87,25 +87,23 @@ extension Renderer {
   /// Creates an image from an SVG.
   ///
   /// - Parameters:
-  ///   - svgData: The SVG data.
-  ///   - geometry: The SVG's geometry.
+  ///   - svg: The SVG.
   ///   - xHeight: The height of the `x` character to render.
   ///   - displayScale: The current display scale.
   ///   - renderingMode: The image's rendering mode.
   /// - Returns: An image.
   @MainActor func convertToImage(
-    svgData: Data,
-    geometry: SVGGeometry,
+    svg: SVG,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode
   ) -> Image? {
     // Get the image's width, height, and offset
-    let width = geometry.width.toPoints(xHeight)
-    let height = geometry.height.toPoints(xHeight)
+    let width = svg.geometry.width.toPoints(xHeight)
+    let height = svg.geometry.height.toPoints(xHeight)
     
     // Render the view
-    let view = SVGView(data: svgData)
+    let view = SVGView(data: svg.data)
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
     
     // Create the image
@@ -163,42 +161,58 @@ extension Renderer {
       let conversionOptions = ConversionOptions(display: !component.type.inline)
       
       // Perform the conversion
-      let svgString: String
-      do {
-        svgString = try mathjax.tex2svg(
-          component.text,
-          styles: false,
-          conversionOptions: conversionOptions,
-          inputOptions: texOptions)
+      var conversionError: Error?
+      let svgString = mathjax.tex2svg(component.text, styles: false, conversionOptions: conversionOptions, inputOptions: texOptions, error: &conversionError)
+      
+      // Check for a conversion error
+      var errorText: String?
+      if let mjError = conversionError as? MathJaxError, case .conversionError(let innerError) = mjError {
+        errorText = innerError
       }
-      catch let error as MJError {
-        if case .conversionError = error {
-          renderedComponents.append(component)
-          continue
-        }
-        else {
-          throw error
-        }
-      }
-      catch {
+      else if let error = conversionError {
         throw error
       }
       
-      // Get the SVG's geometry
-      let geometry = try SVGGeometry(svg: svgString)
+//      // Get the SVG data
+//      guard let svgData = svgString.data(using: .utf8) else {
+//        renderedComponents.append(component)
+//        continue
+//      }
       
-      // Get the SVG data
-      guard let svgData = svgString.data(using: .utf8) else {
-        renderedComponents.append(component)
-        continue
-      }
+      // Create the SVG
+      let svg = try SVG(svgString: svgString, errorText: errorText)
+      
+//      let svgString: String
+//      do {
+//        svgString = try mathjax.tex2svg(
+//          component.text,
+//          styles: false,
+//          conversionOptions: conversionOptions,
+//          inputOptions: texOptions)
+//      }
+//      catch let error as MJError {
+//        if case .conversionError = error {
+//          renderedComponents.append(component)
+//          continue
+//        }
+//        else {
+//          throw error
+//        }
+//      }
+//      catch {
+//        throw error
+//      }
+//      
+//      // Get the SVG's geometry
+//      let geometry = try SVGGeometry(svg: svgString)
+//      
+//      
       
       // Save the rendered component
       renderedComponents.append(Component(
         text: component.text,
         type: component.type,
-        svgData: svgData,
-        svgGeometry: geometry))
+        svg: svg))
     }
     
     // All done
