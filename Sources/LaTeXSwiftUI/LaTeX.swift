@@ -83,7 +83,7 @@ public struct LaTeX: View {
   /// Initializes a view with a LaTeX input string.
   ///
   /// - Parameter latex: The LaTeX input.
-  init(_ latex: String) {
+  public init(_ latex: String) {
     self.latex = latex
   }
 
@@ -103,7 +103,7 @@ public struct LaTeX: View {
 @available(iOS 16.1, *)
 extension LaTeX {
   
-  /// Creats the text view for the given block.
+  /// Creates the text view for the given block.
   ///
   /// - Parameter block: The block.
   /// - Returns: The text view.

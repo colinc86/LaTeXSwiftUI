@@ -25,7 +25,7 @@ internal struct Parser {
   
   /// An inline equation component.
   private static let inline = EquationComponent(
-    regex: #/\$(.|\s)*?\$/#, //\$\$(.|\s)*?\$\$
+    regex: #/\$(.|\s)*?\$/#,
     terminatingRegex: #/\$/#,
     equation: .inlineEquation,
     supportsRecursion: false)
