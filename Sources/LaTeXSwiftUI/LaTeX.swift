@@ -80,6 +80,9 @@ public struct LaTeX: View {
   /// The view's font.
   @Environment(\.font) private var font
   
+  /// The text's line spacing.
+  @Environment(\.lineSpacing) private var lineSpacing
+  
   /// The blocks to render.
   private var blocks: [ComponentBlock] {
     Renderer.shared.render(
@@ -102,23 +105,51 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    text()
+    switch blockRenderingMode {
+    case .alwaysInline:
+      asText(forceInline: true)
+    case .blockText:
+      asText(forceInline: false)
+    case .blockViews:
+      asStack()
+    }
   }
 
 }
 
 extension LaTeX {
   
-  /// The view's text.
-  @MainActor private func text() -> Text {
-    let blocks = blocks
-    return blocks.enumerated().map { i, block in
-      text(for: block)
+  /// The view's input rendered as a text view.
+  ///
+  /// - Parameter forceInline: Whether or not block equations should be forced
+  ///   as inline.
+  /// - Returns: A text view.
+  @MainActor private func asText(forceInline: Bool) -> Text {
+    blocks.map { block in
+      let text = text(for: block)
+      return block.isEquationBlock && !forceInline ?
+        Text("\n") + text + Text("\n") :
+        text
     }.reduce(Text(""), +)
   }
   
-  @MainActor private func stack() -> some View {
-    EmptyView()
+  /// The view's input rendered as a vertical stack of views.
+  ///
+  /// - Returns: A stack view.
+  @MainActor private func asStack() -> some View {
+    VStack(alignment: .leading, spacing: lineSpacing) {
+      ForEach(blocks, id: \.self) { block in
+        if block.isEquationBlock,
+           let (image, size) = image(for: block) {
+          HorizontalImageScroller(
+            image: image,
+            height: size.height)
+        }
+        else {
+          text(for: block)
+        }
+      }
+    }
   }
   
   /// Creates the text view for the given block.
@@ -131,18 +162,34 @@ extension LaTeX {
         font: font ?? .body,
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
-        errorMode: errorMode)
+        errorMode: errorMode,
+        blockRenderingMode: blockRenderingMode,
+        isInEquationBlock: block.isEquationBlock)
     }.reduce(Text(""), +)
+  }
+  
+  /// Creates the image view and its size for the given block.
+  ///
+  /// If the block isn't an equation block, then this method returns `nil`.
+  ///
+  /// - Parameter block: The block.
+  /// - Returns: The image and its size.
+  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize)? {
+    guard block.isEquationBlock,
+          let component = block.components.first else {
+      return nil
+    }
+    return component.convertToImage(
+      font: font ?? .body,
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode)
   }
 
 }
 
+@available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
-    LaTeX("It is proved that if $u_1,\\ldots, u_n$ are vectors in ${\\Bbb R}^k, k\\le n, 1 \\le p < \\infty$ and $$r = ({1\\over k} \\sum ^n_1 |u_i|^p)^{1\\over p}$$ then the volume of the symmetric convex body whose boundary functionals are $\\pm u_1,\\ldots, \\pm u_n$, is bounded from below as $$|\\{ x\\in {\\Bbb R}^k\\colon \\ |\\langle x,u_i \\rangle | \\le 1 \\ \\hbox{for every} \\ i\\}|^{1\\over k} \\ge {1\\over \\sqrt{\\rho}r}.$$ An application to number theory is stated.")
-    .background(Color.green)
-//    .latexMode(.inline)
-    
     VStack {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title)
@@ -153,13 +200,7 @@ struct LaTeX_Previews: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
     }
+    .fontDesign(.serif)
   }
   
-  static func sanitize(_ text: String) -> String {
-    text
-//      .trimmingCharacters(in: .whitespacesAndNewlines)
-      .replacingOccurrences(of: "\n", with: " ")
-//      .replacingOccurrences(of: "   ", with: "")
-//      .replacingOccurrences(of: "  ", with: " ")
-  }
 }

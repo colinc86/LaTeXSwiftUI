@@ -29,7 +29,7 @@ private struct BlockRenderingModeKey: EnvironmentKey {
 }
 
 private struct TeXInputProcessorOptionsKey: EnvironmentKey {
-  static let defaultValue: TexInputProcessorOptions = TexInputProcessorOptions()
+  static let defaultValue: TexInputProcessorOptions = TexInputProcessorOptions(loadPackages: TexInputProcessorOptions.Packages.all)
 }
 
 extension EnvironmentValues {

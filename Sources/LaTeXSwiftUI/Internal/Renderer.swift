@@ -92,13 +92,13 @@ extension Renderer {
   ///   - font: The view's font.
   ///   - displayScale: The current display scale.
   ///   - renderingMode: The image's rendering mode.
-  /// - Returns: An image.
+  /// - Returns: An image and its size.
   @MainActor func convertToImage(
     svg: SVG,
     font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode
-  ) -> Image? {
+  ) -> (Image, CGSize)? {
     // Get the image's width, height, and offset
     let xHeight = _Font.preferredFont(from: font).xHeight
     let width = svg.geometry.width.toPoints(xHeight)
@@ -110,19 +110,28 @@ extension Renderer {
     
     // Create the image
     var image: Image?
+    var size: CGSize?
 #if os(iOS)
     renderer.scale = UIScreen.main.scale
     if let uiImage = renderer.uiImage {
       image = Image(uiImage: uiImage)
+      size = uiImage.size
     }
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
     if let nsImage = renderer.nsImage {
       image = Image(nsImage: nsImage)
+      size = nsImage.size
     }
 #endif
     
-    return image?.renderingMode(renderingMode).antialiased(true).interpolation(.high).resizable()
+    if let image = image, let size = size {
+      return (image
+        .renderingMode(renderingMode)
+        .antialiased(true)
+        .interpolation(.high), size)
+    }
+    return nil
   }
   
 }

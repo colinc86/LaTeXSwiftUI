@@ -112,14 +112,15 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   }
   
   /// The component's text but with all trailing newlines trimmed.
-  var originalTextTrimmingWhitespaceSuffix: String {
-    let whitespaceRegex = #"\\s+"#
-    let text = originalText
-    let ranges = text.ranges(of: whitespaceRegex)
-    guard let last = ranges.last, last.upperBound == text.endIndex else {
-      return originalText
-    }
-    return String(text[..<last.lowerBound])
+  var originalTextTrimmingNewlines: String {
+//    let whitespaceRegex = #"\\s+"#
+//    let text = originalText
+//    let ranges = text.ranges(of: whitespaceRegex)
+//    guard let last = ranges.last, last.upperBound == text.endIndex else {
+//      return originalText
+//    }
+//    return String(text[..<last.lowerBound])
+    originalText.trimmingCharacters(in: .newlines)
   }
   
   /// The component's description.
@@ -177,44 +178,61 @@ extension Component {
     font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
-    errorMode: LaTeX.ErrorMode
+    errorMode: LaTeX.ErrorMode,
+    blockRenderingMode: LaTeX.BlockRenderingMode,
+    isInEquationBlock: Bool
   ) -> Text {
-    if let svg = svg, let errorText = svg.errorText {
-      switch errorMode {
-      case .rendered:
-        // Use the rendered image (if available)
-        break
-      case .original:
-        // Use the original tex input
-        if true {
-          return Text(originalTextTrimmingWhitespaceSuffix)
+    // Get the component's text
+    let text: Text
+    if let svg = svg {
+      // Do we have an error?
+      if let errorText = svg.errorText, errorMode != .rendered {
+        switch errorMode {
+        case .original:
+          // Use the original tex input
+          text = Text(blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText)
+        case .error:
+          // Use the error text
+          text = Text(errorText)
+        default:
+          text = Text("")
         }
-        else {
-          return Text(originalText)
-        }
-      case .error:
-        // Use the error text
-        return Text(errorText)
       }
-    }
-    
-    if let svg = svg,
-       let image = Renderer.shared.convertToImage(
-        svg: svg,
+      else if let (image, _) = convertToImage(
         font: font,
         displayScale: displayScale,
         renderingMode: renderingMode) {
-      // We have an SVG image
-      let xHeight = _Font.preferredFont(from: font).xHeight
-      let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-      return Text(image).baselineOffset(offset)
+        let xHeight = _Font.preferredFont(from: font).xHeight
+        let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
+        text = Text(image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
+      }
+      else {
+        text = Text("")
+      }
     }
-    else if true {
-      return Text(originalTextTrimmingWhitespaceSuffix)
+    else if blockRenderingMode == .alwaysInline {
+      text = Text(originalTextTrimmingNewlines)
     }
     else {
-      return Text(originalText)
+      text = Text(originalText)
     }
+    
+    return text
+  }
+  
+  @MainActor func convertToImage(
+    font: Font,
+    displayScale: CGFloat,
+    renderingMode: Image.TemplateRenderingMode
+  ) -> (Image, CGSize)? {
+    guard let svg = svg else {
+      return nil
+    }
+    return Renderer.shared.convertToImage(
+      svg: svg,
+      font: font,
+      displayScale: displayScale,
+      renderingMode: renderingMode)
   }
   
 }
