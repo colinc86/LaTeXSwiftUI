@@ -165,7 +165,12 @@ extension Renderer {
       
       // Perform the conversion
       var conversionError: Error?
-      let svgString = mathjax.tex2svg(component.text, styles: false, conversionOptions: conversionOptions, inputOptions: texOptions, error: &conversionError)
+      let svgString = mathjax.tex2svg(
+        component.text,
+        styles: false,
+        conversionOptions: conversionOptions,
+        inputOptions: texOptions,
+        error: &conversionError)
       
       // Check for a conversion error
       var errorText: String?

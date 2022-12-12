@@ -1,8 +1,10 @@
 # LaTeXSwiftUI
 
-An easy-to-use SwiftUI view that renders LaTeX.
+A SwiftUI view that renders LaTeX.
 
 ![iOS Version](https://img.shields.io/badge/iOS-6.1-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
+
+![Hello, LaTeX!](./assets/images/device.png)
 
 ## Installation
 
@@ -28,6 +30,8 @@ struct MyView: View {
 }
 ```
 
+![Hello, LaTeX!](./assets/images/hello.png)
+
 ### Modifiers
 
 The `LaTeX` view's body is built up of `Text` views so feel free to use any of the supported modifiers.
@@ -37,6 +41,8 @@ LaTeX("Hello, $\\LaTeX$!")
   .fontDesign(.serif)
   .foregroundColor(.blue)
 ```
+
+![Hello, LaTeX!](./assets/images/hello_blue.png)
 
 Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
 
@@ -54,6 +60,8 @@ LaTeX("e^{i\\pi}+1=0")
   .parsingMode(.all)
 ```
 
+![Euler's Identity](./assets/images/euler.png)
+
 #### Image Rendering Mode
 
 You can specify the rendering mode of the rendered equations so that they either take on the style of the surrounding text or display the style rendered by MathJax. The default behavior is to use the `template` rendering mode so that images match surrounding text.
@@ -64,9 +72,11 @@ LaTeX("Hello, $\\color{red}\\LaTeX$!")
   .imageRenderingMode(.template)
 
 // Display the original rendered image
-LaTeX("Hello, $\\color{red}\\LaTeX$!")
+LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
   .imageRenderingMode(.original)
 ```
+
+![Rendering Mode](./assets/images/rendering_mode.png)
 
 #### Error Mode
 
@@ -74,27 +84,34 @@ When an error occurs while parsing the input the view will display the original 
 
 ```swift
 // Display the original text instead of the equation
-LaTeX("The following is an error: $\\asdf$")
+LaTeX("$\\asdf$")
   .errorMode(.original)
 
 // Display the error text instead of the equation
-LaTeX("The following is an error: $\\asdf$")
+LaTeX("$\\asdf$")
   .errorMode(.error)
 
 // Display the rendered image (if available)
-LaTeX("The following is an error: $\\asdf$")
+LaTeX("$\\asdf$")
   .errorMode(.rendered)
 ```
+
+![Errors](./assets/images/errors.png)
 
 #### Unencode HTML
 
 Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
 
 ```swift
+LaTeX("$x^2&lt;1$")
+  .errorMode(.error)
+
 // Replace "lt;" with "<"
-LaTeX("An inequality: $x^2&lt;1$")
+LaTeX("$x^2&lt;1$")
   .unencoded()
 ```
+
+![Unencoded HTML](./assets/images/unencoded.png)
 
 #### TeX Options
 
@@ -106,5 +123,5 @@ LaTeX("""
 \\begin{equation}
   e^{i\\pi}+1=0
 \\end{equation}
-""").texOptions(TeXInputProcessorOptions(tags: .ams))
+""").texOptions(TexInputProcessorOptions(loadPackages: TexInputProcessorOptions.Packages.all))
 ```

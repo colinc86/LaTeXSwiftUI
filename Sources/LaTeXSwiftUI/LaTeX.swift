@@ -65,17 +65,24 @@ public struct LaTeX: View {
   /// The current line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
+  /// The number of lines to display.
+  @Environment(\.lineLimit) private var lineLimit
+  
   /// The view's font.
   @Environment(\.font) private var font
   
   /// The blocks to render.
   private var blocks: [ComponentBlock] {
-    Renderer.shared.render(
+    let blocks = Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex,
         mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
       texOptions: texOptions)
+    if lineLimit != nil, let first = blocks.first {
+      return [first]
+    }
+    return blocks
   }
   
   // MARK: Initializers
@@ -93,7 +100,10 @@ public struct LaTeX: View {
     VStack(spacing: lineSpacing) {
       ForEach(blocks) { block in
         text(for: block)
-          .multilineTextAlignment(block.isEquationBlock ? .center : .leading)
+          .multilineTextAlignment(
+            block.isEquationBlock ?
+            .center :
+            .leading)
       }
     }
   }
@@ -124,45 +134,58 @@ extension LaTeX {
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.largeTitle)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.title)
-        .foregroundColor(.red)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.title2)
-        .foregroundColor(.orange)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.title3)
-        .foregroundColor(.yellow)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .foregroundColor(.green)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.footnote)
-        .foregroundColor(.blue)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.caption)
-        .foregroundColor(.indigo)
-      
-      LaTeX(Constants.Previewing.helloLaTeX)
-        .font(.caption2)
-        .foregroundColor(.purple)
+      Group {
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.largeTitle)
+          .overlay(
+            LinearGradient(
+              colors: [.red, .blue, .green, .yellow],
+              startPoint: .leading,
+              endPoint: .trailing
+            )
+            .mask(
+              LaTeX(Constants.Previewing.helloLaTeX)
+                .font(.largeTitle)
+            )
+          )
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.title)
+          .foregroundColor(.red)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.title2)
+          .foregroundColor(.orange)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.title3)
+          .foregroundColor(.yellow)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .foregroundColor(.green)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.footnote)
+          .foregroundColor(.blue)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.caption)
+          .foregroundColor(.indigo)
+        
+        LaTeX(Constants.Previewing.helloLaTeX)
+          .font(.caption2)
+          .foregroundColor(.purple)
+      }
     }
     .fontDesign(.serif)
     .previewDisplayName("Basic Usage")
-    
+
     ScrollView {
       LaTeX(Constants.Previewing.longLaTeX)
         .unencoded()
     }
     .previewDisplayName("Word Wrapping")
-    
+
     LaTeX(Constants.Previewing.eulerLaTeX)
       .previewDisplayName("Block Equations")
   }
