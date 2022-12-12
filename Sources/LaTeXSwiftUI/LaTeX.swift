@@ -6,7 +6,6 @@
 //
 
 import HTMLEntities
-import MathJaxSwift
 import SwiftUI
 
 public struct LaTeX: View {
@@ -52,7 +51,7 @@ public struct LaTeX: View {
   // MARK: Public properties
   
   /// The view's LaTeX input string.
-  let latex: String
+  public let latex: String
   
   // MARK: Private properties
   

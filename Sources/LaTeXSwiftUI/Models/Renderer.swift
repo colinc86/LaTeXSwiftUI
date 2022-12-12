@@ -164,7 +164,7 @@ extension Renderer {
     let cacheKey = ImageCacheKey(svg: svg, xHeight: xHeight)
     
     // Check the cache for an image
-    if let imageData = cache?[cacheKey.key()], let image = _Image(data: imageData, scale: displayScale) {
+    if let imageData = cache?[cacheKey.key()], let image = _Image(imageData: imageData, scale: displayScale) {
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -180,13 +180,13 @@ extension Renderer {
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
 #if os(iOS)
     renderer.scale = UIScreen.main.scale
+    let image = renderer.image
+    cache?[cacheKey.key()] = image?.pngData()
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
-#endif
     let image = renderer.image
-    
-    // Write the image to the cache
-    cache?[cacheKey.key()] = image?.pngData()
+    cache?[cacheKey.key()] = image?.tiffRepresentation
+#endif
     
     if let image = image {
       return (Image(image: image)

@@ -18,3 +18,15 @@ internal extension Image {
   }
   
 }
+
+internal extension _Image {
+  
+  convenience init?(imageData: Data, scale: CGFloat? = nil) {
+#if os(iOS)
+    self.init(data: imageData, scale: scale ?? 1)
+#else
+    self.init(data: imageData)
+#endif
+  }
+  
+}
