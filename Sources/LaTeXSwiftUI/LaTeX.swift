@@ -62,27 +62,17 @@ public struct LaTeX: View {
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
   
-  /// The current line spacing.
-  @Environment(\.lineSpacing) private var lineSpacing
-  
-  /// The number of lines to display.
-  @Environment(\.lineLimit) private var lineLimit
-  
   /// The view's font.
   @Environment(\.font) private var font
   
   /// The blocks to render.
   private var blocks: [ComponentBlock] {
-    let blocks = Renderer.shared.render(
+    Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex,
         mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
       texOptions: texOptions)
-    if lineLimit != nil, let first = blocks.first {
-      return [first]
-    }
-    return blocks
   }
   
   // MARK: Initializers
@@ -97,15 +87,7 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    VStack(spacing: lineSpacing) {
-      ForEach(blocks) { block in
-        text(for: block)
-          .multilineTextAlignment(
-            block.isEquationBlock ?
-            .center :
-            .leading)
-      }
-    }
+    text()
   }
 
 }
@@ -113,12 +95,25 @@ public struct LaTeX: View {
 @available(iOS 16.1, *)
 extension LaTeX {
   
+  /// The view's text.
+  @MainActor private func text() -> Text {
+    blocks.enumerated().map { i, block in
+      let text = text(for: block)
+      if block.isEquationBlock && i > 0 {
+        return Text("\n") + text
+      }
+      else {
+        return text
+      }
+    }.reduce(Text(""), +)
+  }
+  
   /// Creates the text view for the given block.
   ///
   /// - Parameter block: The block.
   /// - Returns: The text view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
-    return block.components.enumerated().map { i, component in
+    block.components.enumerated().map { i, component in
       return component.convertToText(
         font: font ?? .body,
         displayScale: displayScale,
@@ -133,60 +128,8 @@ extension LaTeX {
 @available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
-    VStack {
-      Group {
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.largeTitle)
-          .overlay(
-            LinearGradient(
-              colors: [.red, .blue, .green, .yellow],
-              startPoint: .leading,
-              endPoint: .trailing
-            )
-            .mask(
-              LaTeX(Constants.Previewing.helloLaTeX)
-                .font(.largeTitle)
-            )
-          )
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.title)
-          .foregroundColor(.red)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.title2)
-          .foregroundColor(.orange)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.title3)
-          .foregroundColor(.yellow)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .foregroundColor(.green)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.footnote)
-          .foregroundColor(.blue)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.caption)
-          .foregroundColor(.indigo)
-        
-        LaTeX(Constants.Previewing.helloLaTeX)
-          .font(.caption2)
-          .foregroundColor(.purple)
-      }
-    }
-    .fontDesign(.serif)
-    .previewDisplayName("Basic Usage")
-
-    ScrollView {
-      LaTeX(Constants.Previewing.longLaTeX)
-        .unencoded()
-    }
-    .previewDisplayName("Word Wrapping")
-
-    LaTeX(Constants.Previewing.eulerLaTeX)
-      .previewDisplayName("Block Equations")
+    LaTeX(Constants.Previewing.helloLaTeX)
+      .font(.largeTitle)
+      .fontDesign(.serif)
   }
 }
