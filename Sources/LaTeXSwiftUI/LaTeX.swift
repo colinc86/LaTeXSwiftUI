@@ -9,16 +9,21 @@ import HTMLEntities
 import MathJaxSwift
 import SwiftUI
 
-@available(iOS 16.1, *)
 public struct LaTeX: View {
   
   // MARK: Types
   
-  public enum LaTeXMode {
+  /// The view's block rendering mode.
+  public enum BlockRenderingMode {
     
-    case inline
+    /// Block equations are ignored and always rendered inline.
+    case alwaysInline
     
-    case blocks
+    /// Blocks are rendered as text with newlines.
+    case blockText
+    
+    /// Blocks are rendered as views.
+    case blockViews
   }
   
   /// The view's rendering mode.
@@ -63,8 +68,8 @@ public struct LaTeX: View {
   /// Should the view parse the entire input string or only equations?
   @Environment(\.parsingMode) private var parsingMode
   
-  /// The view's LaTeX rendering mode.
-  @Environment(\.latexMode) private var latexMode
+  /// The view's block rendering mode.
+  @Environment(\.blockRenderingMode) private var blockRenderingMode
   
   /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
@@ -97,17 +102,11 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    switch latexMode {
-    case .inline:
-      text()
-    case .blocks:
-      stack()
-    }
+    text()
   }
 
 }
 
-@available(iOS 16.1, *)
 extension LaTeX {
   
   /// The view's text.
@@ -132,20 +131,17 @@ extension LaTeX {
         font: font ?? .body,
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
-        errorMode: errorMode,
-        latexMode: latexMode)
+        errorMode: errorMode)
     }.reduce(Text(""), +)
   }
 
 }
 
-@available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     LaTeX("It is proved that if $u_1,\\ldots, u_n$ are vectors in ${\\Bbb R}^k, k\\le n, 1 \\le p < \\infty$ and $$r = ({1\\over k} \\sum ^n_1 |u_i|^p)^{1\\over p}$$ then the volume of the symmetric convex body whose boundary functionals are $\\pm u_1,\\ldots, \\pm u_n$, is bounded from below as $$|\\{ x\\in {\\Bbb R}^k\\colon \\ |\\langle x,u_i \\rangle | \\le 1 \\ \\hbox{for every} \\ i\\}|^{1\\over k} \\ge {1\\over \\sqrt{\\rho}r}.$$ An application to number theory is stated.")
-    .fontDesign(.serif)
     .background(Color.green)
-    .latexMode(.inline)
+//    .latexMode(.inline)
     
     VStack {
       LaTeX("Hello, $\\LaTeX$!")

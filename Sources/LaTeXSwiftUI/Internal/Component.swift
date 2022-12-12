@@ -163,7 +163,6 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
 
 extension Component {
   
-  @available(iOS 16.1, *)
   /// Converts the component to a `Text` view.
   ///
   /// - Parameters:
@@ -178,8 +177,7 @@ extension Component {
     font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
-    errorMode: LaTeX.ErrorMode,
-    latexMode: LaTeX.LaTeXMode
+    errorMode: LaTeX.ErrorMode
   ) -> Text {
     if let svg = svg, let errorText = svg.errorText {
       switch errorMode {
@@ -188,7 +186,7 @@ extension Component {
         break
       case .original:
         // Use the original tex input
-        if latexMode == .blocks {
+        if true {
           return Text(originalTextTrimmingWhitespaceSuffix)
         }
         else {
@@ -209,9 +207,9 @@ extension Component {
       // We have an SVG image
       let xHeight = _Font.preferredFont(from: font).xHeight
       let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-      return Text(image).baselineOffset(latexMode == .inline ? offset : 0)
+      return Text(image).baselineOffset(offset)
     }
-    else if latexMode == .blocks {
+    else if true {
       return Text(originalTextTrimmingWhitespaceSuffix)
     }
     else {

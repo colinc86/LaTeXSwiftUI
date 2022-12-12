@@ -14,7 +14,6 @@ extension View {
     environment(\.imageRenderingMode, mode)
   }
   
-  @available(iOS 16.1, *)
   public func errorMode(_ mode: LaTeX.ErrorMode) -> some View {
     environment(\.errorMode, mode)
   }
@@ -23,14 +22,12 @@ extension View {
     environment(\.unencodeHTML, true)
   }
   
-  @available(iOS 16.1, *)
   public func parsingMode(_ mode: LaTeX.ParsingMode) -> some View {
     environment(\.parsingMode, mode)
   }
   
-  @available(iOS 16.1, *)
-  public func latexMode(_ mode: LaTeX.LaTeXMode) -> some View {
-    environment(\.latexMode, mode)
+  public func blockRenderingMode(_ mode: LaTeX.BlockRenderingMode) -> some View {
+    environment(\.blockRenderingMode, mode)
   }
   
   public func texOptions(_ options: TexInputProcessorOptions) -> some View {

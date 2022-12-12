@@ -12,7 +12,6 @@ private struct ImageRenderingModeKey: EnvironmentKey {
   static let defaultValue: Image.TemplateRenderingMode = .template
 }
 
-@available(iOS 16.1, *)
 private struct ErrorModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.ErrorMode = .original
 }
@@ -21,14 +20,12 @@ private struct UnencodeHTMLKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
-@available(iOS 16.1, *)
 private struct ParsingModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.ParsingMode = .onlyEquations
 }
 
-@available(iOS 16.1, *)
-private struct LaTeXModeKey: EnvironmentKey {
-  static let defaultValue: LaTeX.LaTeXMode = .blocks
+private struct BlockRenderingModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.BlockRenderingMode = .blockViews
 }
 
 private struct TeXInputProcessorOptionsKey: EnvironmentKey {
@@ -41,7 +38,6 @@ extension EnvironmentValues {
     set { self[ImageRenderingModeKey.self] = newValue }
   }
   
-  @available(iOS 16.1, *)
   var errorMode: LaTeX.ErrorMode {
     get { self[ErrorModeKey.self] }
     set { self[ErrorModeKey.self] = newValue }
@@ -52,16 +48,14 @@ extension EnvironmentValues {
     set { self[UnencodeHTMLKey.self] = newValue }
   }
   
-  @available(iOS 16.1, *)
   var parsingMode: LaTeX.ParsingMode {
     get { self[ParsingModeKey.self] }
     set { self[ParsingModeKey.self] = newValue }
   }
   
-  @available(iOS 16.1, *)
-  var latexMode: LaTeX.LaTeXMode {
-    get { self[LaTeXModeKey.self] }
-    set { self[LaTeXModeKey.self] = newValue }
+  var blockRenderingMode: LaTeX.BlockRenderingMode {
+    get { self[BlockRenderingModeKey.self] }
+    set { self[BlockRenderingModeKey.self] = newValue }
   }
   
   var texOptions: TexInputProcessorOptions {

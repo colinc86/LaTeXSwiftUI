@@ -8,15 +8,14 @@
 import Foundation
 
 /// Parses LaTeX equations.
-@available(iOS 16.1, *)
 internal struct Parser {
   
   // MARK: Types
   
   /// An equation component.
-  private struct EquationComponent<T, U> {
-    let regex: Regex<T>
-    let terminatingRegex: Regex<U>
+  private struct EquationComponent {
+    let regex: String
+    let terminatingRegex: String
     let equation: Component.ComponentType
     let supportsRecursion: Bool
   }
@@ -25,29 +24,29 @@ internal struct Parser {
   
   /// An inline equation component.
   private static let inline = EquationComponent(
-    regex: #/\$(.|\s)*?\$/#,
-    terminatingRegex: #/\$/#,
+    regex: #"\$(.|\s)*?\$"#,
+    terminatingRegex: #"\$"#,
     equation: .inlineEquation,
     supportsRecursion: false)
   
   /// An TeX-style block equation component.
   private static let tex = EquationComponent(
-    regex: #/\$\$(.|\s)*?\$\$/#,
-    terminatingRegex: #/\$\$/#,
+    regex: #"\$\$(.|\s)*?\$\$"#,
+    terminatingRegex: #"\$\$"#,
     equation: .texEquation,
     supportsRecursion: false)
   
   /// A block equation.
   private static let block = EquationComponent(
-    regex: #/\\\[(.|\s)*\\\]/#,
-    terminatingRegex: #/\\\]/#,
+    regex: #"\\\[(.|\s)*\\\]"#,
+    terminatingRegex: #"\\\]"#,
     equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
   private static let named = EquationComponent(
-    regex: #/\\begin{equation}(.|\s)*\\end{equation}/#,
-    terminatingRegex: #/\\end{equation}/#,
+    regex: #"\\begin{equation}(.|\s)*\\end{equation}"#,
+    terminatingRegex: #"\\end{equation}"#,
     equation: .namedEquation,
     supportsRecursion: true)
   
@@ -63,7 +62,6 @@ internal struct Parser {
 
 // MARK: Static methods
 
-@available(iOS 16.1, *)
 extension Parser {
   
   /// Parses the input text for component blocks.
@@ -97,8 +95,8 @@ extension Parser {
   /// - Parameter input: The input string.
   /// - Returns: An array of LaTeX components.
   static func parse(_ input: String) -> [Component] {
-    let matches = allEquations.map({ ($0, input.firstMatch(of: $0.regex)) }).filter { match in
-      guard let range = match.1?.range else { return false }
+    let matches = allEquations.map({ ($0, input.range(of: $0.regex, options: .regularExpression)) }).filter { match in
+      guard let range = match.1 else { return false }
       let firstIndex = range.lowerBound
       let lastIndex = range.upperBound
       let componentIsEmpty = Component(text: String(input[range]), type: match.0.equation).text.isEmpty
@@ -112,31 +110,31 @@ extension Parser {
       return input[previousIndexFirst] != "\\" && input[previousIndexLast] != "\\" && !componentIsEmpty
     }
     
-    let allStart = matches.map({ $0.1?.range.lowerBound })
+    let allStart = matches.map({ $0.1?.lowerBound })
     var equationRange: Range<String.Index>?
     var equation: Component.ComponentType = .text
     
     for match in matches {
-      guard isSmallest(match.1?.range.lowerBound, outOf: allStart) else {
+      guard isSmallest(match.1?.lowerBound, outOf: allStart) else {
         continue
       }
-      guard let matchRange = match.1?.range else {
+      guard let matchRange = match.1 else {
         continue
       }
       
       if match.0.supportsRecursion {
-        let terminatingMatches = input.matches(of: match.0.terminatingRegex).filter { match in
-          let index = match.range.lowerBound
+        let terminatingMatches = input.ranges(of: match.0.terminatingRegex).filter { range in
+          let index = range.lowerBound
           if index == input.startIndex { return true }
           let previousIndex = input.index(before: index)
           return input[previousIndex] != "\\"
         }
         if let lastMatch = terminatingMatches.last {
-          equationRange = matchRange.lowerBound ..< lastMatch.range.upperBound
+          equationRange = matchRange.lowerBound ..< lastMatch.upperBound
         }
       }
       else {
-        equationRange = match.1?.range
+        equationRange = match.1
       }
       
       if equationRange != nil {
@@ -169,7 +167,6 @@ extension Parser {
 
 // MARK: Private static methods
 
-@available(iOS 16.1, *)
 extension Parser {
   
   /// Determines if an index is smaller than all of the indexes in another
