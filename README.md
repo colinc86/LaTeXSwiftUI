@@ -2,7 +2,7 @@
 
 A SwiftUI view that renders LaTeX.
 
-![iOS Version](https://img.shields.io/badge/iOS-6.1-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
+![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
 ![Hello, LaTeX!](./assets/images/device.png)
 
