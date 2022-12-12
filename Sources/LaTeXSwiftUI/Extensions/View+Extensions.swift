@@ -28,6 +28,11 @@ extension View {
     environment(\.parsingMode, mode)
   }
   
+  @available(iOS 16.1, *)
+  public func latexMode(_ mode: LaTeX.LaTeXMode) -> some View {
+    environment(\.latexMode, mode)
+  }
+  
   public func texOptions(_ options: TexInputProcessorOptions) -> some View {
     environment(\.texOptions, options)
   }

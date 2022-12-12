@@ -112,10 +112,10 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   }
   
   /// The component's text but with all trailing newlines trimmed.
-  var originalTextTrimmingNewlineSuffix: String {
-    let newlineRegex = #"\\n+"#
+  var originalTextTrimmingWhitespaceSuffix: String {
+    let whitespaceRegex = #"\\s+"#
     let text = originalText
-    let ranges = text.ranges(of: newlineRegex)
+    let ranges = text.ranges(of: whitespaceRegex)
     guard let last = ranges.last, last.upperBound == text.endIndex else {
       return originalText
     }
@@ -179,7 +179,7 @@ extension Component {
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
-    isLastComponentInBlock: Bool
+    latexMode: LaTeX.LaTeXMode
   ) -> Text {
     if let svg = svg, let errorText = svg.errorText {
       switch errorMode {
@@ -188,8 +188,8 @@ extension Component {
         break
       case .original:
         // Use the original tex input
-        if isLastComponentInBlock {
-          return Text(originalTextTrimmingNewlineSuffix)
+        if latexMode == .blocks {
+          return Text(originalTextTrimmingWhitespaceSuffix)
         }
         else {
           return Text(originalText)
@@ -209,10 +209,10 @@ extension Component {
       // We have an SVG image
       let xHeight = _Font.preferredFont(from: font).xHeight
       let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-      return Text(image).baselineOffset(offset)
+      return Text(image).baselineOffset(latexMode == .inline ? offset : 0)
     }
-    else if isLastComponentInBlock {
-      return Text(originalTextTrimmingNewlineSuffix)
+    else if latexMode == .blocks {
+      return Text(originalTextTrimmingWhitespaceSuffix)
     }
     else {
       return Text(originalText)

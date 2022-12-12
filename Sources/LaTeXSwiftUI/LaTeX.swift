@@ -14,6 +14,13 @@ public struct LaTeX: View {
   
   // MARK: Types
   
+  public enum LaTeXMode {
+    
+    case inline
+    
+    case blocks
+  }
+  
   /// The view's rendering mode.
   public enum ParsingMode {
     
@@ -56,6 +63,9 @@ public struct LaTeX: View {
   /// Should the view parse the entire input string or only equations?
   @Environment(\.parsingMode) private var parsingMode
   
+  /// The view's LaTeX rendering mode.
+  @Environment(\.latexMode) private var latexMode
+  
   /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
   
@@ -87,7 +97,12 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    text()
+    switch latexMode {
+    case .inline:
+      text()
+    case .blocks:
+      stack()
+    }
   }
 
 }
@@ -97,15 +112,14 @@ extension LaTeX {
   
   /// The view's text.
   @MainActor private func text() -> Text {
-    blocks.enumerated().map { i, block in
-      let text = text(for: block)
-      if block.isEquationBlock && i > 0 {
-        return Text("\n") + text
-      }
-      else {
-        return text
-      }
+    let blocks = blocks
+    return blocks.enumerated().map { i, block in
+      text(for: block)
     }.reduce(Text(""), +)
+  }
+  
+  @MainActor private func stack() -> some View {
+    EmptyView()
   }
   
   /// Creates the text view for the given block.
@@ -119,7 +133,7 @@ extension LaTeX {
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
         errorMode: errorMode,
-        isLastComponentInBlock: i == block.components.count - 1)
+        latexMode: latexMode)
     }.reduce(Text(""), +)
   }
 
@@ -128,8 +142,28 @@ extension LaTeX {
 @available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
-    LaTeX(Constants.Previewing.helloLaTeX)
-      .font(.largeTitle)
-      .fontDesign(.serif)
+    LaTeX("It is proved that if $u_1,\\ldots, u_n$ are vectors in ${\\Bbb R}^k, k\\le n, 1 \\le p < \\infty$ and $$r = ({1\\over k} \\sum ^n_1 |u_i|^p)^{1\\over p}$$ then the volume of the symmetric convex body whose boundary functionals are $\\pm u_1,\\ldots, \\pm u_n$, is bounded from below as $$|\\{ x\\in {\\Bbb R}^k\\colon \\ |\\langle x,u_i \\rangle | \\le 1 \\ \\hbox{for every} \\ i\\}|^{1\\over k} \\ge {1\\over \\sqrt{\\rho}r}.$$ An application to number theory is stated.")
+    .fontDesign(.serif)
+    .background(Color.green)
+    .latexMode(.inline)
+    
+    VStack {
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title2)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title3)
+    }
+  }
+  
+  static func sanitize(_ text: String) -> String {
+    text
+//      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacingOccurrences(of: "\n", with: " ")
+//      .replacingOccurrences(of: "   ", with: "")
+//      .replacingOccurrences(of: "  ", with: " ")
   }
 }

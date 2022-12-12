@@ -26,6 +26,11 @@ private struct ParsingModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.ParsingMode = .onlyEquations
 }
 
+@available(iOS 16.1, *)
+private struct LaTeXModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.LaTeXMode = .blocks
+}
+
 private struct TeXInputProcessorOptionsKey: EnvironmentKey {
   static let defaultValue: TexInputProcessorOptions = TexInputProcessorOptions()
 }
@@ -51,6 +56,12 @@ extension EnvironmentValues {
   var parsingMode: LaTeX.ParsingMode {
     get { self[ParsingModeKey.self] }
     set { self[ParsingModeKey.self] = newValue }
+  }
+  
+  @available(iOS 16.1, *)
+  var latexMode: LaTeX.LaTeXMode {
+    get { self[LaTeXModeKey.self] }
+    set { self[LaTeXModeKey.self] = newValue }
   }
   
   var texOptions: TexInputProcessorOptions {

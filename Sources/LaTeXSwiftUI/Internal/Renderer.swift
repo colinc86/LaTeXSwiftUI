@@ -122,7 +122,7 @@ extension Renderer {
     }
 #endif
     
-    return image?.renderingMode(renderingMode)
+    return image?.renderingMode(renderingMode).antialiased(true).interpolation(.high).resizable()
   }
   
 }
