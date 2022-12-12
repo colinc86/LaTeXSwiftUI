@@ -14,7 +14,7 @@ public struct LaTeX: View {
   // MARK: Types
   
   /// The view's block rendering mode.
-  public enum BlockRenderingMode {
+  public enum BlockMode {
     
     /// Block equations are ignored and always rendered inline.
     case alwaysInline
@@ -69,7 +69,7 @@ public struct LaTeX: View {
   @Environment(\.parsingMode) private var parsingMode
   
   /// The view's block rendering mode.
-  @Environment(\.blockRenderingMode) private var blockRenderingMode
+  @Environment(\.blockMode) private var blockMode
   
   /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
@@ -86,8 +86,7 @@ public struct LaTeX: View {
   /// The blocks to render.
   private var blocks: [ComponentBlock] {
     Renderer.shared.render(
-      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex,
-        mode: parsingMode),
+      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -105,7 +104,7 @@ public struct LaTeX: View {
   // MARK: View body
 
   public var body: some View {
-    switch blockRenderingMode {
+    switch blockMode {
     case .alwaysInline:
       asText(forceInline: true)
     case .blockText:
@@ -163,7 +162,7 @@ extension LaTeX {
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
         errorMode: errorMode,
-        blockRenderingMode: blockRenderingMode,
+        blockRenderingMode: blockMode,
         isInEquationBlock: block.isEquationBlock)
     }.reduce(Text(""), +)
   }
@@ -196,11 +195,14 @@ struct LaTeX_Previews: PreviewProvider {
       
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title2)
+        .foregroundColor(.cyan)
       
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
+        .foregroundColor(.pink)
     }
     .fontDesign(.serif)
+    .previewLayout(.sizeThatFits)
   }
   
 }

@@ -8,7 +8,7 @@
 import Foundation
 
 /// Contains SVG information.
-internal struct SVG: Hashable {
+internal struct SVG: Codable, Hashable {
   
   /// An error produced when creating an SVG.
   enum SVGError: Error {

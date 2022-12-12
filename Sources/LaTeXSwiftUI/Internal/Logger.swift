@@ -22,38 +22,8 @@ public var logger: Logger = {
 }()
 
 @inlinable
-public func logTrace(_ message: @autoclosure () -> String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.trace(createMessage(from: message(), file: file, function: function, line: line))
-}
-
-@inlinable
-public func logDebug(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.debug(createMessage(from: message, file: file, function: function, line: line))
-}
-
-@inlinable
-public func logInfo(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.info(createMessage(from: message, file: file, function: function, line: line))
-}
-
-@inlinable
-public func logNotice(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.info(createMessage(from: message, file: file, function: function, line: line))
-}
-
-@inlinable
-public func logWarning(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.warning(createMessage(from: message, file: file, function: function, line: line))
-}
-
-@inlinable
 public func logError(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
   logger.error(createMessage(from: message, file: file, function: function, line: line))
-}
-
-@inlinable
-public func logCritical(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
-  logger.critical(createMessage(from: message, file: file, function: function, line: line))
 }
 
 // MARK: Private methods

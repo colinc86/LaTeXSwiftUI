@@ -14,7 +14,7 @@ import UIKit
 import Cocoa
 #endif
 
-extension Font {
+internal extension Font {
   func textStyle() -> _Font.TextStyle? {
     switch self {
     case .largeTitle, .largeTitle.bold(), .largeTitle.italic(), .largeTitle.monospaced(): return .largeTitle

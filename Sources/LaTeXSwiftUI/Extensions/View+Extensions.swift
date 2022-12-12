@@ -8,29 +8,55 @@
 import MathJaxSwift
 import SwiftUI
 
-extension View {
+public extension View {
   
-  public func imageRenderingMode(_ mode: Image.TemplateRenderingMode) -> some View {
+  /// Sets the image rendering mode for images rendered by MathJax.
+  ///
+  /// - Parameter mode: The template rendering mode.
+  /// - Returns: A view that applies the template rendering mode to all of the
+  ///   rendered images in the view.
+  func imageRenderingMode(_ mode: Image.TemplateRenderingMode) -> some View {
     environment(\.imageRenderingMode, mode)
   }
   
-  public func errorMode(_ mode: LaTeX.ErrorMode) -> some View {
+  /// Sets the error mode for images rendered by MathJax that contain errors.
+  ///
+  /// - Parameter mode: The error mode.
+  /// - Returns: A view that applies the error mode to its rendered images.
+  func errorMode(_ mode: LaTeX.ErrorMode) -> some View {
     environment(\.errorMode, mode)
   }
   
-  public func unencoded() -> some View {
+  /// Unencodes HTML input text.
+  ///
+  /// - Returns: A view that displays unencoded text.
+  func unencoded() -> some View {
     environment(\.unencodeHTML, true)
   }
   
-  public func parsingMode(_ mode: LaTeX.ParsingMode) -> some View {
+  /// Sets the parsing mode to use when parsing LaTeX input.
+  ///
+  /// - Parameter mode: The LaTeX parsing mode.
+  /// - Returns: A view that utilizes the given parsing mode.
+  func parsingMode(_ mode: LaTeX.ParsingMode) -> some View {
     environment(\.parsingMode, mode)
   }
   
-  public func blockRenderingMode(_ mode: LaTeX.BlockRenderingMode) -> some View {
-    environment(\.blockRenderingMode, mode)
+  /// Sets the equation block mode for block equations rendered in this view.
+  ///
+  /// - Parameter mode: The block mode.
+  /// - Returns: A view that applies the given block mode to block equations.
+  func blockMode(_ mode: LaTeX.BlockMode) -> some View {
+    environment(\.blockMode, mode)
   }
   
-  public func texOptions(_ options: TexInputProcessorOptions) -> some View {
+  /// Sets the TeX options for any images rendered with MathJax in this
+  /// environment.
+  ///
+  /// - Parameter options: The TeX input processor options.
+  /// - Returns: A view that uses the given TeX input processor options to
+  ///   render images in its view.
+  func texOptions(_ options: TeXInputProcessorOptions) -> some View {
     environment(\.texOptions, options)
   }
   

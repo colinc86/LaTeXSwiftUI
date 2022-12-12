@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 /// The geometry of a SVG.
-internal struct SVGGeometry: Equatable, Hashable {
+internal struct SVGGeometry: Codable, Hashable {
   
   // MARK: Types
   

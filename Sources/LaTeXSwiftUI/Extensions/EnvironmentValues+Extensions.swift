@@ -24,42 +24,50 @@ private struct ParsingModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.ParsingMode = .onlyEquations
 }
 
-private struct BlockRenderingModeKey: EnvironmentKey {
-  static let defaultValue: LaTeX.BlockRenderingMode = .blockViews
+private struct BlockModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.BlockMode = .blockViews
 }
 
 private struct TeXInputProcessorOptionsKey: EnvironmentKey {
-  static let defaultValue: TexInputProcessorOptions = TexInputProcessorOptions(loadPackages: TexInputProcessorOptions.Packages.all)
+  static let defaultValue: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
 }
 
 extension EnvironmentValues {
+  
+  /// The image rendering mode of this environment.
   var imageRenderingMode: Image.TemplateRenderingMode {
     get { self[ImageRenderingModeKey.self] }
     set { self[ImageRenderingModeKey.self] = newValue }
   }
   
+  /// The error mode of this environment.
   var errorMode: LaTeX.ErrorMode {
     get { self[ErrorModeKey.self] }
     set { self[ErrorModeKey.self] = newValue }
   }
   
+  /// The unencoded value of this environment.
   var unencodeHTML: Bool {
     get { self[UnencodeHTMLKey.self] }
     set { self[UnencodeHTMLKey.self] = newValue }
   }
   
+  /// The parsing mode of this environment.
   var parsingMode: LaTeX.ParsingMode {
     get { self[ParsingModeKey.self] }
     set { self[ParsingModeKey.self] = newValue }
   }
   
-  var blockRenderingMode: LaTeX.BlockRenderingMode {
-    get { self[BlockRenderingModeKey.self] }
-    set { self[BlockRenderingModeKey.self] = newValue }
+  /// The block mode of this environment.
+  var blockMode: LaTeX.BlockMode {
+    get { self[BlockModeKey.self] }
+    set { self[BlockModeKey.self] = newValue }
   }
   
-  var texOptions: TexInputProcessorOptions {
+  /// The TeX options of this environment.
+  var texOptions: TeXInputProcessorOptions {
     get { self[TeXInputProcessorOptionsKey.self] }
     set { self[TeXInputProcessorOptionsKey.self] = newValue }
   }
+  
 }

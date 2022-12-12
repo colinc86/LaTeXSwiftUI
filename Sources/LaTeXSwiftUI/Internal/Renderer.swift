@@ -5,8 +5,10 @@
 //  Created by Colin Campbell on 12/3/22.
 //
 
+import CryptoKit
 import Foundation
 import MathJaxSwift
+import Nuke
 import SwiftUI
 import SVGView
 
@@ -16,9 +18,54 @@ import UIKit
 import Cocoa
 #endif
 
+fileprivate protocol Key: Codable {
+  
+  /// The key type used to identify the cache key in storage.
+  static var keyType: String { get }
+  
+  /// A key to use if encoding fails.
+  var fallbackKey: String { get }
+  
+}
+
+extension Key {
+  
+  /// The key to use in the cache.
+  func key() -> String {
+    do {
+      let data = try JSONEncoder().encode(self)
+      let hashedData = SHA256.hash(data: data)
+      return hashedData.compactMap { String(format: "%02x", $0) }.joined() + "-" + Self.keyType
+    }
+    catch {
+      return fallbackKey + "-" + Self.keyType
+    }
+  }
+  
+}
+
 /// Renders equation components and updates their rendered image and offset
 /// values.
 internal class Renderer {
+  
+  // MARK: Types
+  
+  /// An SVG cache key.
+  struct SVGCacheKey: Key {
+    static let keyType: String = "svg"
+    let componentText: String
+    let conversionOptions: ConversionOptions
+    let texOptions: TeXInputProcessorOptions
+    internal var fallbackKey: String { componentText }
+  }
+  
+  /// An image cache key.
+  struct ImageCacheKey: Key {
+    static let keyType: String = "image"
+    let svg: SVG
+    let xHeight: CGFloat
+    internal var fallbackKey: String { String(data: svg.data, encoding: .utf8) ?? "" }
+  }
   
   // MARK: Static properties
   
@@ -30,10 +77,21 @@ internal class Renderer {
   /// The MathJax instance.
   private let mathjax: MathJax?
   
+  /// The renderer's data cache.
+  private let cache: DataCache?
+  
   // MARK: Initializers
   
   /// Initializes a renderer with a MathJax instance.
   init() {
+    do {
+      cache = try DataCache(name: "mathJaxRenderCache")
+    }
+    catch {
+      logError("Error creating DataCache instance: \(error)")
+      cache = nil
+    }
+    
     do {
       mathjax = try MathJax(preferredOutputFormat: .svg)
     }
@@ -61,7 +119,7 @@ extension Renderer {
     blocks: [ComponentBlock],
     font: Font,
     displayScale: CGFloat,
-    texOptions: TexInputProcessorOptions
+    texOptions: TeXInputProcessorOptions
   ) -> [ComponentBlock] {
     let xHeight = _Font.preferredFont(from: font).xHeight
     var newBlocks = [ComponentBlock]()
@@ -101,35 +159,40 @@ extension Renderer {
   ) -> (Image, CGSize)? {
     // Get the image's width, height, and offset
     let xHeight = _Font.preferredFont(from: font).xHeight
+    
+    // Create our cache key
+    let cacheKey = ImageCacheKey(svg: svg, xHeight: xHeight)
+    
+    // Check the cache for an image
+    if let imageData = cache?[cacheKey.key()], let image = _Image(data: imageData, scale: displayScale) {
+      return (Image(image: image)
+        .renderingMode(renderingMode)
+        .antialiased(true)
+        .interpolation(.high), image.size)
+    }
+    
+    // Continue with getting the image
     let width = svg.geometry.width.toPoints(xHeight)
     let height = svg.geometry.height.toPoints(xHeight)
     
     // Render the view
     let view = SVGView(data: svg.data)
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
-    
-    // Create the image
-    var image: Image?
-    var size: CGSize?
 #if os(iOS)
     renderer.scale = UIScreen.main.scale
-    if let uiImage = renderer.uiImage {
-      image = Image(uiImage: uiImage)
-      size = uiImage.size
-    }
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
-    if let nsImage = renderer.nsImage {
-      image = Image(nsImage: nsImage)
-      size = nsImage.size
-    }
 #endif
+    let image = renderer.image
     
-    if let image = image, let size = size {
-      return (image
+    // Write the image to the cache
+    cache?[cacheKey.key()] = image?.pngData()
+    
+    if let image = image {
+      return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
-        .interpolation(.high), size)
+        .interpolation(.high), image.size)
     }
     return nil
   }
@@ -153,7 +216,7 @@ extension Renderer {
     _ components: [Component],
     xHeight: CGFloat,
     displayScale: CGFloat,
-    texOptions: TexInputProcessorOptions
+    texOptions: TeXInputProcessorOptions
   ) throws -> [Component] {
     // Make sure we have a MathJax instance!
     guard let mathjax = mathjax else {
@@ -171,6 +234,21 @@ extension Renderer {
       
       // Create our options
       let conversionOptions = ConversionOptions(display: !component.type.inline)
+      
+      // Create our cache key
+      let cacheKey = SVGCacheKey(
+        componentText: component.text,
+        conversionOptions: conversionOptions,
+        texOptions: texOptions)
+      
+      // Do we have the SVG in the cache?
+      if let svgData = cache?[cacheKey.key()] {
+        renderedComponents.append(Component(
+          text: component.text,
+          type: component.type,
+          svg: try JSONDecoder().decode(SVG.self, from: svgData)))
+        continue
+      }
       
       // Perform the conversion
       var conversionError: Error?
@@ -192,6 +270,7 @@ extension Renderer {
       
       // Create the SVG
       let svg = try SVG(svgString: svgString, errorText: errorText)
+      cache?[cacheKey.key()] = try JSONEncoder().encode(svg)
       
       // Save the rendered component
       renderedComponents.append(Component(

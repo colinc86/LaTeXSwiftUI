@@ -111,15 +111,8 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     "\(type.leftTerminator)\(text)\(type.rightTerminator)"
   }
   
-  /// The component's text but with all trailing newlines trimmed.
+  /// The component's original text with newlines trimmed.
   var originalTextTrimmingNewlines: String {
-//    let whitespaceRegex = #"\\s+"#
-//    let text = originalText
-//    let ranges = text.ranges(of: whitespaceRegex)
-//    guard let last = ranges.last, last.upperBound == text.endIndex else {
-//      return originalText
-//    }
-//    return String(text[..<last.lowerBound])
     originalText.trimmingCharacters(in: .newlines)
   }
   
@@ -179,7 +172,7 @@ extension Component {
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
-    blockRenderingMode: LaTeX.BlockRenderingMode,
+    blockRenderingMode: LaTeX.BlockMode,
     isInEquationBlock: Bool
   ) -> Text {
     // Get the component's text

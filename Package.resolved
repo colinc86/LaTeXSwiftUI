@@ -5,8 +5,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/colinc86/MathJaxSwift",
       "state" : {
-        "branch" : "main",
-        "revision" : "76389185158681391c698ddeb77a00fa334e6196"
+        "branch" : "develop",
+        "revision" : "d0efb7ed418b0a799f653f7d62a2e0c62f8cb621"
+      }
+    },
+    {
+      "identity" : "nuke",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kean/Nuke",
+      "state" : {
+        "revision" : "93c8dc78fbc0aa3538a0db460eb389d4180af242",
+        "version" : "11.3.1"
       }
     },
     {

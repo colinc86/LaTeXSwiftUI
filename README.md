@@ -98,6 +98,32 @@ LaTeX("$\\asdf$")
 
 ![Errors](./assets/images/errors.png)
 
+#### Block Rendering Mode
+
+The typical "LaTeX-ish" way to render the input is with `blockViews`. This mode renders text as usual, and block equations as... blocks; on their own line and centered. MathJax 3 does not support line breaking, so the view places block equations in horizontal scroll views in case the width of the equation is more than the width of the view.
+
+In the case that you want to force block equations as inline, you can use the `alwaysInline` mode. You can also keep block styling with `blockText`, but the blocks will not be centered in their views. These modes can be helpful if you have a lengthy input string and need to only display it on a single or few lines.
+
+```swift
+/// The default block mode 
+LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
+  .blockMode(.blockViews)
+
+Divider()
+
+/// Force blocks to render as inline
+LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
+  .blockMode(.alwaysInline)
+
+Divider()
+
+/// Force blocks to render as text with newlines
+LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
+  .blockMode(.blockText)
+```
+
+![Blocks](./assets/images/blocks.png)
+
 #### Unencode HTML
 
 Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
@@ -123,5 +149,5 @@ LaTeX("""
 \\begin{equation}
   e^{i\\pi}+1=0
 \\end{equation}
-""").texOptions(TexInputProcessorOptions(loadPackages: TexInputProcessorOptions.Packages.all))
+""").texOptions(TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all))
 ```
