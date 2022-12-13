@@ -72,13 +72,9 @@ Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more
 | `\begin{equation}...\end{equation}` |
 | `\begin{equation*}...\end{equation*}` |
 
-Text input can either be completely rendered, or `LaTeXSwiftUI` can search for top-level equations. The default behavior is to only render equations. Use the `parsingMode` modifier to change the default behavior.
+Text input can either be completely rendered, or `LaTeXSwiftUI` can search for top-level equations. The default behavior is to only render equations with `onlyEquations`. Use the `parsingMode` modifier to change the default behavior.
 
 ```swift
-// Only parse the equation
-LaTeX("Hello, $\\LaTeX$!")
-  .parsingMode(.onlyEquations)
-
 // Parse the entire input
 LaTeX("e^{i\\pi}+1=0")
   .parsingMode(.all)
