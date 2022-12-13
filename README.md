@@ -30,7 +30,7 @@ struct MyView: View {
 }
 ```
 
-<img src="./assets/images/hello.png" width="98" height="34.5">
+<img src="./assets/images/hello.png" width="85" height="21.5">
 
 ### Modifiers
 
@@ -42,7 +42,7 @@ LaTeX("Hello, $\\LaTeX$!")
   .foregroundColor(.blue)
 ```
 
-<img src="./assets/images/hello_blue.png" width="100" height="34.5">
+<img src="./assets/images/hello_blue.png" width="87" height="21.5">
 
 Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
 
@@ -60,7 +60,7 @@ LaTeX("e^{i\\pi}+1=0")
   .parsingMode(.all)
 ```
 
-<img src="./assets/images/euler.png" width="88" height="32.5">
+<img src="./assets/images/euler.png" width="75" height="19.5">
 
 ##### Equations
 
@@ -88,7 +88,7 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
   .imageRenderingMode(.original)
 ```
 
-<img src="./assets/images/rendering_mode.png" width="97.5" height="56">
+<img src="./assets/images/rendering_mode.png" width="84.5" height="43">
 
 #### Error Mode
 
@@ -108,7 +108,7 @@ LaTeX("$\\asdf$")
   .errorMode(.rendered)
 ```
 
-<img src="./assets/images/errors.png" width="212.5" height="68">
+<img src="./assets/images/errors.png" width="199.5" height="55">
 
 #### Block Rendering Mode
 
@@ -134,7 +134,7 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
   .blockMode(.blockText)
 ```
 
-<img src="./assets/images/blocks.png" width="443" height="363">
+<img src="./assets/images/blocks.png" width="430" height="350">
 
 #### Unencode HTML
 
@@ -149,7 +149,7 @@ LaTeX("$x^2&lt;1$")
   .unencoded()
 ```
 
-<img src="./assets/images/unencoded.png" width="85.5" height="47">
+<img src="./assets/images/unencoded.png" width="72.5" height="34">
 
 #### TeX Options
 
