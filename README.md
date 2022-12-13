@@ -188,9 +188,3 @@ VStack {
   }
 }
 ```
-
-## Examples
-
-### Blah
-
-### Full Example
