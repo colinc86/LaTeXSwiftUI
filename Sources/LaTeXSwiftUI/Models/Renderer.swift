@@ -78,19 +78,24 @@ internal class Renderer {
   private let mathjax: MathJax?
   
   /// The renderer's data cache.
-  private let cache: DataCache?
+  internal let dataCache: DataCache?
+  
+  /// The renderer's image cache.
+  internal let imageCache: ImageCache
   
   // MARK: Initializers
   
   /// Initializes a renderer with a MathJax instance.
   init() {
     do {
-      cache = try DataCache(name: "mathJaxRenderCache")
+      dataCache = try DataCache(name: "mathJaxRenderDataCache")
     }
     catch {
       logError("Error creating DataCache instance: \(error)")
-      cache = nil
+      dataCache = nil
     }
+    
+    imageCache = ImageCache()
     
     do {
       mathjax = try MathJax(preferredOutputFormat: .svg)
@@ -164,7 +169,7 @@ extension Renderer {
     let cacheKey = ImageCacheKey(svg: svg, xHeight: xHeight)
     
     // Check the cache for an image
-    if let imageData = cache?[cacheKey.key()], let image = _Image(imageData: imageData, scale: displayScale) {
+    if let image = imageCache[Nuke.ImageCacheKey(key: cacheKey.key())]?.image {
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -181,14 +186,13 @@ extension Renderer {
 #if os(iOS)
     renderer.scale = UIScreen.main.scale
     let image = renderer.image
-    cache?[cacheKey.key()] = image?.pngData()
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
     let image = renderer.image
-    cache?[cacheKey.key()] = image?.tiffRepresentation
 #endif
     
     if let image = image {
+      imageCache[Nuke.ImageCacheKey(key: cacheKey.key())] = ImageContainer(image: image)
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -242,7 +246,7 @@ extension Renderer {
         texOptions: texOptions)
       
       // Do we have the SVG in the cache?
-      if let svgData = cache?[cacheKey.key()] {
+      if let svgData = dataCache?[cacheKey.key()] {
         renderedComponents.append(Component(
           text: component.text,
           type: component.type,
@@ -270,7 +274,7 @@ extension Renderer {
       
       // Create the SVG
       let svg = try SVG(svgString: svgString, errorText: errorText)
-      cache?[cacheKey.key()] = try JSONEncoder().encode(svg)
+      dataCache?[cacheKey.key()] = try JSONEncoder().encode(svg)
       
       // Save the rendered component
       renderedComponents.append(Component(

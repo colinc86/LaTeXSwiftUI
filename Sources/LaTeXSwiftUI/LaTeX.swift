@@ -6,6 +6,8 @@
 //
 
 import HTMLEntities
+import MathJaxSwift
+import Nuke
 import SwiftUI
 
 public struct LaTeX: View {
@@ -46,6 +48,16 @@ public struct LaTeX: View {
     
     /// The error text should be displayed.
     case error
+  }
+  
+  /// The package's shared data cache.
+  public static var dataCache: DataCache? {
+    Renderer.shared.dataCache
+  }
+  
+  /// The package's shared image cache.
+  public static var imageCache: ImageCache {
+    Renderer.shared.imageCache
   }
   
   // MARK: Public properties
@@ -105,15 +117,38 @@ public struct LaTeX: View {
   public var body: some View {
     switch blockMode {
     case .alwaysInline:
-      asText(forceInline: true)
+      blocksAsText(blocks, forceInline: true)
     case .blockText:
-      asText(forceInline: false)
+      blocksAsText(blocks)
     case .blockViews:
-      asStack()
+      blocksAsStack(blocks)
     }
   }
 
 }
+
+// MARK: Public methods
+
+extension LaTeX {
+  
+  /// Preloads the view's components.
+  ///
+  /// - Returns: A LaTeX view whose components have been preloaded.
+  @MainActor public func preload() -> LaTeX {
+    switch blockMode {
+    case .alwaysInline:
+      blocksAsText(blocks, forceInline: true)
+    case .blockText:
+      blocksAsText(blocks)
+    case .blockViews:
+      blocksAsStack(blocks)
+    }
+    return self
+  }
+  
+}
+
+// MARK: Private methods
 
 extension LaTeX {
   
@@ -122,7 +157,9 @@ extension LaTeX {
   /// - Parameter forceInline: Whether or not block equations should be forced
   ///   as inline.
   /// - Returns: A text view.
-  @MainActor private func asText(forceInline: Bool) -> Text {
+  @MainActor
+  @discardableResult
+  private func blocksAsText(_ blocks: [ComponentBlock], forceInline: Bool = false) -> Text {
     blocks.map { block in
       let text = text(for: block)
       return block.isEquationBlock && !forceInline ?
@@ -134,7 +171,9 @@ extension LaTeX {
   /// The view's input rendered as a vertical stack of views.
   ///
   /// - Returns: A stack view.
-  @MainActor private func asStack() -> some View {
+  @MainActor
+  @discardableResult
+  private func blocksAsStack(_ blocks: [ComponentBlock]) -> some View {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock,
@@ -188,28 +227,20 @@ extension LaTeX {
 @available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
-//    VStack {
-//      LaTeX("Hello, $\\LaTeX$!")
-//        .font(.title)
-//
-//      LaTeX("Hello, $\\LaTeX$!")
-//        .font(.title2)
-//        .foregroundColor(.cyan)
-//
-//      LaTeX("Hello, $\\LaTeX$!")
-//        .font(.title3)
-//        .foregroundColor(.pink)
-//    }
-//    .fontDesign(.serif)
-//    .previewLayout(.sizeThatFits)
-    
     VStack {
-      LaTeX("This is a block equation with some block after it $$\\text{and this is some text on the next line}$$ with some more text that comes after it!")
-        .lineSpacing(5)
-      Divider()
-      Text("This is a block equation with some block afte and it wraps and this is some text on the next line and blah blah with some more text that comes after it!")
-        .lineSpacing(5)
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title)
+
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title2)
+        .foregroundColor(.cyan)
+
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.title3)
+        .foregroundColor(.pink)
     }
+    .fontDesign(.serif)
+    .previewLayout(.sizeThatFits)
   }
   
 }

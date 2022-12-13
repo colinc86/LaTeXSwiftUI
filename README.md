@@ -62,6 +62,18 @@ LaTeX("e^{i\\pi}+1=0")
 
 ![Euler's Identity](./assets/images/euler.png)
 
+##### Equations
+
+`LaTexSwiftUI` can parse and render equations (aside from the entire input string) defined with the following terminators.
+
+| Terminators |
+|-------------|
+| `$...$` |
+| `$$...$$` |
+| `\[...\]` |
+| `\begin{equation}...\end{equation}` |
+| `\begin{equation*}...\end{equation*}` |
+
 #### Image Rendering Mode
 
 You can specify the rendering mode of the rendered equations so that they either take on the style of the surrounding text or display the style rendered by MathJax. The default behavior is to use the `template` rendering mode so that images match surrounding text.
@@ -144,10 +156,35 @@ LaTeX("$x^2&lt;1$")
 For more control over the MathJax rendering, you can pass a `TeXInputProcessorOptions` object to the view.
 
 ```swift
-// Add AMS style equation numbering
-LaTeX("""
-\\begin{equation}
-  e^{i\\pi}+1=0
-\\end{equation}
-""").texOptions(TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all))
+LaTeX("Hello, $\\LaTeX$!")
+  .texOptions(TeXInputProcessorOptions(loadPackages: [TeXInputProcessorOptions.Packages.base]))
+```
+
+### Caching
+
+`LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `cache` property.
+
+The caches are managed automatically, but if, for example, you wanted to clear the cache manually you may do so.
+
+```swift
+// Clear the SVG data cache.
+LaTeX.dataCache?.removeAll()
+
+// Clear the rendered image cache.
+LaTeX.imageCache.removeAll()
+```
+
+`LaTeXSwiftUI` uses the [caching](https://github.com/kean/Nuke/tree/master/Sources/Nuke/Caching) components of the [Nuke](https://github.com/kean/Nuke) package.
+
+### Preloading
+
+SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is no lag when the view appears.
+
+```swift
+VStack {
+  ForEach(expressions, id: \.self) { expression in
+    LaTeX(expression)
+      .preload()
+  }
+}
 ```
