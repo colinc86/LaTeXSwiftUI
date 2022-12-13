@@ -4,7 +4,7 @@ A SwiftUI view that renders LaTeX.
 
 ![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
-![Hello, LaTeX!](./assets/images/device.png)
+<center><img src="./assets/images/device.png" width="362" height="707"></center>
 
 ## Installation
 
@@ -30,7 +30,7 @@ struct MyView: View {
 }
 ```
 
-![Hello, LaTeX!](./assets/images/hello.png)
+<img src="./assets/images/hello.png" width="98" height="34.5">
 
 ### Modifiers
 
@@ -42,7 +42,7 @@ LaTeX("Hello, $\\LaTeX$!")
   .foregroundColor(.blue)
 ```
 
-![Hello, LaTeX!](./assets/images/hello_blue.png)
+<img src="./assets/images/hello_blue.png" width="100" height="34.5">
 
 Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
 
@@ -60,7 +60,7 @@ LaTeX("e^{i\\pi}+1=0")
   .parsingMode(.all)
 ```
 
-![Euler's Identity](./assets/images/euler.png)
+<img src="./assets/images/euler.png" width="88" height="32.5">
 
 ##### Equations
 
@@ -88,7 +88,7 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
   .imageRenderingMode(.original)
 ```
 
-![Rendering Mode](./assets/images/rendering_mode.png)
+<img src="./assets/images/rendering_mode.png" width="97.5" height="56">
 
 #### Error Mode
 
@@ -108,7 +108,7 @@ LaTeX("$\\asdf$")
   .errorMode(.rendered)
 ```
 
-![Errors](./assets/images/errors.png)
+<img src="./assets/images/errors.png" width="212.5" height="68">
 
 #### Block Rendering Mode
 
@@ -134,7 +134,7 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
   .blockMode(.blockText)
 ```
 
-![Blocks](./assets/images/blocks.png)
+<img src="./assets/images/blocks.png" width="443" height="363">
 
 #### Unencode HTML
 
@@ -149,7 +149,7 @@ LaTeX("$x^2&lt;1$")
   .unencoded()
 ```
 
-![Unencoded HTML](./assets/images/unencoded.png)
+<img src="./assets/images/unencoded.png" width="85.5" height="47">
 
 #### TeX Options
 
@@ -188,3 +188,9 @@ VStack {
   }
 }
 ```
+
+## Examples
+
+### Blah
+
+### Full Example
