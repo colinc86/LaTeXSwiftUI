@@ -229,15 +229,38 @@ struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
       LaTeX("Hello, $\\LaTeX$!")
+        .font(.largeTitle)
+        .foregroundStyle(
+          LinearGradient(
+            colors: [.red, .orange, .yellow, .green, .blue, .indigo, .purple],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+        )
+      
+      LaTeX("Hello, $\\LaTeX$!")
         .font(.title)
+        .foregroundColor(.red)
 
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title2)
-        .foregroundColor(.cyan)
+        .foregroundColor(.orange)
 
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
-        .foregroundColor(.pink)
+        .foregroundColor(.yellow)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.body)
+        .foregroundColor(.green)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption)
+        .foregroundColor(.indigo)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(.caption2)
+        .foregroundColor(.purple)
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
