@@ -13,9 +13,9 @@ internal struct Parser {
   // MARK: Types
   
   /// An equation component.
-  private struct EquationComponent {
-    let regex: String
-    let terminatingRegex: String
+  private struct EquationComponent<T, U> {
+    let regex: Regex<T>
+    let terminatingRegex: Regex<U>
     let equation: Component.ComponentType
     let supportsRecursion: Bool
   }
@@ -24,30 +24,37 @@ internal struct Parser {
   
   /// An inline equation component.
   private static let inline = EquationComponent(
-    regex: #"\$(.|\s)*?\$"#,
-    terminatingRegex: #"\$"#,
+    regex: #/\$(.|\s)*?\$/#,
+    terminatingRegex: #/\$/#,
     equation: .inlineEquation,
     supportsRecursion: false)
   
   /// An TeX-style block equation component.
   private static let tex = EquationComponent(
-    regex: #"\$\$(.|\s)*?\$\$"#,
-    terminatingRegex: #"\$\$"#,
+    regex: #/\$\$(.|\s)*?\$\$/#,
+    terminatingRegex: #/\$\$/#,
     equation: .texEquation,
     supportsRecursion: false)
   
   /// A block equation.
   private static let block = EquationComponent(
-    regex: #"\\\[(.|\s)*\\\]"#,
-    terminatingRegex: #"\\\]"#,
+    regex: #/\\\[(.|\s)*?\\\]/#,
+    terminatingRegex: #/\\\]/#,
     equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
   private static let named = EquationComponent(
-    regex: #"\\begin{equation}(.|\s)*\\end{equation}"#,
-    terminatingRegex: #"\\end{equation}"#,
+    regex: #/\\begin{equation}(.|\s)*\\end{equation}/#,
+    terminatingRegex: #/\\end{equation}/#,
     equation: .namedEquation,
+    supportsRecursion: true)
+  
+  /// A named no number equation component.
+  private static let namedNoNumber = EquationComponent(
+    regex: #/\\begin{equation\*}(.|\s)*\\end{equation\*}/#,
+    terminatingRegex: #/\\end{equation\*}/#,
+    equation: .namedNoNumberEquation,
     supportsRecursion: true)
   
   // Order matters
@@ -55,7 +62,8 @@ internal struct Parser {
     inline,
     tex,
     block,
-    named
+    named,
+    namedNoNumber
   ]
   
 }
@@ -95,72 +103,90 @@ extension Parser {
   /// - Parameter input: The input string.
   /// - Returns: An array of LaTeX components.
   static func parse(_ input: String) -> [Component] {
-    let matches = allEquations.map({ ($0, input.range(of: $0.regex, options: .regularExpression)) }).filter { match in
-      guard let range = match.1 else { return false }
-      let firstIndex = range.lowerBound
-      let lastIndex = range.upperBound
-      let componentIsEmpty = Component(text: String(input[range]), type: match.0.equation).text.isEmpty
-      let previousIndexLast = input.index(lastIndex, offsetBy: -1 - match.0.equation.rightTerminator.count)
-      
-      if firstIndex == input.startIndex {
-        return input[previousIndexLast] != "\\" && !componentIsEmpty
+    // Get the first match of each each equation type
+    let matches = allEquations.map({ ($0, input.firstMatch(of: $0.regex)) })
+    
+    // Filter the matches
+    let filteredMatches = matches.filter { match in
+      // We only want matches with ranges
+      guard let range = match.1?.range else {
+        return false
       }
       
-      let previousIndexFirst = input.index(before: firstIndex)
-      return input[previousIndexFirst] != "\\" && input[previousIndexLast] != "\\" && !componentIsEmpty
+      print("found match \(match.0.equation)")
+      
+      // Make sure the inner component is non-empty
+      let text = Component(text: String(input[range]), type: match.0.equation).text
+      print(text)
+      guard !text.isEmpty else {
+        return false
+      }
+      
+      // Make sure the starting terminator isn't escaped
+      guard range.lowerBound >= input.startIndex else {
+        return false
+      }
+      if range.lowerBound > input.startIndex, input[input.index(before: range.lowerBound)] == "\\" {
+        return false
+      }
+      print("leading not escaped")
+      
+      // Make sure the ending terminator isn't escaped
+      let endingTerminatorStartIndex = input.index(range.upperBound, offsetBy: -match.0.equation.rightTerminator.count)
+      guard endingTerminatorStartIndex >= input.startIndex else {
+        return false
+      }
+      if endingTerminatorStartIndex > input.startIndex, input[input.index(before: endingTerminatorStartIndex)] == "\\" {
+        return false
+      }
+      print("trailing not escaped")
+      
+      // The component has content and isn't escaped
+      return true
     }
     
-    let allStart = matches.map({ $0.1?.lowerBound })
-    var equationRange: Range<String.Index>?
-    var equation: Component.ComponentType = .text
-    
-    for match in matches {
-      guard isSmallest(match.1?.lowerBound, outOf: allStart) else {
-        continue
+    // Get the first matched equation
+    guard let smallestMatch = filteredMatches.min(by: { $0.1!.range.lowerBound < $1.1!.range.lowerBound }) else {
+      return input.isEmpty ? [] : [Component(text: input, type: .text)]
+    }
+
+    // If the equation supports recursion, then we'll need to find the last
+    // match of its terminating regex component.
+    let equationRange: Range<String.Index>
+    if smallestMatch.0.supportsRecursion {
+      var terminatingMatches = input.matches(of: smallestMatch.0.terminatingRegex).filter { match in
+        // Make sure the terminator isn't escaped
+        if match.range.lowerBound == input.startIndex { return true }
+        let previousIndex = input.index(before: match.range.lowerBound)
+        return input[previousIndex] != "\\"
       }
-      guard let matchRange = match.1 else {
-        continue
-      }
-      
-      if match.0.supportsRecursion {
-        let terminatingMatches = input.ranges(of: match.0.terminatingRegex).filter { range in
-          let index = range.lowerBound
-          if index == input.startIndex { return true }
-          let previousIndex = input.index(before: index)
-          return input[previousIndex] != "\\"
-        }
-        if let lastMatch = terminatingMatches.last {
-          equationRange = matchRange.lowerBound ..< lastMatch.upperBound
-        }
+      terminatingMatches.sort(by: { $0.range.lowerBound < $1.range.lowerBound })
+      if let lastMatch = terminatingMatches.last {
+        equationRange = smallestMatch.1!.range.lowerBound ..< lastMatch.range.upperBound
       }
       else {
-        equationRange = match.1
-      }
-      
-      if equationRange != nil {
-        equation = match.0.equation
-        break
+        equationRange = smallestMatch.1!.range
       }
     }
-    
-    if let equationRange = equationRange {
-      let stringBeforeEquation = String(input[..<equationRange.lowerBound])
-      let equationString = String(input[equationRange])
-      let remainingString = String(input[equationRange.upperBound...])
-      var components = [Component]()
-      if !stringBeforeEquation.isEmpty {
-        components.append(Component(text: stringBeforeEquation, type: .text))
-      }
-      components.append(Component(text: equationString, type: equation))
-      if remainingString.isEmpty {
-        return components
-      }
-      else {
-        return components + parse(remainingString)
-      }
+    else {
+      equationRange = smallestMatch.1!.range
     }
-    
-    return input.isEmpty ? [] : [Component(text: input, type: .text)]
+
+    // We got our equation range, so lets return the components.
+    let stringBeforeEquation = String(input[..<equationRange.lowerBound])
+    let equationString = String(input[equationRange])
+    let remainingString = String(input[equationRange.upperBound...])
+    var components = [Component]()
+    if !stringBeforeEquation.isEmpty {
+      components.append(Component(text: stringBeforeEquation, type: .text))
+    }
+    components.append(Component(text: equationString, type: smallestMatch.0.equation))
+    if remainingString.isEmpty {
+      return components
+    }
+    else {
+      return components + parse(remainingString)
+    }
   }
   
 }

@@ -56,6 +56,11 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     /// - Example: `\begin{equation}x^2\end{equation}`
     case namedEquation
     
+    /// A named equation component.
+    ///
+    /// - Example: `\begin{equation*}x^2\end{equation*}`
+    case namedNoNumberEquation
+    
     /// The component's description.
     var description: String {
       rawValue
@@ -67,8 +72,9 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       case .text: return ""
       case .inlineEquation: return "$"
       case .texEquation: return "$$"
-      case .blockEquation: return "\\]"
+      case .blockEquation: return "\\["
       case .namedEquation: return "\\begin{equation}"
+      case .namedNoNumberEquation: return "\\begin{equation*}"
       }
     }
     
@@ -80,6 +86,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       case .texEquation: return "$$"
       case .blockEquation: return "\\]"
       case .namedEquation: return "\\end{equation}"
+      case .namedNoNumberEquation: return "\\end{equation*}"
       }
     }
     
@@ -139,7 +146,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
         text = String(text[text.index(text.startIndex, offsetBy: type.leftTerminator.count)...])
       }
       if text.hasSuffix(type.rightTerminator) {
-        text = String(text[..<text.index(text.startIndex, offsetBy: text.count - type.rightTerminator.count)])
+        text = String(text[..<text.index(text.endIndex, offsetBy: -type.rightTerminator.count)])
       }
       self.text = text
     }

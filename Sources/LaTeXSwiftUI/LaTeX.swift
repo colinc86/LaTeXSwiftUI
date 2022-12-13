@@ -135,7 +135,7 @@ extension LaTeX {
   ///
   /// - Returns: A stack view.
   @MainActor private func asStack() -> some View {
-    VStack(alignment: .leading, spacing: lineSpacing) {
+    VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock,
            let (image, size) = image(for: block) {
@@ -188,20 +188,28 @@ extension LaTeX {
 @available(iOS 16.1, *)
 struct LaTeX_Previews: PreviewProvider {
   static var previews: some View {
+//    VStack {
+//      LaTeX("Hello, $\\LaTeX$!")
+//        .font(.title)
+//
+//      LaTeX("Hello, $\\LaTeX$!")
+//        .font(.title2)
+//        .foregroundColor(.cyan)
+//
+//      LaTeX("Hello, $\\LaTeX$!")
+//        .font(.title3)
+//        .foregroundColor(.pink)
+//    }
+//    .fontDesign(.serif)
+//    .previewLayout(.sizeThatFits)
+    
     VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title2)
-        .foregroundColor(.cyan)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title3)
-        .foregroundColor(.pink)
+      LaTeX("This is a block equation with some block after it $$\\text{and this is some text on the next line}$$ with some more text that comes after it!")
+        .lineSpacing(5)
+      Divider()
+      Text("This is a block equation with some block afte and it wraps and this is some text on the next line and blah blah with some more text that comes after it!")
+        .lineSpacing(5)
     }
-    .fontDesign(.serif)
-    .previewLayout(.sizeThatFits)
   }
   
 }
