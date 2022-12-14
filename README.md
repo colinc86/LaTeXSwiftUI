@@ -6,7 +6,21 @@ A SwiftUI view that renders LaTeX.
 
 <center><img src="./assets/images/device.png" width="362" height="707"></center>
 
-## Installation
+## 📖 Contents
+
+- [Installation](#📦-installation)
+- [Usage](#⌨️-usage)
+  - [Modifiers](#⚙️-modifiers)
+    - [Parsing Mode](#🔤-parsing-mode)
+    - [Image Rendering Mode](#🌄-image-rendering-mode)
+    - [Error Mode](#🚨-error-mode)
+    - [Block Rendering Mode](#🧱-block-rendering-mode)
+    - [Unencode HTML](#🔗-unencode-html)
+    - [TeX Options](#♾️-tex-options)
+  - [Caching](#🗄️-caching)
+  - [Preloading](#🏃‍♀️-preloading)
+
+## 📦 Installation
 
 Add the dependency to your package manifest file.
 
@@ -14,7 +28,7 @@ Add the dependency to your package manifest file.
 .package(url: "https://github.com/colinc86/LaTeXSwiftUI", branch: "main")
 ```
 
-## Usage
+## ⌨️ Usage
 
 Import the package and use the view.
 
@@ -32,7 +46,7 @@ struct MyView: View {
 
 > <img src="./assets/images/hello.png" width="85" height="21.5">
 
-### Modifiers
+### ⚙️ Modifiers
 
 The `LaTeX` view's body is built up of `Text` views so feel free to use any of the supported modifiers.
 
@@ -46,23 +60,7 @@ LaTeX("Hello, $\\LaTeX$!")
 
 Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
 
-#### Parsing Mode
-
-Text input can either be completely rendered, or `LaTeXSwiftUI` can search for top-level equations. The default behavior is to only render equations. Use the `parsingMode` modifier to change the default behavior.
-
-```swift
-// Only parse the equation
-LaTeX("Hello, $\\LaTeX$!")
-  .parsingMode(.onlyEquations)
-
-// Parse the entire input
-LaTeX("e^{i\\pi}+1=0")
-  .parsingMode(.all)
-```
-
-> <img src="./assets/images/euler.png" width="75" height="19.5">
-
-##### Equations
+#### 🔤 Parsing Mode
 
 `LaTexSwiftUI` can parse and render equations (aside from the entire input string) defined with the following terminators.
 
@@ -74,7 +72,17 @@ LaTeX("e^{i\\pi}+1=0")
 | `\begin{equation}...\end{equation}` |
 | `\begin{equation*}...\end{equation*}` |
 
-#### Image Rendering Mode
+Text input can either be completely rendered, or `LaTeXSwiftUI` can search for top-level equations. The default behavior is to only render equations with `onlyEquations`. Use the `parsingMode` modifier to change the default behavior.
+
+```swift
+// Parse the entire input
+LaTeX("e^{i\\pi}+1=0")
+  .parsingMode(.all)
+```
+
+> <img src="./assets/images/euler.png" width="75" height="19.5">
+
+#### 🌄 Image Rendering Mode
 
 You can specify the rendering mode of the rendered equations so that they either take on the style of the surrounding text or display the style rendered by MathJax. The default behavior is to use the `template` rendering mode so that images match surrounding text.
 
@@ -90,7 +98,7 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
 
 > <img src="./assets/images/rendering_mode.png" width="84.5" height="43">
 
-#### Error Mode
+#### 🚨 Error Mode
 
 When an error occurs while parsing the input the view will display the original LaTeX. You can change this behavior by modifying the view's `errorMode`.
 
@@ -110,7 +118,7 @@ LaTeX("$\\asdf$")
 
 > <img src="./assets/images/errors.png" width="199.5" height="55">
 
-#### Block Rendering Mode
+#### 🧱 Block Rendering Mode
 
 The typical "LaTeX-ish" way to render the input is with `blockViews`. This mode renders text as usual, and block equations as... blocks; on their own line and centered. MathJax 3 does not support line breaking, so the view places block equations in horizontal scroll views in case the width of the equation is more than the width of the view.
 
@@ -136,7 +144,7 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
 
 > <img src="./assets/images/blocks.png" width="430" height="350">
 
-#### Unencode HTML
+#### 🔗 Unencode HTML
 
 Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
 
@@ -151,7 +159,7 @@ LaTeX("$x^2&lt;1$")
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
 
-#### TeX Options
+#### ♾️ TeX Options
 
 For more control over the MathJax rendering, you can pass a `TeXInputProcessorOptions` object to the view.
 
@@ -160,7 +168,7 @@ LaTeX("Hello, $\\LaTeX$!")
   .texOptions(TeXInputProcessorOptions(loadPackages: [TeXInputProcessorOptions.Packages.base]))
 ```
 
-### Caching
+### 🗄️ Caching
 
 `LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `cache` property.
 
@@ -176,9 +184,9 @@ LaTeX.imageCache.removeAll()
 
 `LaTeXSwiftUI` uses the [caching](https://github.com/kean/Nuke/tree/master/Sources/Nuke/Caching) components of the [Nuke](https://github.com/kean/Nuke) package.
 
-### Preloading
+### 🏃‍♀️ Preloading
 
-SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is no lag when the view appears.
+SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
 
 ```swift
 VStack {
