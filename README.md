@@ -25,7 +25,7 @@ A SwiftUI view that renders LaTeX.
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", branch: "main")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.0.0")
 ```
 
 ## ⌨️ Usage
