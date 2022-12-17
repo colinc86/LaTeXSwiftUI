@@ -113,11 +113,8 @@ extension Parser {
         return false
       }
       
-      print("found match \(match.0.equation)")
-      
       // Make sure the inner component is non-empty
       let text = Component(text: String(input[range]), type: match.0.equation).text
-      print(text)
       guard !text.isEmpty else {
         return false
       }
@@ -129,7 +126,6 @@ extension Parser {
       if range.lowerBound > input.startIndex, input[input.index(before: range.lowerBound)] == "\\" {
         return false
       }
-      print("leading not escaped")
       
       // Make sure the ending terminator isn't escaped
       let endingTerminatorStartIndex = input.index(range.upperBound, offsetBy: -match.0.equation.rightTerminator.count)
@@ -139,7 +135,6 @@ extension Parser {
       if endingTerminatorStartIndex > input.startIndex, input[input.index(before: endingTerminatorStartIndex)] == "\\" {
         return false
       }
-      print("trailing not escaped")
       
       // The component has content and isn't escaped
       return true
