@@ -133,15 +133,35 @@ extension LaTeX {
   
   /// Preloads the view's components.
   ///
+  /// - Note: You must set this method's parameters the same as its environment
+  ///   or call it is ineffective and adds additional computational overhead.
+  ///
   /// - Returns: A LaTeX view whose components have been preloaded.
-  @MainActor public func preload() -> LaTeX {
-    switch blockMode {
-    case .alwaysInline:
-      blocksAsText(blocks, forceInline: true)
-    case .blockText:
-      blocksAsText(blocks)
-    case .blockViews:
-      blocksAsStack(blocks)
+  @MainActor public func preload(
+    unencodeHTML: Bool = false,
+    parsingMode: ParsingMode = .onlyEquations,
+    imageRenderingMode: Image.TemplateRenderingMode = .template,
+    font: Font = .body,
+    displayScale: CGFloat = 1.0,
+    texOptions: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
+  ) -> LaTeX {
+    // Render the blocks
+    let preloadedBlocks = Renderer.shared.render(
+      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
+      font: font,
+      displayScale: displayScale,
+      texOptions: texOptions)
+    
+    // Render the images
+    for block in preloadedBlocks {
+      for component in block.components where component.type.isEquation {
+        guard let svg = component.svg else { continue }
+        _ = Renderer.shared.convertToImage(
+          svg: svg,
+          font: font,
+          displayScale: displayScale,
+          renderingMode: imageRenderingMode)
+      }
     }
     return self
   }
