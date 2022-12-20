@@ -13,7 +13,7 @@ internal struct Parser {
   // MARK: Types
   
   /// An equation component.
-  private struct EquationComponent<T, U> {
+  struct EquationComponent<T, U> {
     let regex: Regex<T>
     let terminatingRegex: Regex<U>
     let equation: Component.ComponentType
@@ -23,42 +23,42 @@ internal struct Parser {
   // MARK: Private properties
   
   /// An inline equation component.
-  private static let inline = EquationComponent(
+  static let inline = EquationComponent(
     regex: #/\$(.|\s)*?\$/#,
     terminatingRegex: #/\$/#,
     equation: .inlineEquation,
     supportsRecursion: false)
   
   /// An TeX-style block equation component.
-  private static let tex = EquationComponent(
+  static let tex = EquationComponent(
     regex: #/\$\$(.|\s)*?\$\$/#,
     terminatingRegex: #/\$\$/#,
     equation: .texEquation,
     supportsRecursion: false)
   
   /// A block equation.
-  private static let block = EquationComponent(
+  static let block = EquationComponent(
     regex: #/\\\[(.|\s)*?\\\]/#,
     terminatingRegex: #/\\\]/#,
     equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
-  private static let named = EquationComponent(
-    regex: #/\\begin{equation}(.|\s)*\\end{equation}/#,
+  static let named = EquationComponent(
+    regex: #/\\begin{equation}(.|\s)*?\\end{equation}/#,
     terminatingRegex: #/\\end{equation}/#,
     equation: .namedEquation,
     supportsRecursion: true)
   
   /// A named no number equation component.
-  private static let namedNoNumber = EquationComponent(
-    regex: #/\\begin{equation\*}(.|\s)*\\end{equation\*}/#,
+  static let namedNoNumber = EquationComponent(
+    regex: #/\\begin{equation\*}(.|\s)*?\\end{equation\*}/#,
     terminatingRegex: #/\\end{equation\*}/#,
     equation: .namedNoNumberEquation,
     supportsRecursion: true)
   
   // Order matters
-  private static let allEquations: [EquationComponent] = [
+  static let allEquations: [EquationComponent] = [
     inline,
     tex,
     block,
@@ -182,25 +182,6 @@ extension Parser {
     else {
       return components + parse(remainingString)
     }
-  }
-  
-}
-
-// MARK: Private static methods
-
-extension Parser {
-  
-  /// Determines if an index is smaller than all of the indexes in another
-  /// array.
-  ///
-  /// - Parameters:
-  ///   - index: The index to compare.
-  ///   - indexes: The indexes. The value `index` should not be present in this.
-  /// - Returns: A boolean.
-  private static func isSmallest(_ index: String.Index?, outOf indexes: [String.Index?]) -> Bool {
-    guard let index = index else { return false }
-    let indexes = indexes.filter({ $0 != nil }).map({ $0! }) as! [String.Index]
-    return indexes.first(where: { $0 < index }) == nil
   }
   
 }
