@@ -9,7 +9,7 @@ import Foundation
 import Logging
 
 /// The applications main logger.
-public var logger: Logger = {
+fileprivate var logger: Logger = {
   var log = Logger(label: "latexswiftui")
   
 #if DEBUG
@@ -22,7 +22,7 @@ public var logger: Logger = {
 }()
 
 @inlinable
-public func logError(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
+internal func logError(_ message: String, _ file: StaticString = #file, _ function: StaticString = #function, _ line: UInt = #line) {
   logger.error(createMessage(from: message, file: file, function: function, line: line))
 }
 
@@ -33,7 +33,7 @@ public func logError(_ message: String, _ file: StaticString = #file, _ function
 ///   - file: The file string.
 ///   - line: The line number.
 /// - Returns: A formatted logger message.
-public func createMessage(from message: String, file: StaticString, function: StaticString, line: UInt) -> Logger.Message {
+internal func createMessage(from message: String, file: StaticString, function: StaticString, line: UInt) -> Logger.Message {
   let filename = ("\(file)".components(separatedBy: "/").last ?? "").components(separatedBy: ".").first ?? ""
   let function = "\(function)".components(separatedBy: "(").first ?? ""
   return Logger.Message("[\(filename).\(function):\(line)] \(message)")
