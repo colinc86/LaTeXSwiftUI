@@ -91,7 +91,7 @@ internal class Renderer {
       dataCache = try DataCache(name: "mathJaxRenderDataCache")
     }
     catch {
-      logError("Error creating DataCache instance: \(error)")
+      NSLog("Error creating DataCache instance: \(error)")
       dataCache = nil
     }
     
@@ -101,7 +101,7 @@ internal class Renderer {
       mathjax = try MathJax(preferredOutputFormat: .svg)
     }
     catch {
-      logError("Error creating MathJax instance: \(error)")
+      NSLog("Error creating MathJax instance: \(error)")
       mathjax = nil
     }
   }
@@ -139,7 +139,7 @@ extension Renderer {
         newBlocks.append(ComponentBlock(components: newComponents))
       }
       catch {
-        logError("Error rendering block: \(error)")
+        NSLog("Error rendering block: \(error)")
         newBlocks.append(block)
         continue
       }
