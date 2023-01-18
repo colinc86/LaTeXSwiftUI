@@ -42,35 +42,35 @@ internal struct Parser {
   
   /// An inline equation component.
   static let inline = EquationComponent(
-    regex: #/\$(.|\s)*?\$/#,
+    regex: #/\$(.*?)\$/#,
     terminatingRegex: #/\$/#,
     equation: .inlineEquation,
     supportsRecursion: false)
   
   /// An TeX-style block equation component.
   static let tex = EquationComponent(
-    regex: #/\$\$(.|\s)*?\$\$/#,
+    regex: #/\$\$(.*?)\$\$/#,
     terminatingRegex: #/\$\$/#,
     equation: .texEquation,
     supportsRecursion: false)
   
   /// A block equation.
   static let block = EquationComponent(
-    regex: #/\\\[(.|\s)*?\\\]/#,
+    regex: #/\\\[(.*?)\\\]/#,
     terminatingRegex: #/\\\]/#,
     equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
   static let named = EquationComponent(
-    regex: #/\\begin{equation}(.|\s)*?\\end{equation}/#,
+    regex: #/\\begin{equation}(.*?)\\end{equation}/#,
     terminatingRegex: #/\\end{equation}/#,
     equation: .namedEquation,
     supportsRecursion: true)
   
   /// A named no number equation component.
   static let namedNoNumber = EquationComponent(
-    regex: #/\\begin{equation\*}(.|\s)*?\\end{equation\*}/#,
+    regex: #/\\begin{equation\*}(.*?)\\end{equation\*}/#,
     terminatingRegex: #/\\end{equation\*}/#,
     equation: .namedNoNumberEquation,
     supportsRecursion: true)
