@@ -92,6 +92,30 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .text)
   }
   
+  func testParseDoubleDollarOnly_LeadingLineBreak() {
+    let equation = "\nf(x)=5x+2"
+    let input = "$$\(equation)$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .texEquation)
+  }
+  
+  func testParseDoubleDollarOnly_TrailingLineBreak() {
+    let equation = "f(x)=5x+2\n"
+    let input = "$$\(equation)$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .texEquation)
+  }
+  
+  func testParseDoubleDollarOnly_Whitespace() {
+    let equation = " \nf(x)=5x+2\n "
+    let input = "$$\(equation)$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .texEquation)
+  }
+  
   func testParseBracketsOnly() {
     let input = "\\[\\TeX\\]"
     let components = Parser.parse(input)
@@ -122,11 +146,28 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .text)
   }
   
-  func testParseBracketsOnly_LineBreak() {
-    let input = "Hello, \\[\\TeX\n\\\\]!"
+  func testParseBracketsOnly_LeadingLineBreak() {
+    let equation = "\n\\TeX"
+    let input = "Hello, \\[\(equation)\\]!"
     let components = Parser.parse(input)
-    XCTAssertEqual(components.count, 1)
-    assertComponent(components, 0, input, .text)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .blockEquation)
+  }
+  
+  func testParseBracketsOnly_TrailingLineBreak() {
+    let equation = "\\TeX\n"
+    let input = "Hello, \\[\(equation)\\]!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .blockEquation)
+  }
+  
+  func testParseBracketsOnly_Whitespace() {
+    let equation = " \n\\TeX\n "
+    let input = "Hello, \\[\(equation)\\]!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .blockEquation)
   }
   
   func testParseBeginEndOnly() {
@@ -159,11 +200,28 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .text)
   }
   
-  func testParseBeginEndOnly_LineBreak() {
-    let input = "Hello, \\begin{equation}\\TeX\n\\\\end{equation}!"
+  func testParseBeginEndOnly_LeadingLineBreak() {
+    let equation = "\n\\TeX"
+    let input = "Hello, \\begin{equation}\(equation)\\end{equation}!"
     let components = Parser.parse(input)
-    XCTAssertEqual(components.count, 1)
-    assertComponent(components, 0, input, .text)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedEquation)
+  }
+  
+  func testParseBeginEndOnly_TrailingLineBreak() {
+    let equation = "\\TeX\n"
+    let input = "Hello, \\begin{equation}\(equation)\\end{equation}!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedEquation)
+  }
+  
+  func testParseBeginEndOnly_Whitespace() {
+    let equation = " \n\\TeX\n "
+    let input = "Hello, \\begin{equation}\(equation)\\end{equation}!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedEquation)
   }
   
   func testParseBeginEndStarOnly() {
@@ -196,11 +254,28 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .text)
   }
   
-  func testParseBeginEndStarOnly_LineBreak() {
-    let input = "Hello, \\begin{equation*}\\TeX\n\\\\end{equation*}!"
+  func testParseBeginEndStarOnly_LeadingLineBreak() {
+    let equation = "\n\\TeX"
+    let input = "Hello, \\begin{equation*}\(equation)\\end{equation*}!"
     let components = Parser.parse(input)
-    XCTAssertEqual(components.count, 1)
-    assertComponent(components, 0, input, .text)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedNoNumberEquation)
+  }
+  
+  func testParseBeginEndStarOnly_TrailingLineBreak() {
+    let equation = "\\TeX\n"
+    let input = "Hello, \\begin{equation*}\(equation)\\end{equation*}!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedNoNumberEquation)
+  }
+  
+  func testParseBeginEndStarOnly_Whitespace() {
+    let equation = " \n\\TeX\n "
+    let input = "Hello, \\begin{equation*}\(equation)\\end{equation*}!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 1, equation, .namedNoNumberEquation)
   }
 
 }

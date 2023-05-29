@@ -2,7 +2,7 @@ import MathJaxSwift
 import XCTest
 @testable import LaTeXSwiftUI
 
-final class LaTeXSwiftUITests: XCTestCase {
+final class GeometryTests: XCTestCase {
   
   func testSVGGeometry_parseAlignment() {
     let input = "\"vertical-align: -1.602ex;\""

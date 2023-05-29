@@ -49,28 +49,28 @@ internal struct Parser {
   
   /// An TeX-style block equation component.
   static let tex = EquationComponent(
-    regex: #/\$\$(.*?)\$\$/#,
+    regex: #/\$\$\s*(.*?)\s*\$\$/#,
     terminatingRegex: #/\$\$/#,
     equation: .texEquation,
     supportsRecursion: false)
   
   /// A block equation.
   static let block = EquationComponent(
-    regex: #/\\\[(.*?)\\\]/#,
+    regex: #/\\\[\s*(.*?)\s*\\\]/#,
     terminatingRegex: #/\\\]/#,
     equation: .blockEquation,
     supportsRecursion: false)
   
   /// A named equation component.
   static let named = EquationComponent(
-    regex: #/\\begin{equation}(.*?)\\end{equation}/#,
+    regex: #/\\begin{equation}\s*(.*?)\s*\\end{equation}/#,
     terminatingRegex: #/\\end{equation}/#,
     equation: .namedEquation,
     supportsRecursion: true)
   
   /// A named no number equation component.
   static let namedNoNumber = EquationComponent(
-    regex: #/\\begin{equation\*}(.*?)\\end{equation\*}/#,
+    regex: #/\\begin{equation\*}\s*(.*?)\s*\\end{equation\*}/#,
     terminatingRegex: #/\\end{equation\*}/#,
     equation: .namedNoNumberEquation,
     supportsRecursion: true)
