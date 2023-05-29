@@ -24,6 +24,7 @@
 //
 
 import Foundation
+import CoreGraphics
 
 extension CGRect: Hashable {
   
