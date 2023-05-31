@@ -1,6 +1,6 @@
 # LaTeXSwiftUI
 
-A SwiftUI view that renders LaTeX.
+A SwiftUI view that renders LaTeX equations.
 
 ![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
@@ -8,6 +8,7 @@ A SwiftUI view that renders LaTeX.
 
 ## 📖 Contents
 
+- [About](#ℹ️-about)
 - [Installation](#📦-installation)
 - [Usage](#⌨️-usage)
   - [Modifiers](#⚙️-modifiers)
@@ -19,6 +20,19 @@ A SwiftUI view that renders LaTeX.
     - [TeX Options](#♾️-tex-options)
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
+  
+## ℹ️ About
+
+`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations that contain math-mode marcos.
+
+The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org). Thus, the limitations of the view are heavily influenced by the [limitations](https://docs.mathjax.org/en/v2.7-latest/tex.html#differences) of MathJax.
+
+It will
+- render TeX and LaTeX equations (math-mode macros),
+- and render the `\text{}` macro within equations.
+
+It won't
+- render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
 
 ## 📦 Installation
 
@@ -62,7 +76,7 @@ Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more
 
 #### 🔤 Parsing Mode
 
-`LaTexSwiftUI` can parse and render equations (aside from the entire input string) defined with the following terminators.
+Text input can either be completely rendered, or the view can search for top-level equations delimited by the following terminators.
 
 | Terminators |
 |-------------|
@@ -72,15 +86,20 @@ Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more
 | `\begin{equation}...\end{equation}` |
 | `\begin{equation*}...\end{equation*}` |
 
-Text input can either be completely rendered, or `LaTeXSwiftUI` can search for top-level equations. The default behavior is to only render equations with `onlyEquations`. Use the `parsingMode` modifier to change the default behavior.
+ The default behavior is to only render equations with `onlyEquations`. Use the `parsingMode` modifier to change the default behavior.
 
 ```swift
+// Only parse equations (default)
+LaTeX("Euler's identity is $e^{i\\pi}+1=0$.")
+  .font(.system(size: 18))
+  .parsingMode(.onlyEquations)
+
 // Parse the entire input
-LaTeX("e^{i\\pi}+1=0")
+LaTeX("\\text{Euler's identity is } e^{i\\pi}+1=0\\text{.}")
   .parsingMode(.all)
 ```
 
-> <img src="./assets/images/euler.png" width="75" height="19.5">
+> <img src="./assets/images/euler.png" width="293" height="80">
 
 #### 🌄 Image Rendering Mode
 
@@ -152,7 +171,7 @@ Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX
 LaTeX("$x^2&lt;1$")
   .errorMode(.error)
 
-// Replace "lt;" with "<"
+// Replace "&lt;" with "<"
 LaTeX("$x^2&lt;1$")
   .unencoded()
 ```

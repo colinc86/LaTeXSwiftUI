@@ -17,7 +17,7 @@ let package = Package(
   dependencies: [
      .package(url: "https://github.com/colinc86/MathJaxSwift", from: "3.2.2"),
      .package(url: "https://github.com/exyte/SVGView", from: "1.0.4"),
-     .package(url: "https://github.com/kean/Nuke", from: "11.3.1"),
+     .package(url: "https://github.com/kean/Nuke", from: "12.1.0"),
      .package(url: "https://github.com/Kitura/swift-html-entities", from: "4.0.1")
   ],
   targets: [
