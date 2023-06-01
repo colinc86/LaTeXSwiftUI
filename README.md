@@ -4,7 +4,7 @@ A SwiftUI view that renders LaTeX equations.
 
 ![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
-<center><img src="./assets/images/device.png" width="362" height="707"></center>
+<center><img src="./assets/images/device.png" height="362"></center>
 
 ## 📖 Contents
 
@@ -16,8 +16,12 @@ A SwiftUI view that renders LaTeX equations.
     - [Image Rendering Mode](#🌄-image-rendering-mode)
     - [Error Mode](#🚨-error-mode)
     - [Block Rendering Mode](#🧱-block-rendering-mode)
+    - [Numbered Block Equations](#🔢-numbered-block-equations)
+      - [Equation Number Mode](#equation-number-mode)
+      - [Equation Number Start](#equation-number-start)
+      - [Equation Number Offset](#equation-number-offset)
     - [Unencode HTML](#🔗-unencode-html)
-    - [TeX Options](#♾️-tex-options)
+    - [TeX Options](#♾️-tex-options (deprecated))
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
@@ -39,7 +43,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.0.4")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.1.0")
 ```
 
 ## ⌨️ Usage
@@ -121,6 +125,8 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
 
 When an error occurs while parsing the input the view will display the original LaTeX. You can change this behavior by modifying the view's `errorMode`.
 
+> Note: when the `rendered` mode is used, MathJax is instructed to load the `noerrors` and `noundefined` packages. In the other two modes, `original` and `error`, these packages are not loaded by MathJax and errors are either displayed in the view, or caught and replaced with the original text.
+
 ```swift
 // Display the original text instead of the equation
 LaTeX("$\\asdf$")
@@ -163,6 +169,41 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
 
 > <img src="./assets/images/blocks.png" width="430" height="350">
 
+#### 🔢 Numbered Block Equations
+
+The `LaTeX` view can do simple numbering of block equations with the `blockViews` block mode.
+
+##### Equation Number Mode
+
+Use the `equationNumberMode` modifier to change between `left`, `right` and `none`.
+
+##### Equation Number Start
+
+The default starting number is `1`, but if you need to start at a different value, you can specify it with the `equationNumberStart` modifier.
+
+##### Equation Number Offset
+
+To change the left or right offset of the equation number, use the `equationNumberOffset` modifier.
+
+```swift
+// Don't number block equations (default)
+LaTeX("$$a + b = c$$")
+  .equationNumberMode(.none)
+
+// Add left numbers and a leading offset
+LaTeX("$$d + e = f$$")
+  .equationNumberMode(.left)
+  .equationNumberOffset(10)
+
+// Add right numbers, a leading offset, and start at 2
+LaTeX("$$h + i = j$$ $$k + l = m$$")
+  .equationNumberMode(.right)
+  .equationNumberStart(2)
+  .equationNumberOffset(20)
+```
+
+> <img src="./assets/images/numbers.png">
+
 #### 🔗 Unencode HTML
 
 Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
@@ -178,7 +219,7 @@ LaTeX("$x^2&lt;1$")
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
 
-#### ♾️ TeX Options
+#### ♾️ TeX Options (deprecated)
 
 For more control over the MathJax rendering, you can pass a `TeXInputProcessorOptions` object to the view.
 
@@ -215,3 +256,5 @@ VStack {
   }
 }
 ```
+
+Keep in mind that SVG data and images are rendered as a result of the view's environment, so it is important to call the `preload` method using the same values that will be used when drawing the view.

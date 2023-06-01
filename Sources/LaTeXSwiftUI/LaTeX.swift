@@ -68,6 +68,12 @@ public struct LaTeX: View {
     case error
   }
   
+  public enum EquationNumberMode {
+    case none
+    case left
+    case right
+  }
+  
   /// The package's shared data cache.
   public static var dataCache: DataCache? {
     Renderer.shared.dataCache
@@ -103,6 +109,11 @@ public struct LaTeX: View {
   /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
   
+  @Environment(\.processEscapes) private var processEscapes
+  @Environment(\.equationNumberMode) private var equationNumberMode
+  @Environment(\.equationNumberStart) private var equationNumberStart
+  @Environment(\.equationNumberOffset) private var equationNumberOffset
+  
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
   
@@ -114,11 +125,25 @@ public struct LaTeX: View {
   
   /// The blocks to render.
   private var blocks: [ComponentBlock] {
-    Renderer.shared.render(
+    let options = texOptions
+    var packages = TeXInputProcessorOptions.Packages.all
+    if errorMode != .rendered {
+      if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
+        packages.remove(at: noErrorsIndex)
+      }
+      if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
+        packages.remove(at: noUndefinedIndex)
+      }
+    }
+    
+    options.loadPackages = packages
+    options.processEscapes = processEscapes
+    
+    return Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
-      texOptions: texOptions)
+      texOptions: options)
   }
   
   // MARK: Initializers
@@ -149,26 +174,89 @@ public struct LaTeX: View {
 
 extension LaTeX {
   
+  @MainActor public func preload(
+    unencodeHTML: Bool = false,
+    parsingMode: ParsingMode = .onlyEquations,
+    errorMode: ErrorMode = .rendered,
+    imageRenderingMode: Image.TemplateRenderingMode = .template,
+    font: Font = .body,
+    displayScale: CGFloat = 1.0,
+    processEscapes: Bool
+  ) -> LaTeX {
+    var packages = TeXInputProcessorOptions.Packages.all
+    if errorMode != .rendered {
+      if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
+        packages.remove(at: noErrorsIndex)
+      }
+      if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
+        packages.remove(at: noUndefinedIndex)
+      }
+    }
+    
+    let options = TeXInputProcessorOptions(loadPackages: packages)
+    options.processEscapes = processEscapes
+    
+    // Render the blocks
+    let preloadedBlocks = Renderer.shared.render(
+      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
+      font: font,
+      displayScale: displayScale,
+      texOptions: options)
+    
+    // Render the images
+    for block in preloadedBlocks {
+      for component in block.components where component.type.isEquation {
+        guard let svg = component.svg else { continue }
+        _ = Renderer.shared.convertToImage(
+          svg: svg,
+          font: font,
+          displayScale: displayScale,
+          renderingMode: imageRenderingMode)
+      }
+    }
+    return self
+  }
+  
   /// Preloads the view's components.
   ///
   /// - Note: You must set this method's parameters the same as its environment
   ///   or call it is ineffective and adds additional computational overhead.
   ///
   /// - Returns: A LaTeX view whose components have been preloaded.
+  @available(*, deprecated, message: "This method will be unavailable in the next version.")
   @MainActor public func preload(
     unencodeHTML: Bool = false,
     parsingMode: ParsingMode = .onlyEquations,
     imageRenderingMode: Image.TemplateRenderingMode = .template,
     font: Font = .body,
     displayScale: CGFloat = 1.0,
-    texOptions: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
+    texOptions: TeXInputProcessorOptions? = nil
   ) -> LaTeX {
+    let options: TeXInputProcessorOptions
+    if let texOptions {
+      options = texOptions
+    }
+    else {
+      var packages = TeXInputProcessorOptions.Packages.all
+      if errorMode != .rendered {
+        if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
+          packages.remove(at: noErrorsIndex)
+        }
+        if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
+          packages.remove(at: noUndefinedIndex)
+        }
+      }
+      
+      options = TeXInputProcessorOptions(loadPackages: packages)
+      options.processEscapes = processEscapes
+    }
+    
     // Render the blocks
     let preloadedBlocks = Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font,
       displayScale: displayScale,
-      texOptions: texOptions)
+      texOptions: options)
     
     // Render the images
     for block in preloadedBlocks {
@@ -215,10 +303,28 @@ extension LaTeX {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock,
-           let (image, size) = image(for: block) {
-          HorizontalImageScroller(
-            image: image,
-            height: size.height)
+           let (image, size, errorText) = image(for: block) {
+          HStack(spacing: 0) {
+            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
+            
+            if let errorText = errorText, errorMode != .rendered {
+              switch errorMode {
+              case .error:
+                Text(errorText)
+              case .original:
+                Text(block.components.first?.originalText ?? "")
+              default:
+                EmptyView()
+              }
+            }
+            else {
+              HorizontalImageScroller(
+                image: image,
+                height: size.height)
+            }
+            
+            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
+          }
         }
         else {
           text(for: block)
@@ -248,8 +354,8 @@ extension LaTeX {
   /// If the block isn't an equation block, then this method returns `nil`.
   ///
   /// - Parameter block: The block.
-  /// - Returns: The image and its size.
-  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize)? {
+  /// - Returns: The image, its size, and any associated error text.
+  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize, String?)? {
     guard block.isEquationBlock,
           let component = block.components.first else {
       return nil
@@ -302,6 +408,24 @@ struct LaTeX_Previews: PreviewProvider {
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
+    
+    VStack {
+      
+      // Don't number block equations (default)
+      LaTeX("$$a + b = c$$")
+        .equationNumberMode(.none)
+      
+      // Add left numbers and a leading offset
+      LaTeX("$$d + e = f$$")
+        .equationNumberMode(.left)
+        .equationNumberOffset(10)
+      
+      // Add right numbers, a leading offset, and start at 2
+      LaTeX("$$h + i = j$$ $$k + l = m$$")
+        .equationNumberMode(.right)
+        .equationNumberStart(2)
+        .equationNumberOffset(20)
+    }
   }
   
 }

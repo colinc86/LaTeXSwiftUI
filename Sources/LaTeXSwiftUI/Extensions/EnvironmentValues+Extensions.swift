@@ -50,6 +50,22 @@ private struct TeXInputProcessorOptionsKey: EnvironmentKey {
   static let defaultValue: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
 }
 
+private struct ProcessEscapesKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
+private struct EquationNumberModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.EquationNumberMode = .none
+}
+
+private struct EquationNumberStartKey: EnvironmentKey {
+  static let defaultValue: Int = 1
+}
+
+private struct EquationNumberOffsetKey: EnvironmentKey {
+  static let defaultValue: CGFloat = 0.0
+}
+
 extension EnvironmentValues {
   
   /// The image rendering mode of this environment.
@@ -86,6 +102,26 @@ extension EnvironmentValues {
   var texOptions: TeXInputProcessorOptions {
     get { self[TeXInputProcessorOptionsKey.self] }
     set { self[TeXInputProcessorOptionsKey.self] = newValue }
+  }
+  
+  var processEscapes: Bool {
+    get { self[ProcessEscapesKey.self] }
+    set { self[ProcessEscapesKey.self] = newValue }
+  }
+  
+  var equationNumberMode: LaTeX.EquationNumberMode {
+    get { self[EquationNumberModeKey.self] }
+    set { self[EquationNumberModeKey.self] = newValue }
+  }
+  
+  var equationNumberStart: Int {
+    get { self[EquationNumberStartKey.self] }
+    set { self[EquationNumberStartKey.self] = newValue }
+  }
+  
+  var equationNumberOffset: CGFloat {
+    get { self[EquationNumberOffsetKey.self] }
+    set { self[EquationNumberOffsetKey.self] = newValue }
   }
   
 }

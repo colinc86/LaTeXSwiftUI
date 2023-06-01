@@ -47,9 +47,10 @@ public extension View {
   
   /// Unencodes HTML input text.
   ///
+  /// - Parameter unencode: Whether the variable should be set to true or false.
   /// - Returns: A view that displays unencoded text.
-  func unencoded() -> some View {
-    environment(\.unencodeHTML, true)
+  func unencoded(_ unencode: Bool = true) -> some View {
+    environment(\.unencodeHTML, unencode)
   }
   
   /// Sets the parsing mode to use when parsing LaTeX input.
@@ -71,11 +72,34 @@ public extension View {
   /// Sets the TeX options for any images rendered with MathJax in this
   /// environment.
   ///
+  /// - Note: The environment values `processEscapes`, `equationTags`,
+  ///   `equationTagSide`, and `equationTagIndent` take precedence.
+  ///
   /// - Parameter options: The TeX input processor options.
   /// - Returns: A view that uses the given TeX input processor options to
   ///   render images in its view.
+  @available(*, deprecated, message: """
+This method will be unavailable in the next version. Use the `processEscapes`,
+`equationTags`, `equationTagSide`, and `equationTagIndent` methods instead.
+""")
   func texOptions(_ options: TeXInputProcessorOptions) -> some View {
     environment(\.texOptions, options)
+  }
+  
+  func processEscapes(_ process: Bool = true) -> some View {
+    environment(\.processEscapes, process)
+  }
+  
+  func equationNumberMode(_ mode: LaTeX.EquationNumberMode) -> some View {
+    environment(\.equationNumberMode, mode)
+  }
+  
+  func equationNumberStart(_ value: Int) -> some View {
+    environment(\.equationNumberStart, value)
+  }
+  
+  func equationNumberOffset(_ offset: CGFloat) -> some View {
+    environment(\.equationNumberOffset, offset)
   }
   
 }
