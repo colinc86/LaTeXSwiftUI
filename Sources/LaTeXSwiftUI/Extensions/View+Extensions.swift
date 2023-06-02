@@ -28,6 +28,31 @@ import SwiftUI
 
 public extension View {
   
+  /// Preloads a `LaTeX` view's SVG and image data.
+  ///
+  /// This method should be called last in the view's modifier chain (if at
+  /// all).
+  ///
+  /// - Example:
+  ///
+  /// ```
+  /// LaTeX("Hello, $\\LaTeX$!")
+  ///   .font(.title)
+  ///   .processEscapes()
+  ///   .preload()
+  /// ```
+  ///
+  /// - Note: If the receiver isn't a `LaTeX` view, then this method does
+  ///   nothing.
+  ///
+  /// - Returns: A preloaded view.
+  @MainActor func preload() -> some View {
+    if let latex = self as? LaTeX {
+      latex.preload()
+    }
+    return self
+  }
+  
   /// Sets the image rendering mode for images rendered by MathJax.
   ///
   /// - Parameter mode: The template rendering mode.
@@ -67,24 +92,6 @@ public extension View {
   /// - Returns: A view that applies the given block mode to block equations.
   func blockMode(_ mode: LaTeX.BlockMode) -> some View {
     environment(\.blockMode, mode)
-  }
-  
-  /// Sets the TeX options for any images rendered with MathJax in this
-  /// environment.
-  ///
-  /// - Note: The environment values `processEscapes`, `equationTags`,
-  ///   `equationTagSide`, and `equationTagIndent` take precedence.
-  ///
-  /// - Parameter options: The TeX input processor options.
-  /// - Returns: A view that uses the given TeX input processor options to
-  ///   render images in its view.
-  @available(*, deprecated, message: """
-This method will be unavailable in the next version. Use the `processEscapes`,
-`equationNumberMode`, `equationNumberStart`, and `equationNumberOffset` methods
-instead.
-""")
-  func texOptions(_ options: TeXInputProcessorOptions) -> some View {
-    environment(\.texOptions, options)
   }
   
   /// When set to `true`, you may use `\$` to represent a literal dollar sign,

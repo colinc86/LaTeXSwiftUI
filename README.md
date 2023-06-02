@@ -21,19 +21,20 @@ A SwiftUI view that renders LaTeX equations.
       - [Equation Number Start](#equation-number-start)
       - [Equation Number Offset](#equation-number-offset)
     - [Unencode HTML](#🔗-unencode-html)
-    - [TeX Options](#♾️-tex-options (deprecated))
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
 ## ℹ️ About
 
-`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations that contain math-mode marcos.
+`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode marcos.
 
 The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org). Thus, the limitations of the view are heavily influenced by the [limitations](https://docs.mathjax.org/en/v2.7-latest/tex.html#differences) of MathJax.
 
 It will
 - render TeX and LaTeX equations (math-mode macros),
-- and render the `\text{}` macro within equations.
+- render the `\text{}` macro within equations,
+- attempt to render block equations as a Tex or LaTeX engine would,
+- and number block equations (if desired).
 
 It won't
 - render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
@@ -248,13 +249,18 @@ LaTeX.imageCache.removeAll()
 
 SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
 
+SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.
+
 ```swift
 VStack {
   ForEach(expressions, id: \.self) { expression in
     LaTeX(expression)
+      .font(.caption2)
+      .foregroundColor(.green)
+      .unencoded()
+      .errorMode(.error)
+      .processEscapes()
       .preload()
   }
 }
 ```
-
-Keep in mind that SVG data and images are rendered as a result of the view's environment, so it is important to call the `preload` method using the same values that will be used when drawing the view.

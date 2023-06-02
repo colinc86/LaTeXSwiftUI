@@ -46,10 +46,6 @@ private struct BlockModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.BlockMode = .blockViews
 }
 
-private struct TeXInputProcessorOptionsKey: EnvironmentKey {
-  static let defaultValue: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
-}
-
 private struct ProcessEscapesKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
@@ -96,12 +92,6 @@ extension EnvironmentValues {
   var blockMode: LaTeX.BlockMode {
     get { self[BlockModeKey.self] }
     set { self[BlockModeKey.self] = newValue }
-  }
-  
-  /// The TeX options of this environment.
-  var texOptions: TeXInputProcessorOptions {
-    get { self[TeXInputProcessorOptionsKey.self] }
-    set { self[TeXInputProcessorOptionsKey.self] = newValue }
   }
   
   /// The processEscapes value of this environment.

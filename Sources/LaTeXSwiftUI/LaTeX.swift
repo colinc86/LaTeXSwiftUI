@@ -108,9 +108,6 @@ public struct LaTeX: View {
   /// The view's block rendering mode.
   @Environment(\.blockMode) private var blockMode
   
-  /// The TeX options to pass to MathJax.
-  @Environment(\.texOptions) private var texOptions
-  
   /// Whether the view should process escapes.
   @Environment(\.processEscapes) private var processEscapes
   
@@ -132,9 +129,11 @@ public struct LaTeX: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
-  /// The blocks to render.
-  private var blocks: [ComponentBlock] {
-    let options = texOptions
+  /// The TeX options to use when submitting requests to the renderer.
+  private var texOptions: TeXInputProcessorOptions {
+    let options = TeXInputProcessorOptions()
+    options.processEscapes = processEscapes
+    
     var packages = TeXInputProcessorOptions.Packages.all
     if errorMode != .rendered {
       if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
@@ -144,15 +143,17 @@ public struct LaTeX: View {
         packages.remove(at: noUndefinedIndex)
       }
     }
-    
     options.loadPackages = packages
-    options.processEscapes = processEscapes
-    
-    return Renderer.shared.render(
+    return options
+  }
+  
+  /// The blocks to render.
+  internal var blocks: [ComponentBlock] {
+    Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
-      texOptions: options)
+      texOptions: texOptions)
   }
   
   // MARK: Initializers
@@ -183,102 +184,16 @@ public struct LaTeX: View {
 
 extension LaTeX {
   
-  @MainActor public func preload(
-    unencodeHTML: Bool = false,
-    parsingMode: ParsingMode = .onlyEquations,
-    errorMode: ErrorMode = .rendered,
-    imageRenderingMode: Image.TemplateRenderingMode = .template,
-    font: Font = .body,
-    displayScale: CGFloat = 1.0,
-    processEscapes: Bool
-  ) -> LaTeX {
-    var packages = TeXInputProcessorOptions.Packages.all
-    if errorMode != .rendered {
-      if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
-        packages.remove(at: noErrorsIndex)
-      }
-      if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
-        packages.remove(at: noUndefinedIndex)
-      }
+  /// Preloads the view's SVG and image data.
+  @MainActor public func preload() {
+    switch blockMode {
+    case .alwaysInline:
+      blocksAsText(blocks, forceInline: true)
+    case .blockText:
+      blocksAsText(blocks)
+    case .blockViews:
+      blocksAsStack(blocks)
     }
-    
-    let options = TeXInputProcessorOptions(loadPackages: packages)
-    options.processEscapes = processEscapes
-    
-    // Render the blocks
-    let preloadedBlocks = Renderer.shared.render(
-      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
-      font: font,
-      displayScale: displayScale,
-      texOptions: options)
-    
-    // Render the images
-    for block in preloadedBlocks {
-      for component in block.components where component.type.isEquation {
-        guard let svg = component.svg else { continue }
-        _ = Renderer.shared.convertToImage(
-          svg: svg,
-          font: font,
-          displayScale: displayScale,
-          renderingMode: imageRenderingMode)
-      }
-    }
-    return self
-  }
-  
-  /// Preloads the view's components.
-  ///
-  /// - Note: You must set this method's parameters the same as its environment
-  ///   or call it is ineffective and adds additional computational overhead.
-  ///
-  /// - Returns: A LaTeX view whose components have been preloaded.
-  @available(*, deprecated, message: "This method will be unavailable in the next version.")
-  @MainActor public func preload(
-    unencodeHTML: Bool = false,
-    parsingMode: ParsingMode = .onlyEquations,
-    imageRenderingMode: Image.TemplateRenderingMode = .template,
-    font: Font = .body,
-    displayScale: CGFloat = 1.0,
-    texOptions: TeXInputProcessorOptions? = nil
-  ) -> LaTeX {
-    let options: TeXInputProcessorOptions
-    if let texOptions {
-      options = texOptions
-    }
-    else {
-      var packages = TeXInputProcessorOptions.Packages.all
-      if errorMode != .rendered {
-        if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
-          packages.remove(at: noErrorsIndex)
-        }
-        if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
-          packages.remove(at: noUndefinedIndex)
-        }
-      }
-      
-      options = TeXInputProcessorOptions(loadPackages: packages)
-      options.processEscapes = processEscapes
-    }
-    
-    // Render the blocks
-    let preloadedBlocks = Renderer.shared.render(
-      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
-      font: font,
-      displayScale: displayScale,
-      texOptions: options)
-    
-    // Render the images
-    for block in preloadedBlocks {
-      for component in block.components where component.type.isEquation {
-        guard let svg = component.svg else { continue }
-        _ = Renderer.shared.convertToImage(
-          svg: svg,
-          font: font,
-          displayScale: displayScale,
-          renderingMode: imageRenderingMode)
-      }
-    }
-    return self
   }
   
 }
@@ -298,8 +213,8 @@ extension LaTeX {
     blocks.map { block in
       let text = text(for: block)
       return block.isEquationBlock && !forceInline ?
-        Text("\n") + text + Text("\n") :
-        text
+      Text("\n") + text + Text("\n") :
+      text
     }.reduce(Text(""), +)
   }
   
@@ -414,6 +329,7 @@ struct LaTeX_Previews: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.caption2)
         .foregroundColor(.purple)
+        .preload()
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
