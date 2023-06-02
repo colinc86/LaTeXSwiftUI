@@ -28,6 +28,31 @@ import SwiftUI
 
 public extension View {
   
+  /// Preloads a `LaTeX` view's SVG and image data.
+  ///
+  /// This method should be called last in the view's modifier chain (if at
+  /// all).
+  ///
+  /// - Example:
+  ///
+  /// ```
+  /// LaTeX("Hello, $\\LaTeX$!")
+  ///   .font(.title)
+  ///   .processEscapes()
+  ///   .preload()
+  /// ```
+  ///
+  /// - Note: If the receiver isn't a `LaTeX` view, then this method does
+  ///   nothing.
+  ///
+  /// - Returns: A preloaded view.
+  @MainActor func preload() -> some View {
+    if let latex = self as? LaTeX {
+      latex.preload()
+    }
+    return self
+  }
+  
   /// Sets the image rendering mode for images rendered by MathJax.
   ///
   /// - Parameter mode: The template rendering mode.
@@ -47,9 +72,10 @@ public extension View {
   
   /// Unencodes HTML input text.
   ///
+  /// - Parameter unencode: Whether the variable should be set to true or false.
   /// - Returns: A view that displays unencoded text.
-  func unencoded() -> some View {
-    environment(\.unencodeHTML, true)
+  func unencoded(_ unencode: Bool = true) -> some View {
+    environment(\.unencodeHTML, unencode)
   }
   
   /// Sets the parsing mode to use when parsing LaTeX input.
@@ -68,14 +94,47 @@ public extension View {
     environment(\.blockMode, mode)
   }
   
-  /// Sets the TeX options for any images rendered with MathJax in this
-  /// environment.
+  /// When set to `true`, you may use `\$` to represent a literal dollar sign,
+  /// rather than using it as a math delimiter, and `\\` to represent a literal
+  /// backslash (so that you can use `\\\$` to get a literal `\$` or `\\$...$`
+  /// to get a backslash just before in-line math).
   ///
-  /// - Parameter options: The TeX input processor options.
-  /// - Returns: A view that uses the given TeX input processor options to
-  ///   render images in its view.
-  func texOptions(_ options: TeXInputProcessorOptions) -> some View {
-    environment(\.texOptions, options)
+  /// When `false`, `\$` will not be altered, and its dollar sign may be
+  /// considered part of a math delimiter. Typically this is set to `true` if
+  /// you enable the `$ ... $` in-line delimiters, so you can type `\$` and
+  /// MathJax will convert it to a regular dollar sign in the rendered document.
+  ///
+  /// - Reference: [Option Descriptions](https://docs.mathjax.org/en/latest/options/input/tex.html#option-descriptions)
+  ///
+  /// - Parameter process: Whether escapes should be processed.
+  /// - Returns: A view that processes escapes in its text input.
+  func processEscapes(_ process: Bool = true) -> some View {
+    environment(\.processEscapes, process)
+  }
+  
+  /// Sets whether block view equation numbers should be hidden, displayed on
+  /// the left side of an equation, or displayed on the right side.
+  ///
+  /// - Parameter mode: The equation number mode.
+  /// - Returns: A view that numbers its equations.
+  func equationNumberMode(_ mode: LaTeX.EquationNumberMode) -> some View {
+    environment(\.equationNumberMode, mode)
+  }
+  
+  /// Sets the starting value for equation numbers in this view.
+  ///
+  /// - Parameter value: The starting value.
+  /// - Returns: A view that numbers its equations.
+  func equationNumberStart(_ value: Int) -> some View {
+    environment(\.equationNumberStart, value)
+  }
+  
+  /// Sets the number's left or right offset.
+  ///
+  /// - Parameter offset: The offset to set.
+  /// - Returns: A view that numbers its equations.
+  func equationNumberOffset(_ offset: CGFloat) -> some View {
+    environment(\.equationNumberOffset, offset)
   }
   
 }

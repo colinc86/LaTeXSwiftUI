@@ -46,8 +46,20 @@ private struct BlockModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.BlockMode = .blockViews
 }
 
-private struct TeXInputProcessorOptionsKey: EnvironmentKey {
-  static let defaultValue: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
+private struct ProcessEscapesKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
+private struct EquationNumberModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.EquationNumberMode = .none
+}
+
+private struct EquationNumberStartKey: EnvironmentKey {
+  static let defaultValue: Int = 1
+}
+
+private struct EquationNumberOffsetKey: EnvironmentKey {
+  static let defaultValue: CGFloat = 0.0
 }
 
 extension EnvironmentValues {
@@ -82,10 +94,28 @@ extension EnvironmentValues {
     set { self[BlockModeKey.self] = newValue }
   }
   
-  /// The TeX options of this environment.
-  var texOptions: TeXInputProcessorOptions {
-    get { self[TeXInputProcessorOptionsKey.self] }
-    set { self[TeXInputProcessorOptionsKey.self] = newValue }
+  /// The processEscapes value of this environment.
+  var processEscapes: Bool {
+    get { self[ProcessEscapesKey.self] }
+    set { self[ProcessEscapesKey.self] = newValue }
+  }
+  
+  /// The equation number mode of this environment.
+  var equationNumberMode: LaTeX.EquationNumberMode {
+    get { self[EquationNumberModeKey.self] }
+    set { self[EquationNumberModeKey.self] = newValue }
+  }
+  
+  /// The equation starting number of this environment.
+  var equationNumberStart: Int {
+    get { self[EquationNumberStartKey.self] }
+    set { self[EquationNumberStartKey.self] = newValue }
+  }
+  
+  /// The equation number offset of this environment.
+  var equationNumberOffset: CGFloat {
+    get { self[EquationNumberOffsetKey.self] }
+    set { self[EquationNumberOffsetKey.self] = newValue }
   }
   
 }

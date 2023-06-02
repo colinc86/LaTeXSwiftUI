@@ -216,10 +216,11 @@ extension Component {
           text = Text("")
         }
       }
-      else if let (image, _) = convertToImage(
+      else if let (image, _, _) = convertToImage(
         font: font,
         displayScale: displayScale,
-        renderingMode: renderingMode) {
+        renderingMode: renderingMode
+      ) {
         let xHeight = _Font.preferredFont(from: font).xHeight
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
         text = Text(image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
@@ -242,15 +243,18 @@ extension Component {
     font: Font,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode
-  ) -> (Image, CGSize)? {
+  ) -> (Image, CGSize, String?)? {
     guard let svg = svg else {
       return nil
     }
-    return Renderer.shared.convertToImage(
+    guard let imageData = Renderer.shared.convertToImage(
       svg: svg,
       font: font,
       displayScale: displayScale,
-      renderingMode: renderingMode)
+      renderingMode: renderingMode) else {
+      return nil
+    }
+    return (imageData.0, imageData.1, svg.errorText)
   }
   
 }

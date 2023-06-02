@@ -28,6 +28,8 @@ import MathJaxSwift
 import Nuke
 import SwiftUI
 
+/// A view that can parse and render TeX and LaTeX equations that contain
+/// math-mode marcos.
 public struct LaTeX: View {
   
   // MARK: Types
@@ -68,6 +70,12 @@ public struct LaTeX: View {
     case error
   }
   
+  public enum EquationNumberMode {
+    case none
+    case left
+    case right
+  }
+  
   /// The package's shared data cache.
   public static var dataCache: DataCache? {
     Renderer.shared.dataCache
@@ -100,8 +108,17 @@ public struct LaTeX: View {
   /// The view's block rendering mode.
   @Environment(\.blockMode) private var blockMode
   
-  /// The TeX options to pass to MathJax.
-  @Environment(\.texOptions) private var texOptions
+  /// Whether the view should process escapes.
+  @Environment(\.processEscapes) private var processEscapes
+  
+  /// The view's equation number mode.
+  @Environment(\.equationNumberMode) private var equationNumberMode
+  
+  /// The view's equation starting number.
+  @Environment(\.equationNumberStart) private var equationNumberStart
+  
+  /// The view's equation number's offset.
+  @Environment(\.equationNumberOffset) private var equationNumberOffset
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
@@ -112,8 +129,26 @@ public struct LaTeX: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
+  /// The TeX options to use when submitting requests to the renderer.
+  private var texOptions: TeXInputProcessorOptions {
+    let options = TeXInputProcessorOptions()
+    options.processEscapes = processEscapes
+    
+    var packages = TeXInputProcessorOptions.Packages.all
+    if errorMode != .rendered {
+      if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
+        packages.remove(at: noErrorsIndex)
+      }
+      if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
+        packages.remove(at: noUndefinedIndex)
+      }
+    }
+    options.loadPackages = packages
+    return options
+  }
+  
   /// The blocks to render.
-  private var blocks: [ComponentBlock] {
+  internal var blocks: [ComponentBlock] {
     Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font ?? .body,
@@ -149,39 +184,16 @@ public struct LaTeX: View {
 
 extension LaTeX {
   
-  /// Preloads the view's components.
-  ///
-  /// - Note: You must set this method's parameters the same as its environment
-  ///   or call it is ineffective and adds additional computational overhead.
-  ///
-  /// - Returns: A LaTeX view whose components have been preloaded.
-  @MainActor public func preload(
-    unencodeHTML: Bool = false,
-    parsingMode: ParsingMode = .onlyEquations,
-    imageRenderingMode: Image.TemplateRenderingMode = .template,
-    font: Font = .body,
-    displayScale: CGFloat = 1.0,
-    texOptions: TeXInputProcessorOptions = TeXInputProcessorOptions(loadPackages: TeXInputProcessorOptions.Packages.all)
-  ) -> LaTeX {
-    // Render the blocks
-    let preloadedBlocks = Renderer.shared.render(
-      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
-      font: font,
-      displayScale: displayScale,
-      texOptions: texOptions)
-    
-    // Render the images
-    for block in preloadedBlocks {
-      for component in block.components where component.type.isEquation {
-        guard let svg = component.svg else { continue }
-        _ = Renderer.shared.convertToImage(
-          svg: svg,
-          font: font,
-          displayScale: displayScale,
-          renderingMode: imageRenderingMode)
-      }
+  /// Preloads the view's SVG and image data.
+  @MainActor public func preload() {
+    switch blockMode {
+    case .alwaysInline:
+      blocksAsText(blocks, forceInline: true)
+    case .blockText:
+      blocksAsText(blocks)
+    case .blockViews:
+      blocksAsStack(blocks)
     }
-    return self
   }
   
 }
@@ -201,8 +213,8 @@ extension LaTeX {
     blocks.map { block in
       let text = text(for: block)
       return block.isEquationBlock && !forceInline ?
-        Text("\n") + text + Text("\n") :
-        text
+      Text("\n") + text + Text("\n") :
+      text
     }.reduce(Text(""), +)
   }
   
@@ -215,10 +227,28 @@ extension LaTeX {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock,
-           let (image, size) = image(for: block) {
-          HorizontalImageScroller(
-            image: image,
-            height: size.height)
+           let (image, size, errorText) = image(for: block) {
+          HStack(spacing: 0) {
+            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
+            
+            if let errorText = errorText, errorMode != .rendered {
+              switch errorMode {
+              case .error:
+                Text(errorText)
+              case .original:
+                Text(block.components.first?.originalText ?? "")
+              default:
+                EmptyView()
+              }
+            }
+            else {
+              HorizontalImageScroller(
+                image: image,
+                height: size.height)
+            }
+            
+            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
+          }
         }
         else {
           text(for: block)
@@ -248,8 +278,8 @@ extension LaTeX {
   /// If the block isn't an equation block, then this method returns `nil`.
   ///
   /// - Parameter block: The block.
-  /// - Returns: The image and its size.
-  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize)? {
+  /// - Returns: The image, its size, and any associated error text.
+  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize, String?)? {
     guard block.isEquationBlock,
           let component = block.components.first else {
       return nil
@@ -299,6 +329,7 @@ struct LaTeX_Previews: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.caption2)
         .foregroundColor(.purple)
+        .preload()
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
