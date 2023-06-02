@@ -80,24 +80,52 @@ public extension View {
   ///   render images in its view.
   @available(*, deprecated, message: """
 This method will be unavailable in the next version. Use the `processEscapes`,
-`equationTags`, `equationTagSide`, and `equationTagIndent` methods instead.
+`equationNumberMode`, `equationNumberStart`, and `equationNumberOffset` methods
+instead.
 """)
   func texOptions(_ options: TeXInputProcessorOptions) -> some View {
     environment(\.texOptions, options)
   }
   
+  /// When set to `true`, you may use `\$` to represent a literal dollar sign,
+  /// rather than using it as a math delimiter, and `\\` to represent a literal
+  /// backslash (so that you can use `\\\$` to get a literal `\$` or `\\$...$`
+  /// to get a backslash just before in-line math).
+  ///
+  /// When `false`, `\$` will not be altered, and its dollar sign may be
+  /// considered part of a math delimiter. Typically this is set to `true` if
+  /// you enable the `$ ... $` in-line delimiters, so you can type `\$` and
+  /// MathJax will convert it to a regular dollar sign in the rendered document.
+  ///
+  /// - Reference: [Option Descriptions](https://docs.mathjax.org/en/latest/options/input/tex.html#option-descriptions)
+  ///
+  /// - Parameter process: Whether escapes should be processed.
+  /// - Returns: A view that processes escapes in its text input.
   func processEscapes(_ process: Bool = true) -> some View {
     environment(\.processEscapes, process)
   }
   
+  /// Sets whether block view equation numbers should be hidden, displayed on
+  /// the left side of an equation, or displayed on the right side.
+  ///
+  /// - Parameter mode: The equation number mode.
+  /// - Returns: A view that numbers its equations.
   func equationNumberMode(_ mode: LaTeX.EquationNumberMode) -> some View {
     environment(\.equationNumberMode, mode)
   }
   
+  /// Sets the starting value for equation numbers in this view.
+  ///
+  /// - Parameter value: The starting value.
+  /// - Returns: A view that numbers its equations.
   func equationNumberStart(_ value: Int) -> some View {
     environment(\.equationNumberStart, value)
   }
   
+  /// Sets the number's left or right offset.
+  ///
+  /// - Parameter offset: The offset to set.
+  /// - Returns: A view that numbers its equations.
   func equationNumberOffset(_ offset: CGFloat) -> some View {
     environment(\.equationNumberOffset, offset)
   }

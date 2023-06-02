@@ -25,53 +25,71 @@
 
 import SwiftUI
 
+/// A view that draws a number next to an equation.
 struct EquationNumber: View {
   
+  // MARK: Types
+  
+  /// The side of the equation that the number appears on.
   enum EquationSide {
     case left
     case right
   }
   
+  // MARK: Public properties
+  
+  /// The index of the block attached to this number.
   let blockIndex: Int
+  
+  /// The side of the equation that this number appears on.
   let side: EquationSide
   
+  // MARK: Private properties
+  
+  /// The view's equation number mode.
   @Environment(\.equationNumberMode) private var equationNumberMode
+  
+  /// The view's equation starting number.
   @Environment(\.equationNumberStart) private var equationNumberStart
+  
+  /// The view's equation number's offset.
   @Environment(\.equationNumberOffset) private var equationNumberOffset
   
-    var body: some View {
-      switch equationNumberMode {
-      case .left:
-        if side == .left {
-          Text("(\(equationNumberStart + blockIndex))")
-            .padding([.leading], equationNumberOffset)
-        }
-        else {
-          Text("(\(equationNumberStart + blockIndex))")
-            .padding([.leading], equationNumberOffset)
-            .foregroundColor(.clear)
-        }
-        Spacer(minLength: 0)
-      case .right:
-        Spacer(minLength: 0)
-        if side == .right {
-          Text("(\(equationNumberStart + blockIndex))")
-            .padding([.trailing], equationNumberOffset)
-        }
-        else {
-          Text("(\(equationNumberStart + blockIndex))")
-            .padding([.trailing], equationNumberOffset)
-            .foregroundColor(.clear)
-        }
-      default:
-        EmptyView()
+  // MARK: View body
+  
+  var body: some View {
+    switch equationNumberMode {
+    case .left:
+      if side == .left {
+        Text("(\(equationNumberStart + blockIndex))")
+          .padding([.leading], equationNumberOffset)
       }
+      else {
+        Text("(\(equationNumberStart + blockIndex))")
+          .padding([.leading], equationNumberOffset)
+          .foregroundColor(.clear)
+      }
+      Spacer(minLength: 0)
+    case .right:
+      Spacer(minLength: 0)
+      if side == .right {
+        Text("(\(equationNumberStart + blockIndex))")
+          .padding([.trailing], equationNumberOffset)
+      }
+      else {
+        Text("(\(equationNumberStart + blockIndex))")
+          .padding([.trailing], equationNumberOffset)
+          .foregroundColor(.clear)
+      }
+    default:
+      EmptyView()
     }
+  }
 }
 
 struct EquationNumber_Previews: PreviewProvider {
-    static var previews: some View {
-      EquationNumber(blockIndex: 0, side: .left)
-        .environment(\.equationNumberMode, .left)
-    }
+  static var previews: some View {
+    EquationNumber(blockIndex: 0, side: .left)
+      .environment(\.equationNumberMode, .left)
+  }
 }

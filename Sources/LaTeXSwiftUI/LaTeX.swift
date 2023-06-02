@@ -28,6 +28,8 @@ import MathJaxSwift
 import Nuke
 import SwiftUI
 
+/// A view that can parse and render TeX and LaTeX equations that contain
+/// math-mode marcos.
 public struct LaTeX: View {
   
   // MARK: Types
@@ -109,9 +111,16 @@ public struct LaTeX: View {
   /// The TeX options to pass to MathJax.
   @Environment(\.texOptions) private var texOptions
   
+  /// Whether the view should process escapes.
   @Environment(\.processEscapes) private var processEscapes
+  
+  /// The view's equation number mode.
   @Environment(\.equationNumberMode) private var equationNumberMode
+  
+  /// The view's equation starting number.
   @Environment(\.equationNumberStart) private var equationNumberStart
+  
+  /// The view's equation number's offset.
   @Environment(\.equationNumberOffset) private var equationNumberOffset
   
   /// The view's current display scale.
@@ -408,24 +417,6 @@ struct LaTeX_Previews: PreviewProvider {
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
-    
-    VStack {
-      
-      // Don't number block equations (default)
-      LaTeX("$$a + b = c$$")
-        .equationNumberMode(.none)
-      
-      // Add left numbers and a leading offset
-      LaTeX("$$d + e = f$$")
-        .equationNumberMode(.left)
-        .equationNumberOffset(10)
-      
-      // Add right numbers, a leading offset, and start at 2
-      LaTeX("$$h + i = j$$ $$k + l = m$$")
-        .equationNumberMode(.right)
-        .equationNumberStart(2)
-        .equationNumberOffset(20)
-    }
   }
   
 }
