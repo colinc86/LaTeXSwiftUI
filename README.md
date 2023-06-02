@@ -4,7 +4,7 @@ A SwiftUI view that renders LaTeX equations.
 
 ![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
 
-<center><img src="./assets/images/device.png" height="362"></center>
+<center><img src="./assets/images/device.png" width="362"></center>
 
 ## 📖 Contents
 
@@ -203,7 +203,7 @@ LaTeX("$$h + i = j$$ $$k + l = m$$")
   .equationNumberOffset(20)
 ```
 
-> <img src="./assets/images/numbers.png">
+> <img src="./assets/images/numbers.png" width="428" height="152">
 
 #### 🔗 Unencode HTML
 
@@ -220,18 +220,9 @@ LaTeX("$x^2&lt;1$")
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
 
-#### ♾️ TeX Options (deprecated)
-
-For more control over the MathJax rendering, you can pass a `TeXInputProcessorOptions` object to the view.
-
-```swift
-LaTeX("Hello, $\\LaTeX$!")
-  .texOptions(TeXInputProcessorOptions(loadPackages: [TeXInputProcessorOptions.Packages.base]))
-```
-
 ### 🗄️ Caching
 
-`LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `cache` property.
+`LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `dataCache` and `imageCache` properties.
 
 The caches are managed automatically, but if, for example, you wanted to clear the cache manually you may do so.
 
