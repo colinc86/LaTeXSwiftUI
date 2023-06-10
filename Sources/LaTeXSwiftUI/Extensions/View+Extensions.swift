@@ -46,7 +46,7 @@ public extension View {
   ///   nothing.
   ///
   /// - Returns: A preloaded view.
-  @MainActor func preload() -> some View {
+  func preload() -> some View {
     if let latex = self as? LaTeX {
       latex.preload()
     }
@@ -135,6 +135,31 @@ public extension View {
   /// - Returns: A view that numbers its equations.
   func equationNumberOffset(_ offset: CGFloat) -> some View {
     environment(\.equationNumberOffset, offset)
+  }
+  
+  /// Sets a block that lets you format the equation number that will be
+  /// displayed for named block equations.
+  ///
+  /// - Parameter perform: The block that will format the equation number.
+  /// - Returns: A view that formats its equation numbers.
+  func formatEquationNumber(_ perform: @escaping LaTeX.FormatEquationNumber) -> some View {
+    environment(\.formatEquationNumber, perform)
+  }
+  
+  /// Sets the view rendering style.
+  ///
+  /// - Parameter style: The rendering style to use.
+  /// - Returns: A view that renders its content.
+  func renderingStyle(_ style: LaTeX.RenderingStyle) -> some View {
+    environment(\.renderingStyle, style)
+  }
+  
+  /// Sets whether or not the view will animate its render state changes.
+  ///
+  /// - Parameter animate: Whether animations are enabled.
+  /// - Returns: A view that animates its rendering.
+  func animated(_ animate: Bool = true) -> some View {
+    environment(\.animated, animate)
   }
   
 }

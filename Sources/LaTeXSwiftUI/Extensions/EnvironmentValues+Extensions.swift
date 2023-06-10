@@ -62,6 +62,18 @@ private struct EquationNumberOffsetKey: EnvironmentKey {
   static let defaultValue: CGFloat = 0.0
 }
 
+private struct FormatEquationNumberKey: EnvironmentKey {
+  static let defaultValue: LaTeX.FormatEquationNumber = { "(\($0))" }
+}
+
+private struct RenderingStyleKey: EnvironmentKey {
+  static let defaultValue: LaTeX.RenderingStyle = .wait
+}
+
+private struct AnimatedKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
 extension EnvironmentValues {
   
   /// The image rendering mode of this environment.
@@ -116,6 +128,24 @@ extension EnvironmentValues {
   var equationNumberOffset: CGFloat {
     get { self[EquationNumberOffsetKey.self] }
     set { self[EquationNumberOffsetKey.self] = newValue }
+  }
+  
+  /// The closure used to format equation number before displaying them.
+  var formatEquationNumber: LaTeX.FormatEquationNumber {
+    get { self[FormatEquationNumberKey.self] }
+    set { self[FormatEquationNumberKey.self] = newValue }
+  }
+  
+  /// The rendering style of this environment.
+  var renderingStyle: LaTeX.RenderingStyle {
+    get { self[RenderingStyleKey.self] }
+    set { self[RenderingStyleKey.self] = newValue }
+  }
+  
+  /// Whether or not rendering should be animated.
+  var animated: Bool {
+    get { self[AnimatedKey.self] }
+    set { self[AnimatedKey.self] = newValue }
   }
   
 }
