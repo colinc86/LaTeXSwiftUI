@@ -66,7 +66,9 @@ extension LaTeXRenderState {
   ///   - displayScale: The `displayScale` environment variable.
   ///   - texOptions: The `texOptions` environment variable.
   func render(animated: Bool, unencodeHTML: Bool, parsingMode: LaTeX.ParsingMode, font: Font?, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) async {
-    guard !(await isRendering) else {
+    let isRen = await isRendering
+    let ren = await rendered
+    guard !isRen && !ren else {
       return
     }
     await MainActor.run {

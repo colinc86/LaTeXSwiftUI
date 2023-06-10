@@ -28,6 +28,31 @@ import SwiftUI
 
 public extension View {
   
+  /// Preloads a `LaTeX` view's SVG and image data.
+  ///
+  /// This method should be called last in the view's modifier chain (if at
+  /// all).
+  ///
+  /// - Example:
+  ///
+  /// ```
+  /// LaTeX("Hello, $\\LaTeX$!")
+  ///   .font(.title)
+  ///   .processEscapes()
+  ///   .preload()
+  /// ```
+  ///
+  /// - Note: If the receiver isn't a `LaTeX` view, then this method does
+  ///   nothing.
+  ///
+  /// - Returns: A preloaded view.
+  func preload() -> some View {
+    if let latex = self as? LaTeX {
+      latex.preload()
+    }
+    return self
+  }
+  
   /// Sets the image rendering mode for images rendered by MathJax.
   ///
   /// - Parameter mode: The template rendering mode.
@@ -110,6 +135,15 @@ public extension View {
   /// - Returns: A view that numbers its equations.
   func equationNumberOffset(_ offset: CGFloat) -> some View {
     environment(\.equationNumberOffset, offset)
+  }
+  
+  /// Sets a block that lets you format the equation number that will be
+  /// displayed for named block equations.
+  ///
+  /// - Parameter perform: The block that will format the equation number.
+  /// - Returns: A view that formats its equation numbers.
+  func formatEquationNumber(_ perform: @escaping LaTeX.FormatEquationNumber) -> some View {
+    environment(\.formatEquationNumber, perform)
   }
   
   /// Sets the view rendering style.

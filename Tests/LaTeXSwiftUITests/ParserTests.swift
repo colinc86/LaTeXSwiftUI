@@ -224,6 +224,21 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 1, equation, .namedEquation)
   }
   
+  func testMultipleBeginEnd() {
+    let input = """
+\\begin{equation}
+  E = mc^2
+\\end{equation}
+
+\\begin{equation}
+  E = mc^2
+\\end{equation}
+"""
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "\n  E = mc^2\n", .namedEquation)
+  }
+  
   func testParseBeginEndStarOnly() {
     let input = "\\begin{equation*}\\TeX\\end{equation*}"
     let components = Parser.parse(input)

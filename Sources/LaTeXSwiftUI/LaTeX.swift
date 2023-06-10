@@ -34,6 +34,10 @@ public struct LaTeX: View {
   
   // MARK: Types
   
+  /// A closure that takes an equation number and returns a string to display in
+  /// the view.
+  public typealias FormatEquationNumber = (_ n: Int) -> String
+  
   /// The view's block rendering mode.
   public enum BlockMode {
     
@@ -199,6 +203,18 @@ public struct LaTeX: View {
   
 }
 
+// MARK: Public methods
+
+extension LaTeX {
+  
+  /// Preloads the view's SVG and image data.
+  public func preload() {
+    Task {
+      await render()
+    }
+  }
+}
+
 // MARK: Private methods
 
 extension LaTeX {
@@ -271,6 +287,25 @@ struct LaTeX_Previews: PreviewProvider {
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
+    .previewDisplayName("Hello, LaTeX!")
+    
+    VStack {
+      LaTeX("$$E = mc^2$$")
+        .equationNumberMode(.right)
+        .equationNumberOffset(10)
+        .padding([.bottom])
+      
+      LaTeX("\\begin{equation} E = mc^2 \\end{equation} \\begin{equation} E = mc^2 \\end{equation}")
+        .equationNumberMode(.right)
+        .equationNumberOffset(10)
+        .equationNumberStart(2)
+    }
+    .fontDesign(.serif)
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Equation Numbers")
+    .formatEquationNumber { n in
+      return "~[\(n)]~"
+    }
   }
   
 }

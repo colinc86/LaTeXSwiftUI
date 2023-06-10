@@ -62,6 +62,10 @@ private struct EquationNumberOffsetKey: EnvironmentKey {
   static let defaultValue: CGFloat = 0.0
 }
 
+private struct FormatEquationNumberKey: EnvironmentKey {
+  static let defaultValue: LaTeX.FormatEquationNumber = { "(\($0))" }
+}
+
 private struct RenderingStyleKey: EnvironmentKey {
   static let defaultValue: LaTeX.RenderingStyle = .wait
 }
@@ -124,6 +128,12 @@ extension EnvironmentValues {
   var equationNumberOffset: CGFloat {
     get { self[EquationNumberOffsetKey.self] }
     set { self[EquationNumberOffsetKey.self] = newValue }
+  }
+  
+  /// The closure used to format equation number before displaying them.
+  var formatEquationNumber: LaTeX.FormatEquationNumber {
+    get { self[FormatEquationNumberKey.self] }
+    set { self[FormatEquationNumberKey.self] = newValue }
   }
   
   /// The rendering style of this environment.
