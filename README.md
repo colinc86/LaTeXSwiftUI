@@ -36,7 +36,7 @@ The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwif
 It will
 - render TeX and LaTeX equations (math-mode macros),
 - render the `\text{}` macro within equations,
-- attempt to render block equations as a Tex or LaTeX engine would,
+- attempt to render block equations as a TeX or LaTeX engine would,
 - and number block equations (if desired).
 
 It won't
