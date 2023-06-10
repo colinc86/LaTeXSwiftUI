@@ -44,6 +44,13 @@ internal struct SVG: Codable, Hashable {
   
   // MARK: Initializers
   
+  /// Initializes a new SVG from data.
+  ///
+  /// - Parameter data: The SVG data.
+  init(data: Data) throws {
+    self = try JSONDecoder().decode(Self.self, from: data)
+  }
+  
   /// Initializes a new SVG.
   ///
   /// - Parameters:
@@ -62,6 +69,19 @@ internal struct SVG: Codable, Hashable {
     else {
       throw SVGError.encodingSVGData
     }
+  }
+  
+}
+
+// MARK: Methods
+
+extension SVG {
+  
+  /// The JSON encoded value of the receiver.
+  ///
+  /// - Returns: The receivers JSON encoded data.
+  func encoded() throws -> Data {
+    try JSONEncoder().encode(self)
   }
   
 }

@@ -83,6 +83,7 @@ internal class Renderer {
     let svg: SVG
     let xHeight: CGFloat
     internal var fallbackKey: String { String(data: svg.data, encoding: .utf8) ?? "" }
+    internal var nukeCacheKey: Nuke.ImageCacheKey { Nuke.ImageCacheKey(key: key()) }
   }
   
   // MARK: Static properties
@@ -98,8 +99,14 @@ internal class Renderer {
   /// The renderer's data cache.
   internal let dataCache: DataCache?
   
+  /// Semaphore for thread-safe access to `dataCache`.
+  internal let dataCacheSemaphore = DispatchSemaphore(value: 1)
+  
   /// The renderer's image cache.
   internal let imageCache: ImageCache
+  
+  /// Semaphore for thread-safe access to `imageCache`.
+  internal let imageCacheSemaphore = DispatchSemaphore(value: 1)
   
   // MARK: Initializers
   
@@ -129,6 +136,42 @@ internal class Renderer {
 // MARK: Public methods
 
 extension Renderer {
+  
+  /// Renders the view's component blocks.
+  ///
+  /// - Parameters:
+  ///   - blocks: The component blocks.
+  ///   - font: The view's font.
+  ///   - displayScale: The display scale to render at.
+  ///   - texOptions: The MathJax Tex input processor options.
+  /// - Returns: An array of rendered blocks.
+  func render(
+    blocks: [ComponentBlock],
+    font: Font,
+    displayScale: CGFloat,
+    texOptions: TeXInputProcessorOptions
+  ) async -> [ComponentBlock] {
+    let xHeight = _Font.preferredFont(from: font).xHeight
+    var newBlocks = [ComponentBlock]()
+    for block in blocks {
+      do {
+        let newComponents = try await render(
+          block.components,
+          xHeight: xHeight,
+          displayScale: displayScale,
+          texOptions: texOptions)
+        
+        newBlocks.append(ComponentBlock(components: newComponents))
+      }
+      catch {
+        NSLog("Error rendering block: \(error)")
+        newBlocks.append(block)
+        continue
+      }
+    }
+    
+    return newBlocks
+  }
   
   /// Renders the view's component blocks.
   ///
@@ -187,7 +230,7 @@ extension Renderer {
     let cacheKey = ImageCacheKey(svg: svg, xHeight: xHeight)
     
     // Check the cache for an image
-    if let image = imageCache[Nuke.ImageCacheKey(key: cacheKey.key())]?.image {
+    if let image = imageCacheValue(for: cacheKey) {
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -210,7 +253,7 @@ extension Renderer {
 #endif
     
     if let image = image {
-      imageCache[Nuke.ImageCacheKey(key: cacheKey.key())] = ImageContainer(image: image)
+      setImageCacheValue(image, for: cacheKey)
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -221,9 +264,147 @@ extension Renderer {
   
 }
 
+// MARK: Cache access methods
+
+extension Renderer {
+  
+  /// Safely access the cache value for the given key.
+  ///
+  /// - Parameter key: The key of the value to get.
+  /// - Returns: A value.
+  private func dataCacheValue(for key: SVGCacheKey) -> Data? {
+    dataCacheSemaphore.wait()
+    defer { dataCacheSemaphore.signal() }
+    return dataCache?[key.key()]
+  }
+  
+  /// Safely sets the cache value.
+  ///
+  /// - Parameters:
+  ///   - value: The value to set.
+  ///   - key: The value's key.
+  private func setDataCacheValue(_ value: Data, for key: SVGCacheKey) {
+    dataCacheSemaphore.wait()
+    dataCache?[key.key()] = value
+    dataCacheSemaphore.signal()
+  }
+  
+  /// Safely access the cache value for the given key.
+  ///
+  /// - Parameter key: The key of the value to get.
+  /// - Returns: A value.
+  private func imageCacheValue(for key: ImageCacheKey) -> _Image? {
+    imageCacheSemaphore.wait()
+    defer { imageCacheSemaphore.signal() }
+    return imageCache[key.nukeCacheKey]?.image
+  }
+  
+  /// Safely sets the cache value.
+  ///
+  /// - Parameters:
+  ///   - value: The value to set.
+  ///   - key: The value's key.
+  private func setImageCacheValue(_ value: _Image, for key: ImageCacheKey) {
+    imageCacheSemaphore.wait()
+    imageCache[key.nukeCacheKey] = ImageContainer(image: value)
+    imageCacheSemaphore.signal()
+  }
+  
+}
+
 // MARK: Private methods
 
 extension Renderer {
+  
+  /// Gets the error text from a possibly non-nil error.
+  ///
+  /// - Parameter error: The error.
+  /// - Returns: The error text.
+  func getErrorText(from error: Error?) throws -> String? {
+    if let mjError = error as? MathJaxError, case .conversionError(let innerError) = mjError {
+      return innerError
+    }
+    else if let error = error {
+      throw error
+    }
+    return nil
+  }
+  
+  /// Renders the components and stores the new images in a new set of
+  /// components.
+  ///
+  /// - Parameters:
+  ///   - components: The components to render.
+  ///   - xHeight: The xHeight of the font to use.
+  ///   - displayScale: The current display scale.
+  ///   - texOptions: The MathJax TeX input processor options.
+  /// - Returns: An array of components.
+  private func render(
+    _ components: [Component],
+    xHeight: CGFloat,
+    displayScale: CGFloat,
+    texOptions: TeXInputProcessorOptions
+  ) async throws -> [Component] {
+    // Make sure we have a MathJax instance!
+    guard let mathjax = mathjax else {
+      return components
+    }
+    
+    // Iterate through the input components and render
+    var renderedComponents = [Component]()
+    for component in components {
+      // Only render equation components
+      guard component.type.isEquation else {
+        renderedComponents.append(component)
+        continue
+      }
+      
+      // Create our cache key
+      let cacheKey = SVGCacheKey(
+        componentText: component.text,
+        conversionOptions: component.conversionOptions,
+        texOptions: texOptions)
+      
+      // Do we have the SVG in the cache?
+      if let svgData = dataCacheValue(for: cacheKey) {
+        renderedComponents.append(Component(
+          text: component.text,
+          type: component.type,
+          svg: try SVG(data: svgData)))
+        continue
+      }
+      
+      // Perform the conversion
+      var conversionError: Error?
+      var svgString: String = ""
+      do {
+        svgString = try await mathjax.tex2svg(
+          component.text,
+          styles: false,
+          conversionOptions: component.conversionOptions,
+          inputOptions: texOptions)
+      }
+      catch {
+        conversionError = error
+      }
+      
+      // Check for a conversion error
+      let errorText = try getErrorText(from: conversionError)
+      
+      // Create and cache the SVG
+      let svg = try SVG(svgString: svgString, errorText: errorText)
+      setDataCacheValue(try svg.encoded(), for: cacheKey)
+      
+      // Save the rendered component
+      renderedComponents.append(Component(
+        text: component.text,
+        type: component.type,
+        svg: svg))
+    }
+    
+    // All done
+    return renderedComponents
+  }
   
   /// Renders the components and stores the new images in a new set of
   /// components.
@@ -254,21 +435,18 @@ extension Renderer {
         continue
       }
       
-      // Create our options
-      let conversionOptions = ConversionOptions(display: !component.type.inline)
-      
       // Create our cache key
       let cacheKey = SVGCacheKey(
         componentText: component.text,
-        conversionOptions: conversionOptions,
+        conversionOptions: component.conversionOptions,
         texOptions: texOptions)
       
       // Do we have the SVG in the cache?
-      if let svgData = dataCache?[cacheKey.key()] {
+      if let svgData = dataCacheValue(for: cacheKey) {
         renderedComponents.append(Component(
           text: component.text,
           type: component.type,
-          svg: try JSONDecoder().decode(SVG.self, from: svgData)))
+          svg: try SVG(data: svgData)))
         continue
       }
       
@@ -277,22 +455,16 @@ extension Renderer {
       let svgString = mathjax.tex2svg(
         component.text,
         styles: false,
-        conversionOptions: conversionOptions,
+        conversionOptions: component.conversionOptions,
         inputOptions: texOptions,
         error: &conversionError)
       
       // Check for a conversion error
-      var errorText: String?
-      if let mjError = conversionError as? MathJaxError, case .conversionError(let innerError) = mjError {
-        errorText = innerError
-      }
-      else if let error = conversionError {
-        throw error
-      }
+      let errorText = try getErrorText(from: conversionError)
       
-      // Create the SVG
+      // Create and cache the SVG
       let svg = try SVG(svgString: svgString, errorText: errorText)
-      dataCache?[cacheKey.key()] = try JSONEncoder().encode(svg)
+      setDataCacheValue(try svg.encoded(), for: cacheKey)
       
       // Save the rendered component
       renderedComponents.append(Component(

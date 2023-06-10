@@ -24,6 +24,7 @@
 //
 
 import Foundation
+import MathJaxSwift
 import SwiftUI
 
 /// A block of components.
@@ -141,6 +142,11 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     originalText.trimmingCharacters(in: .newlines)
   }
   
+  /// The component's conversion options.
+  var conversionOptions: ConversionOptions {
+    ConversionOptions(display: !type.inline)
+  }
+  
   /// The component's description.
   var description: String {
     return "(\(type), \"\(text)\")"
@@ -239,6 +245,13 @@ extension Component {
     return text
   }
   
+  /// Converts the component to an image.
+  ///
+  /// - Parameters:
+  ///   - font: The font to use.
+  ///   - displayScale: The current display scale.
+  ///   - renderingMode: The current rendering mode.
+  /// - Returns: Image details.
   @MainActor func convertToImage(
     font: Font,
     displayScale: CGFloat,

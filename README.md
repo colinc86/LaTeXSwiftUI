@@ -2,7 +2,7 @@
 
 A SwiftUI view that renders LaTeX equations.
 
-![Swift Version](https://img.shields.io/badge/Swift-5.7-orange?logo=swift) ![iOS Version](https://img.shields.io/badge/iOS-16-informational) ![macOS Version](https://img.shields.io/badge/macOS-13-informational)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI)
 
 <center><img src="./assets/images/device.png" width="362"></center>
 
@@ -20,7 +20,10 @@ A SwiftUI view that renders LaTeX equations.
       - [Equation Number Mode](#equation-number-mode)
       - [Equation Number Start](#equation-number-start)
       - [Equation Number Offset](#equation-number-offset)
+      - [Format Equation Number](#format-equation-number)
     - [Unencode HTML](#🔗-unencode-html)
+    - [Rendering Style](#🕶️-rendering-style)
+    - [Animated](#🪩-animated)
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
@@ -33,7 +36,7 @@ The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwif
 It will
 - render TeX and LaTeX equations (math-mode macros),
 - render the `\text{}` macro within equations,
-- attempt to render block equations as a Tex or LaTeX engine would,
+- attempt to render block equations as a TeX or LaTeX engine would,
 - and number block equations (if desired).
 
 It won't
@@ -44,7 +47,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.1.0")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.0")
 ```
 
 ## ⌨️ Usage
@@ -186,24 +189,26 @@ The default starting number is `1`, but if you need to start at a different valu
 
 To change the left or right offset of the equation number, use the `equationNumberOffset` modifier.
 
+##### Format Equation Number
+
+You can set a closure on the view to do your own custom formatting. The `formatEquationNumber` modifier takes a closure that is passed the equation number and returns a string.
+
 ```swift
-// Don't number block equations (default)
-LaTeX("$$a + b = c$$")
-  .equationNumberMode(.none)
-
-// Add left numbers and a leading offset
-LaTeX("$$d + e = f$$")
-  .equationNumberMode(.left)
-  .equationNumberOffset(10)
-
-// Add right numbers, a leading offset, and start at 2
-LaTeX("$$h + i = j$$ $$k + l = m$$")
+LaTeX("$$E = mc^2$$")
   .equationNumberMode(.right)
+  .equationNumberOffset(10)
+  .padding([.bottom])
+
+LaTeX("$$E = mc^2$$ $$E = mc^2$$")
+  .equationNumberMode(.right)
+  .equationNumberOffset(10)
   .equationNumberStart(2)
-  .equationNumberOffset(20)
+  .formatEquationNumber { n in
+    return "~[\(n)]~"
+  }
 ```
 
-> <img src="./assets/images/numbers.png" width="428" height="152">
+> <img src="./assets/images/numbers.png" width="433" height="153">
 
 #### 🔗 Unencode HTML
 
@@ -219,6 +224,30 @@ LaTeX("$x^2&lt;1$")
 ```
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
+
+#### 🕶️ Rendering Style
+
+The view has four rendering styles. The `wait` style is the default style, and loads the view synchronously on the main queue. To get better performance and move SVG rendering off of the main queue, use any of the other three styles.
+
+| Style      | Asynchronous | Description                                                              |
+|:-----------|:-------------|:-------------------------------------------------------------------------|
+| `empty`    | Yes          | The view remains empty until its finished rendering.                     |
+| `original` | Yes          | The view displays the input text until its finished rendering.           |
+| `progress` | Yes          | The view displays a progress view until its finished rendering.          |
+| `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
+
+
+#### 🪩 Animated
+
+The `animated` modifier applies to the view when using the asynchronous rendering styles `empty`, `original`, or `progress`.
+
+```swift
+LaTeX(input)
+  .renderingStyle(.original)
+  .animated()
+```
+
+> In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
 
 ### 🗄️ Caching
 
@@ -240,8 +269,6 @@ LaTeX.imageCache.removeAll()
 
 SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
 
-SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.
-
 ```swift
 VStack {
   ForEach(expressions, id: \.self) { expression in
@@ -255,3 +282,5 @@ VStack {
   }
 }
 ```
+
+SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.

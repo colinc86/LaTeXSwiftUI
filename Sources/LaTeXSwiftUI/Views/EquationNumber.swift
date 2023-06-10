@@ -55,17 +55,25 @@ struct EquationNumber: View {
   /// The view's equation number's offset.
   @Environment(\.equationNumberOffset) private var equationNumberOffset
   
+  /// The view's equation number formatter.
+  @Environment(\.formatEquationNumber) private var formatEquationNumber
+  
+  /// The number to draw in the view
+  private var number: Text {
+    Text(formatEquationNumber(equationNumberStart + blockIndex))
+  }
+  
   // MARK: View body
   
   var body: some View {
     switch equationNumberMode {
     case .left:
       if side == .left {
-        Text("(\(equationNumberStart + blockIndex))")
+        number
           .padding([.leading], equationNumberOffset)
       }
       else {
-        Text("(\(equationNumberStart + blockIndex))")
+        number
           .padding([.leading], equationNumberOffset)
           .foregroundColor(.clear)
       }
@@ -73,11 +81,11 @@ struct EquationNumber: View {
     case .right:
       Spacer(minLength: 0)
       if side == .right {
-        Text("(\(equationNumberStart + blockIndex))")
+        number
           .padding([.trailing], equationNumberOffset)
       }
       else {
-        Text("(\(equationNumberStart + blockIndex))")
+        number
           .padding([.trailing], equationNumberOffset)
           .foregroundColor(.clear)
       }
@@ -85,6 +93,7 @@ struct EquationNumber: View {
       EmptyView()
     }
   }
+  
 }
 
 struct EquationNumber_Previews: PreviewProvider {
