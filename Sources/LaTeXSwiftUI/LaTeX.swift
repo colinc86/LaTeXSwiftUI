@@ -47,14 +47,16 @@ public struct LaTeX: View {
     case blockViews
   }
   
-  /// The view's rendering mode.
-  public enum ParsingMode {
+  public enum EquationNumberMode {
     
-    /// Render the entire text as the equation.
-    case all
+    /// The view should not number named block equations.
+    case none
     
-    /// Find equations in the text and only render the equations.
-    case onlyEquations
+    /// The view should number named block equations on the left side.
+    case left
+    
+    /// The view should number named block equations on the right side.
+    case right
   }
   
   /// The view's error mode.
@@ -70,11 +72,32 @@ public struct LaTeX: View {
     case error
   }
   
-  public enum EquationNumberMode {
-    case none
-    case left
-    case right
+  /// The view's rendering mode.
+  public enum ParsingMode {
+    
+    /// Render the entire text as the equation.
+    case all
+    
+    /// Find equations in the text and only render the equations.
+    case onlyEquations
   }
+  
+  public enum RenderingStyle {
+    
+    /// The view remains empty until its finished rendering.
+    case empty
+    
+    /// The view displays the input text until its finished rendering.
+    case original
+    
+    /// The view displays a progress view until its finished rendering.
+    case progress
+    
+    /// The view blocks on the main thread until its finished rendering.
+    case wait
+  }
+  
+  // MARK: Static properties
   
   /// The package's shared data cache.
   public static var dataCache: DataCache? {
@@ -91,10 +114,7 @@ public struct LaTeX: View {
   /// The view's LaTeX input string.
   public let latex: String
   
-  // MARK: Private properties
-  
-  /// The rendering mode to use with the rendered MathJax images.
-  @Environment(\.imageRenderingMode) private var imageRenderingMode
+  // MARK: Environment variables
   
   /// What to do in the case of an error.
   @Environment(\.errorMode) private var errorMode
@@ -111,14 +131,11 @@ public struct LaTeX: View {
   /// Whether the view should process escapes.
   @Environment(\.processEscapes) private var processEscapes
   
-  /// The view's equation number mode.
-  @Environment(\.equationNumberMode) private var equationNumberMode
+  /// The view's rendering style.
+  @Environment(\.renderingStyle) private var renderingStyle
   
-  /// The view's equation starting number.
-  @Environment(\.equationNumberStart) private var equationNumberStart
-  
-  /// The view's equation number's offset.
-  @Environment(\.equationNumberOffset) private var equationNumberOffset
+  /// Whether or not rendering should be animated.
+  @Environment(\.animated) private var animated
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
@@ -126,34 +143,25 @@ public struct LaTeX: View {
   /// The view's font.
   @Environment(\.font) private var font
   
-  /// The text's line spacing.
-  @Environment(\.lineSpacing) private var lineSpacing
+  // MARK: Private properties
   
-  /// The TeX options to use when submitting requests to the renderer.
-  private var texOptions: TeXInputProcessorOptions {
-    let options = TeXInputProcessorOptions()
-    options.processEscapes = processEscapes
-    
-    var packages = TeXInputProcessorOptions.Packages.all
-    if errorMode != .rendered {
-      if let noErrorsIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noerrors) {
-        packages.remove(at: noErrorsIndex)
-      }
-      if let noUndefinedIndex = packages.firstIndex(of: TeXInputProcessorOptions.Packages.noundefined) {
-        packages.remove(at: noUndefinedIndex)
-      }
-    }
-    options.loadPackages = packages
-    return options
-  }
+  /// The view's render state.
+  @StateObject private var renderState: LaTeXRenderState
   
-  /// The blocks to render.
-  internal var blocks: [ComponentBlock] {
+  /// Renders the blocks synchronously.
+  ///
+  /// This will block whatever thread you call it on.
+  private var syncBlocks: [ComponentBlock] {
     Renderer.shared.render(
       blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
       font: font ?? .body,
       displayScale: displayScale,
       texOptions: texOptions)
+  }
+  
+  /// The TeX options to use when submitting requests to the renderer.
+  private var texOptions: TeXInputProcessorOptions {
+    TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
   }
   
   // MARK: Initializers
@@ -163,36 +171,29 @@ public struct LaTeX: View {
   /// - Parameter latex: The LaTeX input.
   public init(_ latex: String) {
     self.latex = latex
+    _renderState = StateObject(wrappedValue: LaTeXRenderState(latex: latex))
   }
-
-  // MARK: View body
-
-  public var body: some View {
-    switch blockMode {
-    case .alwaysInline:
-      blocksAsText(blocks, forceInline: true)
-    case .blockText:
-      blocksAsText(blocks)
-    case .blockViews:
-      blocksAsStack(blocks)
-    }
-  }
-
-}
-
-// MARK: Public methods
-
-extension LaTeX {
   
-  /// Preloads the view's SVG and image data.
-  @MainActor public func preload() {
-    switch blockMode {
-    case .alwaysInline:
-      blocksAsText(blocks, forceInline: true)
-    case .blockText:
-      blocksAsText(blocks)
-    case .blockViews:
-      blocksAsStack(blocks)
+  // MARK: View body
+  
+  public var body: some View {
+    if renderState.rendered {
+      bodyWithBlocks(renderState.blocks)
+    }
+    else {
+      switch renderingStyle {
+      case .empty:
+        Text("")
+          .task(render)
+      case .original:
+        Text(latex)
+          .task(render)
+      case .progress:
+        ProgressView()
+          .task(render)
+      case .wait:
+        bodyWithBlocks(syncBlocks)
+      }
     }
   }
   
@@ -202,94 +203,32 @@ extension LaTeX {
 
 extension LaTeX {
   
-  /// The view's input rendered as a text view.
-  ///
-  /// - Parameter forceInline: Whether or not block equations should be forced
-  ///   as inline.
-  /// - Returns: A text view.
-  @MainActor
-  @discardableResult
-  private func blocksAsText(_ blocks: [ComponentBlock], forceInline: Bool = false) -> Text {
-    blocks.map { block in
-      let text = text(for: block)
-      return block.isEquationBlock && !forceInline ?
-      Text("\n") + text + Text("\n") :
-      text
-    }.reduce(Text(""), +)
-  }
-  
-  /// The view's input rendered as a vertical stack of views.
-  ///
-  /// - Returns: A stack view.
-  @MainActor
-  @discardableResult
-  private func blocksAsStack(_ blocks: [ComponentBlock]) -> some View {
-    VStack(alignment: .leading, spacing: lineSpacing + 4) {
-      ForEach(blocks, id: \.self) { block in
-        if block.isEquationBlock,
-           let (image, size, errorText) = image(for: block) {
-          HStack(spacing: 0) {
-            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
-            
-            if let errorText = errorText, errorMode != .rendered {
-              switch errorMode {
-              case .error:
-                Text(errorText)
-              case .original:
-                Text(block.components.first?.originalText ?? "")
-              default:
-                EmptyView()
-              }
-            }
-            else {
-              HorizontalImageScroller(
-                image: image,
-                height: size.height)
-            }
-            
-            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
-          }
-        }
-        else {
-          text(for: block)
-        }
-      }
-    }
-  }
-  
-  /// Creates the text view for the given block.
-  ///
-  /// - Parameter block: The block.
-  /// - Returns: The text view.
-  @MainActor private func text(for block: ComponentBlock) -> Text {
-    block.components.enumerated().map { i, component in
-      return component.convertToText(
-        font: font ?? .body,
-        displayScale: displayScale,
-        renderingMode: imageRenderingMode,
-        errorMode: errorMode,
-        blockRenderingMode: blockMode,
-        isInEquationBlock: block.isEquationBlock)
-    }.reduce(Text(""), +)
-  }
-  
-  /// Creates the image view and its size for the given block.
-  ///
-  /// If the block isn't an equation block, then this method returns `nil`.
-  ///
-  /// - Parameter block: The block.
-  /// - Returns: The image, its size, and any associated error text.
-  @MainActor private func image(for block: ComponentBlock) -> (Image, CGSize, String?)? {
-    guard block.isEquationBlock,
-          let component = block.components.first else {
-      return nil
-    }
-    return component.convertToImage(
-      font: font ?? .body,
+  /// Renders the view's components.
+  @Sendable private func render() async {
+    await renderState.render(
+      animated: animated,
+      unencodeHTML: unencodeHTML,
+      parsingMode: parsingMode,
+      font: font,
       displayScale: displayScale,
-      renderingMode: imageRenderingMode)
+      texOptions: texOptions)
   }
-
+  
+  /// Creates the view's body based on its block mode.
+  ///
+  /// - Parameter blocks: The blocks to display.
+  /// - Returns: The view's body.
+  @MainActor @ViewBuilder private func bodyWithBlocks(_ blocks: [ComponentBlock]) -> some View {
+    switch blockMode {
+    case .alwaysInline:
+      ComponentBlocksText(blocks: blocks, forceInline: true)
+    case .blockText:
+      ComponentBlocksText(blocks: blocks)
+    case .blockViews:
+      ComponentBlocksViews(blocks: blocks)
+    }
+  }
+  
 }
 
 @available(iOS 16.1, *)
@@ -309,11 +248,11 @@ struct LaTeX_Previews: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title)
         .foregroundColor(.red)
-
+      
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title2)
         .foregroundColor(.orange)
-
+      
       LaTeX("Hello, $\\LaTeX$!")
         .font(.title3)
         .foregroundColor(.yellow)
@@ -329,7 +268,6 @@ struct LaTeX_Previews: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.caption2)
         .foregroundColor(.purple)
-        .preload()
     }
     .fontDesign(.serif)
     .previewLayout(.sizeThatFits)
