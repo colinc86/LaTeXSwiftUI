@@ -35,7 +35,6 @@ internal struct Parser {
     let regex: Regex<T>
     let terminatingRegex: Regex<U>
     let equation: Component.ComponentType
-    let supportsRecursion: Bool
   }
   
   // MARK: Private properties
@@ -44,36 +43,31 @@ internal struct Parser {
   static let inline = EquationComponent(
     regex: #/\$(.*?)\$/#,
     terminatingRegex: #/\$/#,
-    equation: .inlineEquation,
-    supportsRecursion: false)
+    equation: .inlineEquation)
   
   /// An TeX-style block equation component.
   static let tex = EquationComponent(
     regex: #/\$\$\s*(.*?)\s*\$\$/#,
     terminatingRegex: #/\$\$/#,
-    equation: .texEquation,
-    supportsRecursion: false)
+    equation: .texEquation)
   
   /// A block equation.
   static let block = EquationComponent(
     regex: #/\\\[\s*(.*?)\s*\\\]/#,
     terminatingRegex: #/\\\]/#,
-    equation: .blockEquation,
-    supportsRecursion: false)
+    equation: .blockEquation)
   
   /// A named equation component.
   static let named = EquationComponent(
     regex: #/\\begin{equation}\s*(.*?)\s*\\end{equation}/#,
     terminatingRegex: #/\\end{equation}/#,
-    equation: .namedEquation,
-    supportsRecursion: true)
+    equation: .namedEquation)
   
   /// A named no number equation component.
   static let namedNoNumber = EquationComponent(
     regex: #/\\begin{equation\*}\s*(.*?)\s*\\end{equation\*}/#,
     terminatingRegex: #/\\end{equation\*}/#,
-    equation: .namedNoNumberEquation,
-    supportsRecursion: true)
+    equation: .namedNoNumberEquation)
   
   // Order matters
   static let allEquations: [EquationComponent] = [

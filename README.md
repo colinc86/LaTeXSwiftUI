@@ -208,7 +208,7 @@ LaTeX("$$E = mc^2$$ $$E = mc^2$$")
   }
 ```
 
-> <img src="./assets/images/numbers.png" width="258" height="145">
+> <img src="./assets/images/numbers.png" width="433" height="153">
 
 #### 🔗 Unencode HTML
 
@@ -227,7 +227,7 @@ LaTeX("$x^2&lt;1$")
 
 #### 🕶️ Rendering Style
 
-The view has four rendering styles.
+The view has four rendering styles. The `wait` style is the default style, and loads the view synchronously on the main queue. To get better performance and move SVG rendering off of the main queue, use any of the other three styles.
 
 | Style      | Asynchronous | Description                                                              |
 |:-----------|:-------------|:-------------------------------------------------------------------------|
@@ -236,7 +236,6 @@ The view has four rendering styles.
 | `progress` | Yes          | The view displays a progress view until its finished rendering.          |
 | `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
 
-The `wait` style is the default style, and loads the view synchronously on the main queue. To get better performance and move SVG rendering off of the main queue, use any of the other three styles.
 
 #### 🪩 Animated
 
@@ -270,8 +269,6 @@ LaTeX.imageCache.removeAll()
 
 SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
 
-SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.
-
 ```swift
 VStack {
   ForEach(expressions, id: \.self) { expression in
@@ -285,3 +282,5 @@ VStack {
   }
 }
 ```
+
+SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.
