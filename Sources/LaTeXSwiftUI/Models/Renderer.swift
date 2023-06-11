@@ -26,7 +26,6 @@
 import CryptoKit
 import Foundation
 import MathJaxSwift
-import Nuke
 import SwiftUI
 import SVGView
 
@@ -83,7 +82,6 @@ internal class Renderer {
     let svg: SVG
     let xHeight: CGFloat
     internal var fallbackKey: String { String(data: svg.data, encoding: .utf8) ?? "" }
-    internal var nukeCacheKey: Nuke.ImageCacheKey { Nuke.ImageCacheKey(key: key()) }
   }
   
   // MARK: Static properties
@@ -97,13 +95,13 @@ internal class Renderer {
   private let mathjax: MathJax?
   
   /// The renderer's data cache.
-  internal let dataCache: DataCache?
+  internal let dataCache: NSCache<NSString, NSData> = NSCache()
   
   /// Semaphore for thread-safe access to `dataCache`.
   internal let dataCacheSemaphore = DispatchSemaphore(value: 1)
   
   /// The renderer's image cache.
-  internal let imageCache: ImageCache
+  internal let imageCache: NSCache<NSString, _Image> = NSCache()
   
   /// Semaphore for thread-safe access to `imageCache`.
   internal let imageCacheSemaphore = DispatchSemaphore(value: 1)
@@ -112,16 +110,6 @@ internal class Renderer {
   
   /// Initializes a renderer with a MathJax instance.
   init() {
-    do {
-      dataCache = try DataCache(name: "mathJaxRenderDataCache")
-    }
-    catch {
-      NSLog("Error creating DataCache instance: \(error)")
-      dataCache = nil
-    }
-    
-    imageCache = ImageCache()
-    
     do {
       mathjax = try MathJax(preferredOutputFormat: .svg)
     }
@@ -275,7 +263,7 @@ extension Renderer {
   private func dataCacheValue(for key: SVGCacheKey) -> Data? {
     dataCacheSemaphore.wait()
     defer { dataCacheSemaphore.signal() }
-    return dataCache?[key.key()]
+    return dataCache.object(forKey: key.key() as NSString) as Data?
   }
   
   /// Safely sets the cache value.
@@ -285,7 +273,7 @@ extension Renderer {
   ///   - key: The value's key.
   private func setDataCacheValue(_ value: Data, for key: SVGCacheKey) {
     dataCacheSemaphore.wait()
-    dataCache?[key.key()] = value
+    dataCache.setObject(value as NSData, forKey: key.key() as NSString)
     dataCacheSemaphore.signal()
   }
   
@@ -296,7 +284,7 @@ extension Renderer {
   private func imageCacheValue(for key: ImageCacheKey) -> _Image? {
     imageCacheSemaphore.wait()
     defer { imageCacheSemaphore.signal() }
-    return imageCache[key.nukeCacheKey]?.image
+    return imageCache.object(forKey: key.key() as NSString)
   }
   
   /// Safely sets the cache value.
@@ -306,7 +294,7 @@ extension Renderer {
   ///   - key: The value's key.
   private func setImageCacheValue(_ value: _Image, for key: ImageCacheKey) {
     imageCacheSemaphore.wait()
-    imageCache[key.nukeCacheKey] = ImageContainer(image: value)
+    imageCache.setObject(value, forKey: key.key() as NSString)
     imageCacheSemaphore.signal()
   }
   

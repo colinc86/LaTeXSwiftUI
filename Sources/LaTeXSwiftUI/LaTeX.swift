@@ -25,7 +25,6 @@
 
 import HTMLEntities
 import MathJaxSwift
-import Nuke
 import SwiftUI
 
 /// A view that can parse and render TeX and LaTeX equations that contain
@@ -104,14 +103,22 @@ public struct LaTeX: View {
   // MARK: Static properties
   
   /// The package's shared data cache.
-  public static var dataCache: DataCache? {
+  public static var dataCache: NSCache<NSString, NSData> {
     Renderer.shared.dataCache
   }
   
+#if os(macOS)
   /// The package's shared image cache.
-  public static var imageCache: ImageCache {
+  public static var imageCache: NSCache<NSString, NSImage> {
     Renderer.shared.imageCache
   }
+#else
+  /// The package's shared image cache.
+  public static var imageCache: NSCache<NSString, UIImage> {
+    Renderer.shared.imageCache
+  }
+#endif
+  
   
   // MARK: Public properties
   
