@@ -253,17 +253,13 @@ LaTeX(input)
 
 `LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `dataCache` and `imageCache` properties.
 
-The caches are managed automatically, but if, for example, you wanted to clear the cache manually you may do so.
-
 ```swift
 // Clear the SVG data cache.
-LaTeX.dataCache?.removeAll()
+LaTeX.dataCache.removeAllObjects()
 
 // Clear the rendered image cache.
-LaTeX.imageCache.removeAll()
+LaTeX.imageCache.removeAllObjects()
 ```
-
-`LaTeXSwiftUI` uses the [caching](https://github.com/kean/Nuke/tree/master/Sources/Nuke/Caching) components of the [Nuke](https://github.com/kean/Nuke) package.
 
 ### 🏃‍♀️ Preloading
 
