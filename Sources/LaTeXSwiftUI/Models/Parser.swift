@@ -115,20 +115,13 @@ extension Parser {
   /// - Parameter input: The input string.
   /// - Returns: An array of LaTeX components.
   static func parse(_ input: String) -> [Component] {
-    print("parsing input \(input)")
     // Get the first match of each each equation type
-//    let matches = allEquations.map({ ($0, input.firstMatch(of: $0.regex)) })
     let matchArrays = allEquations.map { equationComponent in
       let regexMatches = input.matches(of: equationComponent.regex)
       return regexMatches.map({ (equationComponent, $0) })
     }
     
     let matches = matchArrays.reduce([], +)
-    
-    for match in matches {
-      let substring = input[match.1.range]
-      print("match: \(substring)")
-    }
     
     // Filter the matches
     let filteredMatches = matches.filter { match in
