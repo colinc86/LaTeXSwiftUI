@@ -1,5 +1,5 @@
 //
-//  ComponentBlocksViews.swift
+//  ComponentBlockText.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -26,10 +26,10 @@
 import SwiftUI
 
 /// Displays a component block as a text view.
-internal struct ComponentBlocksViews: View {
+internal struct ComponentBlockText: View {
   
   /// The component blocks to display in the view.
-  let blocks: [ComponentBlock]
+  let block: ComponentBlock
   
   // MARK: Private properties
   
@@ -48,51 +48,26 @@ internal struct ComponentBlocksViews: View {
   /// The view's block rendering mode.
   @Environment(\.blockMode) private var blockMode
   
-  /// The text's line spacing.
-  @Environment(\.lineSpacing) private var lineSpacing
-  
   // MARK: View body
   
   var body: some View {
-    VStack(alignment: .leading, spacing: lineSpacing + 4) {
-      ForEach(blocks, id: \.self) { block in
-        if block.isEquationBlock,
-           let (image, size, errorText) = block.image(font: font ?? .body, displayScale: displayScale, renderingMode: imageRenderingMode) {
-          HStack(spacing: 0) {
-            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
-            
-            if let errorText = errorText, errorMode != .rendered {
-              switch errorMode {
-              case .error:
-                Text(errorText)
-              case .original:
-                Text(block.components.first?.originalText ?? "")
-              default:
-                EmptyView()
-              }
-            }
-            else {
-              HorizontalImageScroller(
-                image: image,
-                height: size.height)
-            }
-            
-            EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
-          }
-        }
-        else {
-          ComponentBlockText(block: block)
-        }
-      }
-    }
+    block.components.enumerated().map { i, component in
+      return component.convertToText(
+        font: font ?? .body,
+        displayScale: displayScale,
+        renderingMode: imageRenderingMode,
+        errorMode: errorMode,
+        blockRenderingMode: blockMode,
+        isInEquationBlock: block.isEquationBlock)
+    }.reduce(Text(""), +)
   }
   
 }
 
-struct ComponentBlocksViewsPreviews: PreviewProvider {
+struct ComponentBlockTextPreviews: PreviewProvider {
   static var previews: some View {
-    ComponentBlocksViews(blocks: [ComponentBlock(components: [
+    ComponentBlockText(block: ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
-    ])])
+    ]))
   }
 }
