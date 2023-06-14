@@ -154,12 +154,12 @@ public extension View {
     environment(\.renderingStyle, style)
   }
   
-  /// Sets whether or not the view will animate its render state changes.
+  /// Sets the animation the view should apply to its rendered images.
   ///
-  /// - Parameter animate: Whether animations are enabled.
-  /// - Returns: A view that animates its rendering.
-  func animated(_ animate: Bool = true) -> some View {
-    environment(\.animated, animate)
+  /// - Parameter animation: The animation.
+  /// - Returns: A view that animates its rendered state.
+  func renderingAnimation(_ animation: Animation?) -> some View {
+    environment(\.renderingAnimation, animation)
   }
   
 }

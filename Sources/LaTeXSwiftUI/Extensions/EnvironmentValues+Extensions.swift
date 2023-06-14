@@ -70,8 +70,8 @@ private struct RenderingStyleKey: EnvironmentKey {
   static let defaultValue: LaTeX.RenderingStyle = .wait
 }
 
-private struct AnimatedKey: EnvironmentKey {
-  static let defaultValue: Bool = false
+private struct RenderingAnimationKey: EnvironmentKey {
+  static let defaultValue: Animation? = .none
 }
 
 extension EnvironmentValues {
@@ -143,9 +143,9 @@ extension EnvironmentValues {
   }
   
   /// Whether or not rendering should be animated.
-  var animated: Bool {
-    get { self[AnimatedKey.self] }
-    set { self[AnimatedKey.self] = newValue }
+  var renderingAnimation: Animation? {
+    get { self[RenderingAnimationKey.self] }
+    set { self[RenderingAnimationKey.self] = newValue }
   }
   
 }

@@ -44,6 +44,26 @@ internal struct ComponentBlock: Hashable, Identifiable {
     components.count == 1 && !components[0].type.inline
   }
   
+  /// Creates the image view and its size for the given block.
+  ///
+  /// If the block isn't an equation block, then this method returns `nil`.
+  ///
+  /// - Parameter block: The block.
+  /// - Returns: The image, its size, and any associated error text.
+  @MainActor func image(
+    font: Font,
+    displayScale: CGFloat,
+    renderingMode: Image.TemplateRenderingMode
+  ) -> (Image, CGSize, String?)? {
+    guard isEquationBlock, let component = components.first else {
+      return nil
+    }
+    return component.convertToImage(
+      font: font,
+      displayScale: displayScale,
+      renderingMode: renderingMode)
+  }
+  
 }
 
 /// A LaTeX component.

@@ -2,7 +2,7 @@
 
 A SwiftUI view that renders LaTeX equations.
 
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![Unit Tests](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml/badge.svg)](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml)
 
 <center><img src="./assets/images/device.png" width="362"></center>
 
@@ -23,7 +23,7 @@ A SwiftUI view that renders LaTeX equations.
       - [Format Equation Number](#format-equation-number)
     - [Unencode HTML](#🔗-unencode-html)
     - [Rendering Style](#🕶️-rendering-style)
-    - [Animated](#🪩-animated)
+    - [Rendering Animation](#🪩-animated)
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
@@ -47,7 +47,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.1")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.2")
 ```
 
 ## ⌨️ Usage
@@ -237,14 +237,14 @@ The view has four rendering styles. The `wait` style is the default style, and l
 | `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
 
 
-#### 🪩 Animated
+#### 🪩 Rendering Animation
 
-The `animated` modifier applies to the view when using the asynchronous rendering styles `empty`, `original`, or `progress`.
+When using the asynchronous rendering styles `empty`, `original`, or `progress`, use this modifier to determine the animation applied to the transition between views. The default value is `none`.
 
 ```swift
 LaTeX(input)
   .renderingStyle(.original)
-  .animated()
+  .renderingAnimation(.easeIn)
 ```
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.

@@ -145,8 +145,8 @@ public struct LaTeX: View {
   /// The view's rendering style.
   @Environment(\.renderingStyle) private var renderingStyle
   
-  /// Whether or not rendering should be animated.
-  @Environment(\.animated) private var animated
+  /// The animation the view should apply to its rendered images.
+  @Environment(\.renderingAnimation) private var renderingAnimation
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
@@ -188,24 +188,27 @@ public struct LaTeX: View {
   // MARK: View body
   
   public var body: some View {
-    if renderState.rendered {
-      bodyWithBlocks(renderState.blocks)
-    }
-    else {
-      switch renderingStyle {
-      case .empty:
-        Text("")
-          .task(render)
-      case .original:
-        Text(latex)
-          .task(render)
-      case .progress:
-        ProgressView()
-          .task(render)
-      case .wait:
-        bodyWithBlocks(syncBlocks)
+    VStack(spacing: 0) {
+      if renderState.rendered {
+        bodyWithBlocks(renderState.blocks)
+      }
+      else {
+        switch renderingStyle {
+        case .empty:
+          Text("")
+            .task(render)
+        case .original:
+          Text(latex)
+            .task(render)
+        case .progress:
+          ProgressView()
+            .task(render)
+        case .wait:
+          bodyWithBlocks(syncBlocks)
+        }
       }
     }
+    .animation(renderingAnimation, value: renderState.rendered)
   }
   
 }
@@ -229,7 +232,6 @@ extension LaTeX {
   /// Renders the view's components.
   @Sendable private func render() async {
     await renderState.render(
-      animated: animated,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       font: font,
@@ -297,6 +299,58 @@ struct LaTeX_Previews: PreviewProvider {
     .previewDisplayName("Hello, LaTeX!")
     
     VStack {
+      LaTeX("Hello, $\\color{blue}\\LaTeX$")
+        .imageRenderingMode(.original)
+        
+      LaTeX("Hello, $\\LaTeX$")
+        .imageRenderingMode(.template)
+    }
+    .previewDisplayName("Image Rendering Mode")
+    
+    VStack {
+      LaTeX("$\\asdf$")
+        .errorMode(.error)
+      
+      LaTeX("$\\asdf$")
+        .errorMode(.original)
+      
+      LaTeX("$\\asdf$")
+        .errorMode(.rendered)
+    }
+    .previewDisplayName("Error Mode")
+    
+    VStack {
+      LaTeX("$x&lt;0$")
+        .errorMode(.error)
+      
+      LaTeX("$x&lt;0$")
+        .unencoded()
+        .errorMode(.error)
+    }
+    .previewDisplayName("Unencoded")
+    
+    VStack {
+      LaTeX("$a^2 + b^2 = c^2$")
+        .parsingMode(.onlyEquations)
+      
+      LaTeX("a^2 + b^2 = c^2")
+        .parsingMode(.all)
+    }
+    .previewDisplayName("Parsing Mode")
+    
+    VStack {
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.blockViews)
+      
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.blockText)
+      
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.alwaysInline)
+    }
+    .previewDisplayName("Block Mode")
+    
+    VStack {
       LaTeX("$$E = mc^2$$")
         .equationNumberMode(.right)
         .equationNumberOffset(10)
@@ -313,6 +367,23 @@ struct LaTeX_Previews: PreviewProvider {
     .formatEquationNumber { n in
       return "~[\(n)]~"
     }
+    
+    VStack {
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.wait)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.empty)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.original)
+        .renderingAnimation(.default)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.progress)
+        .renderingAnimation(.easeIn)
+    }
+    .previewDisplayName("Rendering Style and Animated")
   }
   
 }

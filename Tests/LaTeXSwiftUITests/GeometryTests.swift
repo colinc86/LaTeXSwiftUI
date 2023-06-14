@@ -4,6 +4,21 @@ import XCTest
 
 final class GeometryTests: XCTestCase {
   
+  func testInitXHeight_Success1() {
+    let value = SVGGeometry.XHeight(stringValue: "0ex")
+    XCTAssertEqual(value, 0)
+  }
+  
+  func testInitXHeight_Success2() {
+    let value = SVGGeometry.XHeight(stringValue: "0")
+    XCTAssertEqual(value, 0)
+  }
+  
+  func testInitXHeight_Failure() {
+    let value = SVGGeometry.XHeight(stringValue: "zeroex")
+    XCTAssertNil(value)
+  }
+  
   func testSVGGeometry_parseAlignment() {
     let input = "\"vertical-align: -1.602ex;\""
     let value = SVGGeometry.parseAlignment(from: input)

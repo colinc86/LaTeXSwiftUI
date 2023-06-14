@@ -59,27 +59,19 @@ extension LaTeXRenderState {
   /// Renders the views components.
   ///
   /// - Parameters:
-  ///   - animated: The `animated` environment variable.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - font: The `font environment` variable.
   ///   - displayScale: The `displayScale` environment variable.
   ///   - texOptions: The `texOptions` environment variable.
-  func render(animated: Bool, unencodeHTML: Bool, parsingMode: LaTeX.ParsingMode, font: Font?, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) async {
+  func render(unencodeHTML: Bool, parsingMode: LaTeX.ParsingMode, font: Font?, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) async {
     let isRen = await isRendering
     let ren = await rendered
     guard !isRen && !ren else {
       return
     }
     await MainActor.run {
-      if animated {
-        withAnimation {
-          isRendering = true
-        }
-      }
-      else {
-        isRendering = true
-      }
+      isRendering = true
     }
     
     let renderedBlocks = await Renderer.shared.render(
@@ -89,18 +81,9 @@ extension LaTeXRenderState {
       texOptions: texOptions)
     
     await MainActor.run {
-      if animated {
-        withAnimation {
-          blocks = renderedBlocks
-          isRendering = false
-          rendered = true
-        }
-      }
-      else {
-        blocks = renderedBlocks
-        isRendering = false
-        rendered = true
-      }
+      blocks = renderedBlocks
+      isRendering = false
+      rendered = true
     }
   }
   
