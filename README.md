@@ -23,7 +23,7 @@ A SwiftUI view that renders LaTeX equations.
       - [Format Equation Number](#format-equation-number)
     - [Unencode HTML](#🔗-unencode-html)
     - [Rendering Style](#🕶️-rendering-style)
-    - [Animated](#🪩-animated)
+    - [Rendering Animation](#🪩-animated)
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
@@ -47,7 +47,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.1")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.2")
 ```
 
 ## ⌨️ Usage
@@ -237,14 +237,14 @@ The view has four rendering styles. The `wait` style is the default style, and l
 | `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
 
 
-#### 🪩 Animated
+#### 🪩 Rendering Animation
 
-The `animated` modifier applies to the view when using the asynchronous rendering styles `empty`, `original`, or `progress`.
+When using the asynchronous rendering styles `empty`, `original`, or `progress`, use this modifier to determine the animation applied to the transition between views. The default value is `none`.
 
 ```swift
 LaTeX(input)
   .renderingStyle(.original)
-  .animated()
+  .renderingAnimation(.easeIn)
 ```
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.

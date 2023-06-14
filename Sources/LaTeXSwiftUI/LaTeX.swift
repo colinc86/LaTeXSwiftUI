@@ -145,8 +145,8 @@ public struct LaTeX: View {
   /// The view's rendering style.
   @Environment(\.renderingStyle) private var renderingStyle
   
-  /// Whether or not rendering should be animated.
-  @Environment(\.animated) private var animated
+  /// The animation the view should apply to its rendered images.
+  @Environment(\.renderingAnimation) private var renderingAnimation
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
@@ -188,24 +188,27 @@ public struct LaTeX: View {
   // MARK: View body
   
   public var body: some View {
-    if renderState.rendered {
-      bodyWithBlocks(renderState.blocks)
-    }
-    else {
-      switch renderingStyle {
-      case .empty:
-        Text("")
-          .task(render)
-      case .original:
-        Text(latex)
-          .task(render)
-      case .progress:
-        ProgressView()
-          .task(render)
-      case .wait:
-        bodyWithBlocks(syncBlocks)
+    VStack(spacing: 0) {
+      if renderState.rendered {
+        bodyWithBlocks(renderState.blocks)
+      }
+      else {
+        switch renderingStyle {
+        case .empty:
+          Text("")
+            .task(render)
+        case .original:
+          Text(latex)
+            .task(render)
+        case .progress:
+          ProgressView()
+            .task(render)
+        case .wait:
+          bodyWithBlocks(syncBlocks)
+        }
       }
     }
+    .animation(renderingAnimation, value: renderState.rendered)
   }
   
 }
@@ -229,7 +232,6 @@ extension LaTeX {
   /// Renders the view's components.
   @Sendable private func render() async {
     await renderState.render(
-      animated: animated,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       font: font,
@@ -375,11 +377,12 @@ struct LaTeX_Previews: PreviewProvider {
       
       LaTeX("Hello, $\\LaTeX$!")
         .renderingStyle(.original)
+        .renderingAnimation(.default)
       
       LaTeX("Hello, $\\LaTeX$!")
         .renderingStyle(.progress)
+        .renderingAnimation(.easeIn)
     }
-    .animated()
     .previewDisplayName("Rendering Style and Animated")
   }
   
