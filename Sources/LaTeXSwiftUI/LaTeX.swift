@@ -297,6 +297,58 @@ struct LaTeX_Previews: PreviewProvider {
     .previewDisplayName("Hello, LaTeX!")
     
     VStack {
+      LaTeX("Hello, $\\color{blue}\\LaTeX$")
+        .imageRenderingMode(.original)
+        
+      LaTeX("Hello, $\\LaTeX$")
+        .imageRenderingMode(.template)
+    }
+    .previewDisplayName("Image Rendering Mode")
+    
+    VStack {
+      LaTeX("$\\asdf$")
+        .errorMode(.error)
+      
+      LaTeX("$\\asdf$")
+        .errorMode(.original)
+      
+      LaTeX("$\\asdf$")
+        .errorMode(.rendered)
+    }
+    .previewDisplayName("Error Mode")
+    
+    VStack {
+      LaTeX("$x&lt;0$")
+        .errorMode(.error)
+      
+      LaTeX("$x&lt;0$")
+        .unencoded()
+        .errorMode(.error)
+    }
+    .previewDisplayName("Unencoded")
+    
+    VStack {
+      LaTeX("$a^2 + b^2 = c^2$")
+        .parsingMode(.onlyEquations)
+      
+      LaTeX("a^2 + b^2 = c^2")
+        .parsingMode(.all)
+    }
+    .previewDisplayName("Parsing Mode")
+    
+    VStack {
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.blockViews)
+      
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.blockText)
+      
+      LaTeX("Equation 1: $$x = 3$$")
+        .blockMode(.alwaysInline)
+    }
+    .previewDisplayName("Block Mode")
+    
+    VStack {
       LaTeX("$$E = mc^2$$")
         .equationNumberMode(.right)
         .equationNumberOffset(10)
@@ -313,6 +365,22 @@ struct LaTeX_Previews: PreviewProvider {
     .formatEquationNumber { n in
       return "~[\(n)]~"
     }
+    
+    VStack {
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.wait)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.empty)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.original)
+      
+      LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.progress)
+    }
+    .animated()
+    .previewDisplayName("Rendering Style and Animated")
   }
   
 }
