@@ -38,7 +38,7 @@ internal struct ComponentBlocksText: View {
   
   var body: some View {
     blocks.map { block in
-      let text = ComponentBlockText(block: block).body as! Text
+      let text = ComponentBlockText(block: block).body
       return block.isEquationBlock && !forceInline ?
       Text("\n") + text + Text("\n") :
       text

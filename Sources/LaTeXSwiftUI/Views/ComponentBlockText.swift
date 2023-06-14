@@ -50,7 +50,7 @@ internal struct ComponentBlockText: View {
   
   // MARK: View body
   
-  var body: some View {
+  var body: Text {
     block.components.enumerated().map { i, component in
       return component.convertToText(
         font: font ?? .body,
