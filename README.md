@@ -2,7 +2,7 @@
 
 A SwiftUI view that renders LaTeX equations.
 
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![Unit Tests](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml/badge.svg)](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml)
 
 <center><img src="./assets/images/device.png" width="362"></center>
 
