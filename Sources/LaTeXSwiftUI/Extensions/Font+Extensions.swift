@@ -33,6 +33,8 @@ import Cocoa
 #endif
 
 internal extension Font {
+  
+  /// The font's text style.
   func textStyle() -> _Font.TextStyle? {
     switch self {
     case .largeTitle, .largeTitle.bold(), .largeTitle.italic(), .largeTitle.monospaced(): return .largeTitle
@@ -48,6 +50,12 @@ internal extension Font {
     default: return nil
     }
   }
+  
+  /// The font's x-height.
+  var xHeight: CGFloat {
+    _Font.preferredFont(from: self).xHeight
+  }
+  
 }
 
 internal extension _Font {

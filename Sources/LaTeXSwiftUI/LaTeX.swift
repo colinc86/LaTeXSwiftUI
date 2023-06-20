@@ -104,18 +104,18 @@ public struct LaTeX: View {
   
   /// The package's shared data cache.
   public static var dataCache: NSCache<NSString, NSData> {
-    Renderer.shared.dataCache
+    Renderer.shared.cache.dataCache
   }
   
 #if os(macOS)
   /// The package's shared image cache.
   public static var imageCache: NSCache<NSString, NSImage> {
-    Renderer.shared.imageCache
+    Renderer.shared.cache.imageCache
   }
 #else
   /// The package's shared image cache.
   public static var imageCache: NSCache<NSString, UIImage> {
-    Renderer.shared.imageCache
+    Renderer.shared.cache.imageCache
   }
 #endif
   
@@ -159,22 +159,6 @@ public struct LaTeX: View {
   /// The view's render state.
   @StateObject private var renderState: LaTeXRenderState
   
-  /// Renders the blocks synchronously.
-  ///
-  /// This will block whatever thread you call it on.
-  private var syncBlocks: [ComponentBlock] {
-    Renderer.shared.render(
-      blocks: Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode),
-      font: font ?? .body,
-      displayScale: displayScale,
-      texOptions: texOptions)
-  }
-  
-  /// The TeX options to use when submitting requests to the renderer.
-  private var texOptions: TeXInputProcessorOptions {
-    TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
-  }
-  
   // MARK: Initializers
   
   /// Initializes a view with a LaTeX input string.
@@ -190,21 +174,22 @@ public struct LaTeX: View {
   public var body: some View {
     VStack(spacing: 0) {
       if renderState.rendered {
+        // If our blocks have been rendered, display them
         bodyWithBlocks(renderState.blocks)
       }
+      else if isCached() {
+        // If our blocks are cached, display them
+        bodyWithBlocks(renderSync())
+      }
       else {
+        // The view is not rendered nor cached
         switch renderingStyle {
-        case .empty:
-          Text("")
-            .task(render)
-        case .original:
-          Text(latex)
-            .task(render)
-        case .progress:
-          ProgressView()
-            .task(render)
+        case .empty, .original, .progress:
+          // Render the components asynchronously
+          loadingView().task(renderAsync)
         case .wait:
-          bodyWithBlocks(syncBlocks)
+          // Render the components synchronously
+          bodyWithBlocks(renderSync())
         }
       }
     }
@@ -220,7 +205,7 @@ extension LaTeX {
   /// Preloads the view's SVG and image data.
   public func preload() {
     Task {
-      await render()
+      await renderAsync()
     }
   }
 }
@@ -229,14 +214,45 @@ extension LaTeX {
 
 extension LaTeX {
   
+  /// Checks the renderer's caches for the current view.
+  ///
+  /// If this method returns `true`, then there is no need to do an async
+  /// render.
+  ///
+  /// - Returns: A boolean indicating whether the components to the view are
+  ///   cached.
+  private func isCached() -> Bool {
+    renderState.isCached(
+      unencodeHTML: unencodeHTML,
+      parsingMode: parsingMode,
+      processEscapes: processEscapes,
+      errorMode: errorMode,
+      font: font ?? .body,
+      displayScale: displayScale)
+  }
+  
   /// Renders the view's components.
-  @Sendable private func render() async {
+  @Sendable private func renderAsync() async {
     await renderState.render(
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
-      font: font,
-      displayScale: displayScale,
-      texOptions: texOptions)
+      processEscapes: processEscapes,
+      errorMode: errorMode,
+      font: font ?? .body,
+      displayScale: displayScale)
+  }
+  
+  /// Renders the view's components synchronously.
+  ///
+  /// - Returns: The rendered components.
+  private func renderSync() -> [ComponentBlock] {
+    renderState.renderSync(
+      unencodeHTML: unencodeHTML,
+      parsingMode: parsingMode,
+      processEscapes: processEscapes,
+      errorMode: errorMode,
+      font: font ?? .body,
+      displayScale: displayScale)
   }
   
   /// Creates the view's body based on its block mode.
@@ -251,6 +267,22 @@ extension LaTeX {
       ComponentBlocksText(blocks: blocks)
     case .blockViews:
       ComponentBlocksViews(blocks: blocks)
+    }
+  }
+  
+  @MainActor @ViewBuilder private func loadingView() -> some View {
+    switch renderingStyle {
+    case .empty:
+      Text("")
+        .task(renderAsync)
+    case .original:
+      Text(latex)
+        .task(renderAsync)
+    case .progress:
+      ProgressView()
+        .task(renderAsync)
+    default:
+      EmptyView()
     }
   }
   

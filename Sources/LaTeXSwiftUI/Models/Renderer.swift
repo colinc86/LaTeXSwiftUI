@@ -23,7 +23,6 @@
 //  IN THE SOFTWARE.
 //
 
-import CryptoKit
 import Foundation
 import MathJaxSwift
 import SwiftUI
@@ -35,76 +34,24 @@ import UIKit
 import Cocoa
 #endif
 
-fileprivate protocol Key: Codable {
-  
-  /// The key type used to identify the cache key in storage.
-  static var keyType: String { get }
-  
-  /// A key to use if encoding fails.
-  var fallbackKey: String { get }
-  
-}
-
-extension Key {
-  
-  /// The key to use in the cache.
-  func key() -> String {
-    do {
-      let data = try JSONEncoder().encode(self)
-      let hashedData = SHA256.hash(data: data)
-      return hashedData.compactMap { String(format: "%02x", $0) }.joined() + "-" + Self.keyType
-    }
-    catch {
-      return fallbackKey + "-" + Self.keyType
-    }
-  }
-  
-}
-
 /// Renders equation components and updates their rendered image and offset
 /// values.
 internal class Renderer {
-  
-  // MARK: Types
-  
-  /// An SVG cache key.
-  struct SVGCacheKey: Key {
-    static let keyType: String = "svg"
-    let componentText: String
-    let conversionOptions: ConversionOptions
-    let texOptions: TeXInputProcessorOptions
-    internal var fallbackKey: String { componentText }
-  }
-  
-  /// An image cache key.
-  struct ImageCacheKey: Key {
-    static let keyType: String = "image"
-    let svg: SVG
-    let xHeight: CGFloat
-    internal var fallbackKey: String { String(data: svg.data, encoding: .utf8) ?? "" }
-  }
   
   // MARK: Static properties
   
   /// The shared renderer.
   static let shared = Renderer()
   
+  // MARK: Internal properties
+  
+  /// The renderer's data and image cache.
+  internal let cache = Cache()
+  
   // MARK: Private properties
   
   /// The MathJax instance.
   private let mathjax: MathJax?
-  
-  /// The renderer's data cache.
-  internal let dataCache: NSCache<NSString, NSData> = NSCache()
-  
-  /// Semaphore for thread-safe access to `dataCache`.
-  internal let dataCacheSemaphore = DispatchSemaphore(value: 1)
-  
-  /// The renderer's image cache.
-  internal let imageCache: NSCache<NSString, _Image> = NSCache()
-  
-  /// Semaphore for thread-safe access to `imageCache`.
-  internal let imageCacheSemaphore = DispatchSemaphore(value: 1)
   
   // MARK: Initializers
   
@@ -125,6 +72,39 @@ internal class Renderer {
 
 extension Renderer {
   
+  /// Determines and returns whether the blocks are in the renderer's cache.
+  ///
+  /// - Parameters:
+  ///   - blocks: The blocks.
+  ///   - font: The `font` environment variable.
+  ///   - displayScale: The `displayScale` environment variable.
+  ///   - texOptions: The `texOptions` environment variable.
+  /// - Returns: Whether the blocks are in the renderer's cache.
+  func blocksExistInCache(_ blocks: [ComponentBlock], font: Font, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) -> Bool {
+    for block in blocks {
+      for component in block.components where component.type.isEquation {
+        let dataCacheKey = Cache.SVGCacheKey(
+          componentText: component.text,
+          conversionOptions: component.conversionOptions,
+          texOptions: texOptions)
+        guard let svgData = cache.dataCacheValue(for: dataCacheKey) else {
+          return false
+        }
+        
+        guard let svg = try? SVG(data: svgData) else {
+          return false
+        }
+        
+        let xHeight = _Font.preferredFont(from: font).xHeight
+        let imageCacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight)
+        guard cache.imageCacheValue(for: imageCacheKey) != nil else {
+          return false
+        }
+      }
+    }
+    return true
+  }
+  
   /// Renders the view's component blocks.
   ///
   /// - Parameters:
@@ -139,26 +119,9 @@ extension Renderer {
     displayScale: CGFloat,
     texOptions: TeXInputProcessorOptions
   ) async -> [ComponentBlock] {
-    let xHeight = _Font.preferredFont(from: font).xHeight
-    var newBlocks = [ComponentBlock]()
-    for block in blocks {
-      do {
-        let newComponents = try await render(
-          block.components,
-          xHeight: xHeight,
-          displayScale: displayScale,
-          texOptions: texOptions)
-        
-        newBlocks.append(ComponentBlock(components: newComponents))
-      }
-      catch {
-        NSLog("Error rendering block: \(error)")
-        newBlocks.append(block)
-        continue
-      }
-    }
-    
-    return newBlocks
+    return await withCheckedContinuation({ continuation in
+      continuation.resume(returning: render(blocks: blocks, font: font, displayScale: displayScale, texOptions: texOptions))
+    })
   }
   
   /// Renders the view's component blocks.
@@ -175,13 +138,12 @@ extension Renderer {
     displayScale: CGFloat,
     texOptions: TeXInputProcessorOptions
   ) -> [ComponentBlock] {
-    let xHeight = _Font.preferredFont(from: font).xHeight
     var newBlocks = [ComponentBlock]()
     for block in blocks {
       do {
         let newComponents = try render(
           block.components,
-          xHeight: xHeight,
+          xHeight: font.xHeight,
           displayScale: displayScale,
           texOptions: texOptions)
         
@@ -211,14 +173,11 @@ extension Renderer {
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode
   ) -> (Image, CGSize)? {
-    // Get the image's width, height, and offset
-    let xHeight = _Font.preferredFont(from: font).xHeight
-    
     // Create our cache key
-    let cacheKey = ImageCacheKey(svg: svg, xHeight: xHeight)
+    let cacheKey = Cache.ImageCacheKey(svg: svg, xHeight: font.xHeight)
     
     // Check the cache for an image
-    if let image = imageCacheValue(for: cacheKey) {
+    if let image = cache.imageCacheValue(for: cacheKey) {
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -226,8 +185,8 @@ extension Renderer {
     }
     
     // Continue with getting the image
-    let width = svg.geometry.width.toPoints(xHeight)
-    let height = svg.geometry.height.toPoints(xHeight)
+    let width = svg.geometry.width.toPoints(font.xHeight)
+    let height = svg.geometry.height.toPoints(font.xHeight)
     
     // Render the view
     let view = SVGView(data: svg.data)
@@ -241,61 +200,13 @@ extension Renderer {
 #endif
     
     if let image = image {
-      setImageCacheValue(image, for: cacheKey)
+      cache.setImageCacheValue(image, for: cacheKey)
       return (Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
         .interpolation(.high), image.size)
     }
     return nil
-  }
-  
-}
-
-// MARK: Cache access methods
-
-extension Renderer {
-  
-  /// Safely access the cache value for the given key.
-  ///
-  /// - Parameter key: The key of the value to get.
-  /// - Returns: A value.
-  private func dataCacheValue(for key: SVGCacheKey) -> Data? {
-    dataCacheSemaphore.wait()
-    defer { dataCacheSemaphore.signal() }
-    return dataCache.object(forKey: key.key() as NSString) as Data?
-  }
-  
-  /// Safely sets the cache value.
-  ///
-  /// - Parameters:
-  ///   - value: The value to set.
-  ///   - key: The value's key.
-  private func setDataCacheValue(_ value: Data, for key: SVGCacheKey) {
-    dataCacheSemaphore.wait()
-    dataCache.setObject(value as NSData, forKey: key.key() as NSString)
-    dataCacheSemaphore.signal()
-  }
-  
-  /// Safely access the cache value for the given key.
-  ///
-  /// - Parameter key: The key of the value to get.
-  /// - Returns: A value.
-  private func imageCacheValue(for key: ImageCacheKey) -> _Image? {
-    imageCacheSemaphore.wait()
-    defer { imageCacheSemaphore.signal() }
-    return imageCache.object(forKey: key.key() as NSString)
-  }
-  
-  /// Safely sets the cache value.
-  ///
-  /// - Parameters:
-  ///   - value: The value to set.
-  ///   - key: The value's key.
-  private func setImageCacheValue(_ value: _Image, for key: ImageCacheKey) {
-    imageCacheSemaphore.wait()
-    imageCache.setObject(value, forKey: key.key() as NSString)
-    imageCacheSemaphore.signal()
   }
   
 }
@@ -332,82 +243,6 @@ extension Renderer {
     xHeight: CGFloat,
     displayScale: CGFloat,
     texOptions: TeXInputProcessorOptions
-  ) async throws -> [Component] {
-    // Make sure we have a MathJax instance!
-    guard let mathjax = mathjax else {
-      return components
-    }
-    
-    // Iterate through the input components and render
-    var renderedComponents = [Component]()
-    for component in components {
-      // Only render equation components
-      guard component.type.isEquation else {
-        renderedComponents.append(component)
-        continue
-      }
-      
-      // Create our cache key
-      let cacheKey = SVGCacheKey(
-        componentText: component.text,
-        conversionOptions: component.conversionOptions,
-        texOptions: texOptions)
-      
-      // Do we have the SVG in the cache?
-      if let svgData = dataCacheValue(for: cacheKey) {
-        renderedComponents.append(Component(
-          text: component.text,
-          type: component.type,
-          svg: try SVG(data: svgData)))
-        continue
-      }
-      
-      // Perform the conversion
-      var conversionError: Error?
-      var svgString: String = ""
-      do {
-        svgString = try await mathjax.tex2svg(
-          component.text,
-          styles: false,
-          conversionOptions: component.conversionOptions,
-          inputOptions: texOptions)
-      }
-      catch {
-        conversionError = error
-      }
-      
-      // Check for a conversion error
-      let errorText = try getErrorText(from: conversionError)
-      
-      // Create and cache the SVG
-      let svg = try SVG(svgString: svgString, errorText: errorText)
-      setDataCacheValue(try svg.encoded(), for: cacheKey)
-      
-      // Save the rendered component
-      renderedComponents.append(Component(
-        text: component.text,
-        type: component.type,
-        svg: svg))
-    }
-    
-    // All done
-    return renderedComponents
-  }
-  
-  /// Renders the components and stores the new images in a new set of
-  /// components.
-  ///
-  /// - Parameters:
-  ///   - components: The components to render.
-  ///   - xHeight: The xHeight of the font to use.
-  ///   - displayScale: The current display scale.
-  ///   - texOptions: The MathJax TeX input processor options.
-  /// - Returns: An array of components.
-  private func render(
-    _ components: [Component],
-    xHeight: CGFloat,
-    displayScale: CGFloat,
-    texOptions: TeXInputProcessorOptions
   ) throws -> [Component] {
     // Make sure we have a MathJax instance!
     guard let mathjax = mathjax else {
@@ -424,13 +259,13 @@ extension Renderer {
       }
       
       // Create our cache key
-      let cacheKey = SVGCacheKey(
+      let cacheKey = Cache.SVGCacheKey(
         componentText: component.text,
         conversionOptions: component.conversionOptions,
         texOptions: texOptions)
       
       // Do we have the SVG in the cache?
-      if let svgData = dataCacheValue(for: cacheKey) {
+      if let svgData = cache.dataCacheValue(for: cacheKey) {
         renderedComponents.append(Component(
           text: component.text,
           type: component.type,
@@ -452,7 +287,7 @@ extension Renderer {
       
       // Create and cache the SVG
       let svg = try SVG(svgString: svgString, errorText: errorText)
-      setDataCacheValue(try svg.encoded(), for: cacheKey)
+      cache.setDataCacheValue(try svg.encoded(), for: cacheKey)
       
       // Save the rendered component
       renderedComponents.append(Component(
