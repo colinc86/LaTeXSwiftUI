@@ -44,26 +44,6 @@ internal struct ComponentBlock: Hashable, Identifiable {
     components.count == 1 && !components[0].type.inline
   }
   
-  /// Creates the image view and its size for the given block.
-  ///
-  /// If the block isn't an equation block, then this method returns `nil`.
-  ///
-  /// - Parameter block: The block.
-  /// - Returns: The image, its size, and any associated error text.
-  @MainActor func image(
-    font: Font,
-    displayScale: CGFloat,
-    renderingMode: Image.TemplateRenderingMode
-  ) -> (Image, CGSize, String?)? {
-    guard isEquationBlock, let component = components.first else {
-      return nil
-    }
-    return component.convertToImage(
-      font: font,
-      displayScale: displayScale,
-      renderingMode: renderingMode)
-  }
-  
 }
 
 /// A LaTeX component.
@@ -200,94 +180,6 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     
     self.type = type
     self.svg = svg
-  }
-  
-}
-
-// MARK: Methods
-
-extension Component {
-  
-  /// Converts the component to a `Text` view.
-  ///
-  /// - Parameters:
-  ///   - font: The font to use.
-  ///   - displayScale: The view's display scale.
-  ///   - renderingMode: The image rendering mode.
-  ///   - errorMode: The error handling mode.
-  ///   - isLastComponentInBlock: Whether or not this is the last component in
-  ///     the block that contains it.
-  /// - Returns: A text view.
-  @MainActor func convertToText(
-    font: Font,
-    displayScale: CGFloat,
-    renderingMode: Image.TemplateRenderingMode,
-    errorMode: LaTeX.ErrorMode,
-    blockRenderingMode: LaTeX.BlockMode,
-    isInEquationBlock: Bool
-  ) -> Text {
-    // Get the component's text
-    let text: Text
-    if let svg = svg {
-      // Do we have an error?
-      if let errorText = svg.errorText, errorMode != .rendered {
-        switch errorMode {
-        case .original:
-          // Use the original tex input
-          text = Text(blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText)
-        case .error:
-          // Use the error text
-          text = Text(errorText)
-        default:
-          text = Text("")
-        }
-      }
-      else if let (image, _, _) = convertToImage(
-        font: font,
-        displayScale: displayScale,
-        renderingMode: renderingMode
-      ) {
-        let xHeight = _Font.preferredFont(from: font).xHeight
-        let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-        text = Text(image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
-      }
-      else {
-        text = Text("")
-      }
-    }
-    else if blockRenderingMode == .alwaysInline {
-      text = Text(originalTextTrimmingNewlines)
-    }
-    else {
-      text = Text(originalText)
-    }
-    
-    return text
-  }
-  
-  /// Converts the component to an image.
-  ///
-  /// - Parameters:
-  ///   - font: The font to use.
-  ///   - displayScale: The current display scale.
-  ///   - renderingMode: The current rendering mode.
-  /// - Returns: Image details.
-  @MainActor func convertToImage(
-    font: Font,
-    displayScale: CGFloat,
-    renderingMode: Image.TemplateRenderingMode
-  ) -> (Image, CGSize, String?)? {
-    guard let svg = svg else {
-      return nil
-    }
-    guard let imageData = Renderer.shared.convertToImage(
-      svg: svg,
-      font: font,
-      displayScale: displayScale,
-      renderingMode: renderingMode) else {
-      return nil
-    }
-    return (imageData.0, imageData.1, svg.errorText)
   }
   
 }
