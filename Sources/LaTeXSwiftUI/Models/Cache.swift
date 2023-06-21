@@ -76,17 +76,24 @@ internal class Cache {
   
   // MARK: Static properties
   
-  /// The renderer's data cache.
-  internal let dataCache: NSCache<NSString, NSData> = NSCache()
+  /// The shared cache.
+  static let shared = Cache()
   
-  /// Semaphore for thread-safe access to `dataCache`.
-  internal let dataCacheSemaphore = DispatchSemaphore(value: 1)
+  // MARK: Public properties
+  
+  /// The renderer's data cache.
+  let dataCache: NSCache<NSString, NSData> = NSCache()
   
   /// The renderer's image cache.
-  internal let imageCache: NSCache<NSString, _Image> = NSCache()
+  let imageCache: NSCache<NSString, _Image> = NSCache()
+  
+  // MARK: Private properties
+  
+  /// Semaphore for thread-safe access to `dataCache`.
+  let dataCacheSemaphore = DispatchSemaphore(value: 1)
   
   /// Semaphore for thread-safe access to `imageCache`.
-  internal let imageCacheSemaphore = DispatchSemaphore(value: 1)
+  let imageCacheSemaphore = DispatchSemaphore(value: 1)
   
 }
 

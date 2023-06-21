@@ -31,6 +31,9 @@ internal struct ComponentBlockText: View {
   /// The component blocks to display in the view.
   let block: ComponentBlock
   
+  /// The view's renderer.
+  let renderer: Renderer
+  
   // MARK: Private properties
   
   /// The rendering mode to use with the rendered MathJax images.
@@ -52,7 +55,8 @@ internal struct ComponentBlockText: View {
   
   var body: Text {
     block.components.enumerated().map { i, component in
-      return component.convertToText(
+      return renderer.convertToText(
+        component: component,
         font: font ?? .body,
         displayScale: displayScale,
         renderingMode: imageRenderingMode,
@@ -68,6 +72,6 @@ struct ComponentBlockTextPreviews: PreviewProvider {
   static var previews: some View {
     ComponentBlockText(block: ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
-    ]))
+    ]), renderer: Renderer(latex: "Hello, World!"))
   }
 }

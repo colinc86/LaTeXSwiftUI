@@ -104,18 +104,18 @@ public struct LaTeX: View {
   
   /// The package's shared data cache.
   public static var dataCache: NSCache<NSString, NSData> {
-    Renderer.shared.cache.dataCache
+    Cache.shared.dataCache
   }
   
 #if os(macOS)
   /// The package's shared image cache.
   public static var imageCache: NSCache<NSString, NSImage> {
-    Renderer.shared.cache.imageCache
+    Cache.shared.imageCache
   }
 #else
   /// The package's shared image cache.
   public static var imageCache: NSCache<NSString, UIImage> {
-    Renderer.shared.cache.imageCache
+    Cache.shared.imageCache
   }
 #endif
   
@@ -156,8 +156,8 @@ public struct LaTeX: View {
   
   // MARK: Private properties
   
-  /// The view's render state.
-  @StateObject private var renderState: LaTeXRenderState
+  /// The view's renderer.
+  @StateObject private var renderer: Renderer
   
   // MARK: Initializers
   
@@ -166,16 +166,16 @@ public struct LaTeX: View {
   /// - Parameter latex: The LaTeX input.
   public init(_ latex: String) {
     self.latex = latex
-    _renderState = StateObject(wrappedValue: LaTeXRenderState(latex: latex))
+    _renderer = StateObject(wrappedValue: Renderer(latex: latex))
   }
   
   // MARK: View body
   
   public var body: some View {
     VStack(spacing: 0) {
-      if renderState.rendered {
+      if renderer.rendered {
         // If our blocks have been rendered, display them
-        bodyWithBlocks(renderState.blocks)
+        bodyWithBlocks(renderer.blocks)
       }
       else if isCached() {
         // If our blocks are cached, display them
@@ -193,7 +193,8 @@ public struct LaTeX: View {
         }
       }
     }
-    .animation(renderingAnimation, value: renderState.rendered)
+    .animation(renderingAnimation, value: renderer.rendered)
+    .environmentObject(renderer)
   }
   
 }
@@ -222,7 +223,7 @@ extension LaTeX {
   /// - Returns: A boolean indicating whether the components to the view are
   ///   cached.
   private func isCached() -> Bool {
-    renderState.isCached(
+    renderer.isCached(
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
@@ -233,7 +234,7 @@ extension LaTeX {
   
   /// Renders the view's components.
   @Sendable private func renderAsync() async {
-    await renderState.render(
+    await renderer.render(
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
@@ -246,7 +247,7 @@ extension LaTeX {
   ///
   /// - Returns: The rendered components.
   private func renderSync() -> [ComponentBlock] {
-    renderState.renderSync(
+    renderer.renderSync(
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
@@ -274,13 +275,10 @@ extension LaTeX {
     switch renderingStyle {
     case .empty:
       Text("")
-        .task(renderAsync)
     case .original:
       Text(latex)
-        .task(renderAsync)
     case .progress:
       ProgressView()
-        .task(renderAsync)
     default:
       EmptyView()
     }

@@ -1,5 +1,5 @@
 //
-//  ComponentBlocksText.swift
+//  MathJax+Extensions.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,40 +23,19 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
+import Foundation
+import MathJaxSwift
 
-/// Displays a component block as a text view.
-internal struct ComponentBlocksText: View {
+internal extension MathJax {
   
-  /// The component blocks to display in the view.
-  let blocks: [ComponentBlock]
+  static var svgRenderer: MathJax? = {
+    do {
+      return try MathJax(preferredOutputFormat: .svg)
+    }
+    catch {
+      NSLog("Error creating MathJax instance: \(error)")
+      return nil
+    }
+  }()
   
-  /// Whether inline mode should be forced.
-  var forceInline: Bool = false
-  
-  // MARK: Private properties
-  
-  /// The view's renderer.
-  @EnvironmentObject private var renderer: Renderer
-  
-  // MARK: View body
-  
-  var body: some View {
-    blocks.map { block in
-      let text = ComponentBlockText(block: block, renderer: renderer).body
-      return block.isEquationBlock && !forceInline ?
-      Text("\n") + text + Text("\n") :
-      text
-    }.reduce(Text(""), +)
-  }
-  
-}
-
-struct ComponentBlocksTextPreviews: PreviewProvider {
-  static var previews: some View {
-    ComponentBlocksText(blocks: [ComponentBlock(components: [
-      Component(text: "Hello, World!", type: .text)
-    ])], forceInline: false)
-    .environmentObject(Renderer(latex: "Hello, World!"))
-  }
 }

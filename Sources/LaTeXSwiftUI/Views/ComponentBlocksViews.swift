@@ -33,6 +33,9 @@ internal struct ComponentBlocksViews: View {
   
   // MARK: Private properties
   
+  /// The view's renderer.
+  @EnvironmentObject private var renderer: Renderer
+  
   /// The rendering mode to use with the rendered MathJax images.
   @Environment(\.imageRenderingMode) private var imageRenderingMode
   
@@ -57,7 +60,7 @@ internal struct ComponentBlocksViews: View {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock,
-           let (image, size, errorText) = block.image(font: font ?? .body, displayScale: displayScale, renderingMode: imageRenderingMode) {
+           let (image, size, errorText) = renderer.convertToImage(block: block, font: font ?? .body, displayScale: displayScale, renderingMode: imageRenderingMode) {
           HStack(spacing: 0) {
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
             
@@ -81,7 +84,7 @@ internal struct ComponentBlocksViews: View {
           }
         }
         else {
-          ComponentBlockText(block: block)
+          ComponentBlockText(block: block, renderer: renderer)
         }
       }
     }
@@ -94,5 +97,6 @@ struct ComponentBlocksViewsPreviews: PreviewProvider {
     ComponentBlocksViews(blocks: [ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
     ])])
+    .environmentObject(Renderer(latex: "Hello, World!"))
   }
 }
