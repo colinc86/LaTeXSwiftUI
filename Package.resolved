@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/colinc86/MathJaxSwift",
       "state" : {
-        "revision" : "01797ab2738a8852d70fb81479bcf76768716220",
-        "version" : "3.3.0"
+        "revision" : "e23d6eab941da699ac4a60fb0e60f3ba5c937459",
+        "version" : "3.4.0"
       }
     },
     {

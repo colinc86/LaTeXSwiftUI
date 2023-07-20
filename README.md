@@ -24,6 +24,7 @@ A SwiftUI view that renders LaTeX equations.
     - [Unencode HTML](#🔗-unencode-html)
     - [Rendering Style](#🕶️-rendering-style)
     - [Rendering Animation](#🪩-animated)
+  - [Styles](#🪮-styles)
   - [Caching](#🗄️-caching)
   - [Preloading](#🏃‍♀️-preloading)
   
@@ -47,7 +48,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.2.3")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.3.0")
 ```
 
 ## ⌨️ Usage
@@ -248,6 +249,44 @@ LaTeX(input)
 ```
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
+
+### 🪮 Styles
+
+You can use the provided view styles or create your own.
+
+```swift
+// The default view style.
+LaTeX(input)
+  .latexStyle(.automatic)
+
+// A "standard" style with HTML elements unencoded and block equations numbered.
+LaTeX(input)
+  .latexStyle(.standard)  
+```
+
+To create your own style, conform to the `LaTeXStyle` protocol. Its `makeBody(content:)` method takes a `LaTeX` view and returns a stylized version of the view.
+
+The following would create a style for the first title used at the [top](#latexswiftui) of this README.
+
+```swift
+@available(iOS 16.1, *)
+public struct TitleLaTeXStyle: LaTeXStyle {
+  
+  public func makeBody(content: LaTeX) -> some View {
+    content
+      .fontDesign(.serif)
+      .font(.largeTitle)
+      .foregroundStyle(
+          LinearGradient(
+            colors: [.red, .orange, .yellow, .green, .blue, .indigo, .purple],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+        )
+  }
+  
+}
+```
 
 ### 🗄️ Caching
 

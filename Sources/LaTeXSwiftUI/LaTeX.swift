@@ -50,6 +50,7 @@ public struct LaTeX: View {
     case blockViews
   }
   
+  /// The view's equation number mode.
   public enum EquationNumberMode {
     
     /// The view should not number named block equations.
@@ -85,6 +86,7 @@ public struct LaTeX: View {
     case onlyEquations
   }
   
+  /// The view's rendering style.
   public enum RenderingStyle {
     
     /// The view remains empty until its finished rendering.
@@ -159,6 +161,9 @@ public struct LaTeX: View {
   /// The view's renderer.
   @StateObject private var renderer: Renderer
   
+  /// The view's preload task, if any.
+  @State private var preloadTask: Task<(), Never>?
+  
   // MARK: Initializers
   
   /// Initializes a view with a LaTeX input string.
@@ -195,6 +200,7 @@ public struct LaTeX: View {
     }
     .animation(renderingAnimation, value: renderer.rendered)
     .environmentObject(renderer)
+    .onDisappear(perform: preloadTask?.cancel)
   }
   
 }
@@ -205,10 +211,19 @@ extension LaTeX {
   
   /// Preloads the view's SVG and image data.
   public func preload() {
-    Task {
-      await renderAsync()
-    }
+    preloadTask?.cancel()
+    preloadTask = Task { await renderAsync() }
+    Task { await preloadTask?.value }
   }
+  
+  /// Configures the `LaTeX` view with the given style.
+  ///
+  /// - Parameter style: The `LaTeX` view style to use.
+  /// - Returns: A stylized view.
+  public func latexStyle<S>(_ style: S) -> some View where S: LaTeXStyle {
+    style.makeBody(content: self)
+  }
+  
 }
 
 // MARK: Private methods
@@ -271,6 +286,9 @@ extension LaTeX {
     }
   }
   
+  /// The view to display while its content is rendering.
+  ///
+  /// - Returns: The view's body.
   @MainActor @ViewBuilder private func loadingView() -> some View {
     switch renderingStyle {
     case .empty:
@@ -282,138 +300,6 @@ extension LaTeX {
     default:
       EmptyView()
     }
-  }
-  
-}
-
-@available(iOS 16.1, *)
-struct LaTeX_Previews: PreviewProvider {
-  static var previews: some View {
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.largeTitle)
-        .foregroundStyle(
-          LinearGradient(
-            colors: [.red, .orange, .yellow, .green, .blue, .indigo, .purple],
-            startPoint: .leading,
-            endPoint: .trailing
-          )
-        )
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title)
-        .foregroundColor(.red)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title2)
-        .foregroundColor(.orange)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.title3)
-        .foregroundColor(.yellow)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.body)
-        .foregroundColor(.green)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.caption)
-        .foregroundColor(.indigo)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .font(.caption2)
-        .foregroundColor(.purple)
-    }
-    .fontDesign(.serif)
-    .previewLayout(.sizeThatFits)
-    .previewDisplayName("Hello, LaTeX!")
-    
-    VStack {
-      LaTeX("Hello, $\\color{blue}\\LaTeX$")
-        .imageRenderingMode(.original)
-        
-      LaTeX("Hello, $\\LaTeX$")
-        .imageRenderingMode(.template)
-    }
-    .previewDisplayName("Image Rendering Mode")
-    
-    VStack {
-      LaTeX("$\\asdf$")
-        .errorMode(.error)
-      
-      LaTeX("$\\asdf$")
-        .errorMode(.original)
-      
-      LaTeX("$\\asdf$")
-        .errorMode(.rendered)
-    }
-    .previewDisplayName("Error Mode")
-    
-    VStack {
-      LaTeX("$x&lt;0$")
-        .errorMode(.error)
-      
-      LaTeX("$x&lt;0$")
-        .unencoded()
-        .errorMode(.error)
-    }
-    .previewDisplayName("Unencoded")
-    
-    VStack {
-      LaTeX("$a^2 + b^2 = c^2$")
-        .parsingMode(.onlyEquations)
-      
-      LaTeX("a^2 + b^2 = c^2")
-        .parsingMode(.all)
-    }
-    .previewDisplayName("Parsing Mode")
-    
-    VStack {
-      LaTeX("Equation 1: $$x = 3$$")
-        .blockMode(.blockViews)
-      
-      LaTeX("Equation 1: $$x = 3$$")
-        .blockMode(.blockText)
-      
-      LaTeX("Equation 1: $$x = 3$$")
-        .blockMode(.alwaysInline)
-    }
-    .previewDisplayName("Block Mode")
-    
-    VStack {
-      LaTeX("$$E = mc^2$$")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .padding([.bottom])
-      
-      LaTeX("\\begin{equation} E = mc^2 \\end{equation} \\begin{equation} E = mc^2 \\end{equation}")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .equationNumberStart(2)
-    }
-    .fontDesign(.serif)
-    .previewLayout(.sizeThatFits)
-    .previewDisplayName("Equation Numbers")
-    .formatEquationNumber { n in
-      return "~[\(n)]~"
-    }
-    
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.wait)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.empty)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.original)
-        .renderingAnimation(.default)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.progress)
-        .renderingAnimation(.easeIn)
-    }
-    .previewDisplayName("Rendering Style and Animated")
   }
   
 }
