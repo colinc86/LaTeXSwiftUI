@@ -72,6 +72,6 @@ struct ComponentBlockTextPreviews: PreviewProvider {
   static var previews: some View {
     ComponentBlockText(block: ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
-    ]), renderer: Renderer(latex: "Hello, World!"))
+    ]), renderer: Renderer())
   }
 }

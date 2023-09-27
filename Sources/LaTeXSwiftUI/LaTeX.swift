@@ -125,7 +125,7 @@ public struct LaTeX: View {
   // MARK: Public properties
   
   /// The view's LaTeX input string.
-  public let latex: String
+  @Binding public var latex: String
   
   // MARK: Environment variables
   
@@ -163,16 +163,22 @@ public struct LaTeX: View {
   
   /// The view's preload task, if any.
   @State private var preloadTask: Task<(), Never>?
+    
+    @State private var compos = [ComponentBlock]()
   
   // MARK: Initializers
   
   /// Initializes a view with a LaTeX input string.
   ///
   /// - Parameter latex: The LaTeX input.
-  public init(_ latex: String) {
-    self.latex = latex
-    _renderer = StateObject(wrappedValue: Renderer(latex: latex))
+  public init(_ latex: Binding<String>) {
+    _latex = latex
+    _renderer = StateObject(wrappedValue: Renderer())
   }
+    
+    public init(_ latex: String) {
+        self.init(.constant(latex))
+    }
   
   // MARK: View body
   
@@ -194,7 +200,7 @@ public struct LaTeX: View {
           loadingView().task(renderAsync)
         case .wait:
           // Render the components synchronously
-          bodyWithBlocks(renderSync())
+            bodyWithBlocks(renderSync())
         }
       }
     }
@@ -244,7 +250,9 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      latex: latex
+    )
   }
   
   /// Renders the view's components.
@@ -255,20 +263,24 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      latex: latex
+    )
   }
   
   /// Renders the view's components synchronously.
   ///
   /// - Returns: The rendered components.
   private func renderSync() -> [ComponentBlock] {
-    renderer.renderSync(
+      renderer.renderSync(
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      latex: latex
+      )
   }
   
   /// Creates the view's body based on its block mode.

@@ -40,9 +40,6 @@ internal class Renderer: ObservableObject {
   
   // MARK: Public properties
   
-  /// The view's input string.
-  let latex: String
-  
   /// Whether or not the view's blocks have been rendered.
   @MainActor @Published var rendered: Bool = false
   
@@ -61,13 +58,6 @@ internal class Renderer: ObservableObject {
   private var _parsedBlocksSemaphore = DispatchSemaphore(value: 1)
   
   // MARK: Initializers
-  
-  /// Initializes a render state with an input string.
-  ///
-  /// - Parameter latex: The view's input string.
-  init(latex: String) {
-    self.latex = latex
-  }
   
 }
 
@@ -91,11 +81,12 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     font: Font,
-    displayScale: CGFloat
+    displayScale: CGFloat,
+    latex: String
   ) -> Bool {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return blocksExistInCache(
-      parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode, latex: latex),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -117,11 +108,12 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     font: Font,
-    displayScale: CGFloat
+    displayScale: CGFloat,
+    latex: String
   ) -> [ComponentBlock] {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return render(
-      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode, latex: latex),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -143,7 +135,8 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     font: Font,
-    displayScale: CGFloat
+    displayScale: CGFloat,
+    latex: String
   ) async {
     let isRen = await isRendering
     let ren = await rendered
@@ -156,7 +149,7 @@ extension Renderer {
     
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     let renderedBlocks = await render(
-      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode, latex: latex),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -318,14 +311,15 @@ extension Renderer {
   /// - Returns: The parsed blocks.
   private func parsedBlocks(
     unencodeHTML: Bool,
-    parsingMode: LaTeX.ParsingMode
+    parsingMode: LaTeX.ParsingMode,
+    latex: String
   ) -> [ComponentBlock] {
     _parsedBlocksSemaphore.wait()
     defer { _parsedBlocksSemaphore.signal() }
-    if let _parsedBlocks {
-      return _parsedBlocks
-    }
-    
+      // force to reparse
+//    if let _parsedBlocks {
+//      return _parsedBlocks
+//    }
     let blocks = Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode)
     _parsedBlocks = blocks
     return blocks
