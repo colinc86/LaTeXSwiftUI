@@ -29,7 +29,7 @@ struct LaTeX_Previews_Color: PreviewProvider {
   
   static var previews: some View {
     VStack {
-      LaTeX("Hello, $\\LaTeX$!")
+        LaTeX("Hello, $\\LaTeX$!")
         .font(.largeTitle)
         .foregroundStyle(
           LinearGradient(
