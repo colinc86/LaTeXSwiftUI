@@ -159,7 +159,7 @@ public struct LaTeX: View {
   // MARK: Private properties
   
   /// The view's renderer.
-  @ObservedObject private var renderer: Renderer
+  @StateObject private var renderer = Renderer()
   
   /// The view's preload task, if any.
   @State private var preloadTask: Task<(), Never>?
@@ -171,7 +171,6 @@ public struct LaTeX: View {
   /// - Parameter latex: The LaTeX input.
   public init(_ latex: String) {
     self.latex = latex
-    _renderer = ObservedObject(wrappedValue: Renderer(latex: latex))
   }
   
   // MARK: View body
@@ -239,6 +238,7 @@ extension LaTeX {
   ///   cached.
   private func isCached() -> Bool {
     renderer.isCached(
+      latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
@@ -250,6 +250,7 @@ extension LaTeX {
   /// Renders the view's components.
   @Sendable private func renderAsync() async {
     await renderer.render(
+      latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,
@@ -263,6 +264,7 @@ extension LaTeX {
   /// - Returns: The rendered components.
   private func renderSync() -> [ComponentBlock] {
     renderer.renderSync(
+      latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
       processEscapes: processEscapes,

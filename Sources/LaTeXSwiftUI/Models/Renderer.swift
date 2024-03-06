@@ -38,10 +38,22 @@ import Cocoa
 /// values.
 internal class Renderer: ObservableObject {
   
-  // MARK: Public properties
+  // MARK: Types
   
-  /// The view's input string.
-  let latex: String
+  /// A set of values used to create an array of parsed component blocks.
+  struct ParsingSource: Equatable {
+    
+    /// The LaTeX input.
+    let latex: String
+    
+    /// Whether or not the HTML should be unencoded.
+    let unencodeHTML: Bool
+    
+    /// The parsing mode.
+    let parsingMode: LaTeX.ParsingMode
+  }
+  
+  // MARK: Public properties
   
   /// Whether or not the view's blocks have been rendered.
   @MainActor @Published var rendered: Bool = false
@@ -57,17 +69,11 @@ internal class Renderer: ObservableObject {
   /// The LaTeX input's parsed blocks.
   private var _parsedBlocks: [ComponentBlock]? = nil
   
+  /// The set of values used to create the parsed blocks.
+  private var _parsingSource: ParsingSource? = nil
+  
   /// Semaphore for thread-safe access to `_parsedBlocks`.
   private var _parsedBlocksSemaphore = DispatchSemaphore(value: 1)
-  
-  // MARK: Initializers
-  
-  /// Initializes a render state with an input string.
-  ///
-  /// - Parameter latex: The view's input string.
-  init(latex: String) {
-    self.latex = latex
-  }
   
 }
 
@@ -78,14 +84,15 @@ extension Renderer {
   /// Returns whether the view's components are cached.
   ///
   /// - Parameters:
+  ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - font: The `font environment` variable.
   ///   - displayScale: The `displayScale` environment variable.
-  ///   - texOptions: The `texOptions` environment variable.
   func isCached(
+    latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
@@ -95,7 +102,7 @@ extension Renderer {
   ) -> Bool {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return blocksExistInCache(
-      parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      parsedBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -104,14 +111,15 @@ extension Renderer {
   /// Renders the view's components synchronously.
   ///
   /// - Parameters:
+  ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - font: The `font environment` variable.
   ///   - displayScale: The `displayScale` environment variable.
-  ///   - texOptions: The `texOptions` environment variable.
   func renderSync(
+    latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
@@ -121,7 +129,7 @@ extension Renderer {
   ) -> [ComponentBlock] {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return render(
-      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      blocks: parsedBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -130,14 +138,15 @@ extension Renderer {
   /// Renders the view's components asynchronously.
   ///
   /// - Parameters:
+  ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - font: The `font environment` variable.
   ///   - displayScale: The `displayScale` environment variable.
-  ///   - texOptions: The `texOptions` environment variable.
   func render(
+    latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
@@ -156,7 +165,7 @@ extension Renderer {
     
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     let renderedBlocks = await render(
-      blocks: parsedBlocks(unencodeHTML: unencodeHTML, parsingMode: parsingMode),
+      blocks: parsedBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       font: font,
       displayScale: displayScale,
       texOptions: texOptions)
@@ -313,21 +322,26 @@ extension Renderer {
   /// Gets the LaTeX input's parsed blocks.
   ///
   /// - Parameters:
+  ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
   /// - Returns: The parsed blocks.
   private func parsedBlocks(
+    latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode
   ) -> [ComponentBlock] {
     _parsedBlocksSemaphore.wait()
     defer { _parsedBlocksSemaphore.signal() }
-    if let _parsedBlocks {
+    
+    let currentSource = ParsingSource(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode)
+    if let _parsedBlocks, _parsingSource == currentSource {
       return _parsedBlocks
     }
     
     let blocks = Parser.parse(unencodeHTML ? latex.htmlUnescape() : latex, mode: parsingMode)
     _parsedBlocks = blocks
+    _parsingSource = currentSource
     return blocks
   }
   
