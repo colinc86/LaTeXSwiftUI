@@ -48,7 +48,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.3.0")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.3.1")
 ```
 
 ## ⌨️ Usage

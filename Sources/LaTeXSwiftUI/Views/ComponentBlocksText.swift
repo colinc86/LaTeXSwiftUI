@@ -57,6 +57,6 @@ struct ComponentBlocksTextPreviews: PreviewProvider {
     ComponentBlocksText(blocks: [ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
     ])], forceInline: false)
-    .environmentObject(Renderer(latex: "Hello, World!"))
+    .environmentObject(Renderer())
   }
 }
