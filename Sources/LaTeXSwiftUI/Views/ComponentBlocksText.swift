@@ -39,15 +39,49 @@ internal struct ComponentBlocksText: View {
   /// The view's renderer.
   @EnvironmentObject private var renderer: Renderer
   
+  /// The rendering mode to use with the rendered MathJax images.
+  @Environment(\.imageRenderingMode) private var imageRenderingMode
+  
+  /// What to do in the case of an error.
+  @Environment(\.errorMode) private var errorMode
+  
+  /// The view's font.
+  @Environment(\.font) private var font
+  
+  /// The view's current display scale.
+  @Environment(\.displayScale) private var displayScale
+  
+  /// The view's block rendering mode.
+  @Environment(\.blockMode) private var blockMode
+  
   // MARK: View body
   
   var body: some View {
     blocks.map { block in
-      let text = ComponentBlockText(block: block, renderer: renderer).body
       return block.isEquationBlock && !forceInline ?
-      Text("\n") + text + Text("\n") :
-      text
+      Text("\n") + text(for: block) + Text("\n") :
+      text(for: block)
     }.reduce(Text(""), +)
+  }
+  
+}
+
+// MARK: Private methods
+
+extension ComponentBlocksText {
+  
+  /// Gets the `Text` view for the given component block.
+  ///
+  /// - Parameter block: The component block.
+  /// - Returns: A `Text` view.
+  private func text(for block: ComponentBlock) -> Text {
+    block.toText(
+      using: renderer,
+      font: font,
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode,
+      errorMode: errorMode,
+      blockRenderingMode: blockMode)
   }
   
 }

@@ -84,7 +84,13 @@ internal struct ComponentBlocksViews: View {
           }
         }
         else {
-          ComponentBlockText(block: block, renderer: renderer)
+          block.toText(
+            using: renderer,
+            font: font,
+            displayScale: displayScale,
+            renderingMode: imageRenderingMode,
+            errorMode: errorMode,
+            blockRenderingMode: blockMode)
         }
       }
     }

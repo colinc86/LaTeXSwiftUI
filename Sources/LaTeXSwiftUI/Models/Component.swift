@@ -44,6 +44,36 @@ internal struct ComponentBlock: Hashable, Identifiable {
     components.count == 1 && !components[0].type.inline
   }
   
+  /// Converts a component block to a `Text` view.
+  ///
+  /// - Parameters:
+  ///   - renderer: The renderer to use.
+  ///   - font: The font to use.
+  ///   - displayScale: The display scale.
+  ///   - renderingMode: The rendering mode.
+  ///   - errorMode: The error mode.
+  ///   - blockRenderingMode: The block rendering mode.
+  /// - Returns: A `Text` view.
+  @MainActor func toText(
+    using renderer: Renderer,
+    font: Font?,
+    displayScale: CGFloat,
+    renderingMode: Image.TemplateRenderingMode,
+    errorMode: LaTeX.ErrorMode,
+    blockRenderingMode: LaTeX.BlockMode
+  ) -> Text {
+    components.enumerated().map { i, component in
+      return renderer.convertToText(
+        component: component,
+        font: font ?? .body,
+        displayScale: displayScale,
+        renderingMode: renderingMode,
+        errorMode: errorMode,
+        blockRenderingMode: blockRenderingMode,
+        isInEquationBlock: isEquationBlock)
+    }.reduce(Text(""), +)
+  }
+  
 }
 
 /// A LaTeX component.
