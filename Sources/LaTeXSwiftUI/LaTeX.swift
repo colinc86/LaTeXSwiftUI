@@ -190,7 +190,9 @@ public struct LaTeX: View {
         switch renderingStyle {
         case .empty, .original, .progress:
           // Render the components asynchronously
-          loadingView().task(renderAsync)
+          loadingView().task {
+            await renderAsync()
+          }
         case .wait:
           // Render the components synchronously
           bodyWithBlocks(renderSync())
@@ -248,7 +250,7 @@ extension LaTeX {
   }
   
   /// Renders the view's components.
-  @Sendable private func renderAsync() async {
+  private func renderAsync() async {
     await renderer.render(
       latex: latex,
       unencodeHTML: unencodeHTML,
