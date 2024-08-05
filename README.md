@@ -30,7 +30,7 @@ A SwiftUI view that renders LaTeX equations.
   
 ## ℹ️ About
 
-`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode marcos.
+`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode macros.
 
 The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org). Thus, the limitations of the view are heavily influenced by the [limitations](https://docs.mathjax.org/en/v2.7-latest/tex.html#differences) of MathJax.
 
