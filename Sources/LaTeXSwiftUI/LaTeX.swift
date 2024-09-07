@@ -94,7 +94,9 @@ public struct LaTeX: View {
     
     /// The view displays the input text until its finished rendering.
     case original
-    
+
+    case redactedOriginal
+
     /// The view displays a progress view until its finished rendering.
     case progress
     
@@ -188,7 +190,7 @@ public struct LaTeX: View {
       else {
         // The view is not rendered nor cached
         switch renderingStyle {
-        case .empty, .original, .progress:
+        case .empty, .original, .redactedOriginal, .progress:
           // Render the components asynchronously
           loadingView().task {
             await renderAsync()
@@ -299,6 +301,12 @@ extension LaTeX {
       Text("")
     case .original:
       Text(latex)
+    case .redactedOriginal:
+      Text(latex)
+        .foregroundStyle(Color.clear)
+        .background {
+            Text(latex).redacted(reason: .placeholder)
+        }
     case .progress:
       ProgressView()
     default:
