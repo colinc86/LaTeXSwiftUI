@@ -89,7 +89,12 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     ///
     /// - Example: `$x^2$`
     case inlineEquation
-    
+
+    /// An inline parenthesis equation component.
+    ///
+    /// - Example: `\(x^2\)`
+    case inlineParenEquation
+
     /// A TeX-style block equation.
     ///
     /// - Example: `$$x^2$$`.
@@ -120,6 +125,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       switch self {
       case .text: return ""
       case .inlineEquation: return "$"
+      case .inlineParenEquation: return "\\("
       case .texEquation: return "$$"
       case .blockEquation: return "\\["
       case .namedEquation: return "\\begin{equation}"
@@ -132,6 +138,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       switch self {
       case .text: return ""
       case .inlineEquation: return "$"
+      case .inlineParenEquation: return "\\)"
       case .texEquation: return "$$"
       case .blockEquation: return "\\]"
       case .namedEquation: return "\\end{equation}"
@@ -142,7 +149,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     /// Whether or not this component is inline.
     var inline: Bool {
       switch self {
-      case .text, .inlineEquation: return true
+      case .text, .inlineEquation, .inlineParenEquation: return true
       default: return false
       }
     }
