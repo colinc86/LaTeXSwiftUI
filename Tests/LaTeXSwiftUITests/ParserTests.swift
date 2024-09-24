@@ -115,7 +115,61 @@ final class ParserTests: XCTestCase {
     XCTAssertEqual(components.count, 1)
     assertComponent(components, 0, equation, .texEquation)
   }
-  
+
+  func testParseParenthesesOnly() {
+      let input = "\\(\\TeX\\)"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 1)
+      assertComponent(components, 0, "\\TeX", .inlineParenEquation)
+  }
+
+  func testParseParentheses_Normal() {
+      let input = "Hello, \\(\\TeX\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 3)
+      assertComponent(components, 0, "Hello, ", .text)
+      assertComponent(components, 1, "\\TeX", .inlineParenEquation)
+      assertComponent(components, 2, "!", .text)
+  }
+
+  func testParseParentheses_LeftEscaped() {
+      let input = "Hello, \\\\(\\TeX\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 1)
+      assertComponent(components, 0, input, .text)
+  }
+
+  func testParseParentheses_RightEscaped() {
+      let input = "Hello, \\(\\TeX\\\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 1)
+      assertComponent(components, 0, input, .text)
+  }
+
+  func testParseParentheses_LeadingLineBreak() {
+      let equation = "\n\\TeX"
+      let input = "Hello, \\(\(equation)\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 3)
+      assertComponent(components, 1, equation, .inlineParenEquation)
+  }
+
+  func testParseParentheses_TrailingLineBreak() {
+      let equation = "\\TeX\n"
+      let input = "Hello, \\(\(equation)\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 3)
+      assertComponent(components, 1, equation, .inlineParenEquation)
+  }
+
+  func testParseParentheses_Whitespace() {
+      let equation = " \n\\TeX\n "
+      let input = "Hello, \\(\(equation)\\)!"
+      let components = Parser.parse(input)
+      XCTAssertEqual(components.count, 3)
+      assertComponent(components, 1, equation, .inlineParenEquation)
+  }
+
   func testParseBracketsOnly() {
     let input = "\\[\\TeX\\]"
     let components = Parser.parse(input)
