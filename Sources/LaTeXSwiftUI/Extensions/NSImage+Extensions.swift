@@ -1,5 +1,5 @@
 //
-//  ImageRenderer+Extensions.swift
+//  Image+Extensions.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,16 +23,25 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
+#if os(macOS)
+import Cocoa
 
-internal extension ImageRenderer {
+internal extension NSImage {
   
-  @MainActor var image: _Image? {
-#if os(iOS)
-    return uiImage
-#else
-    return nsImage
-#endif
+  /// Resizes the image.
+  /// - Parameter newSize: The image's new size.
+  /// - Returns: A resized image.
+  func resized(to newSize: CGSize) -> NSImage {
+    let newImage = NSImage(size: newSize)
+    newImage.lockFocus()
+    defer { newImage.unlockFocus() }
+    self.draw(
+      in: CGRect(origin: .zero, size: newSize),
+      from: CGRect(origin: .zero, size: self.size),
+      operation: .copy,
+      fraction: 1.0)
+    return newImage
   }
   
 }
+#endif

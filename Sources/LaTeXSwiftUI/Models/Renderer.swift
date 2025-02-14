@@ -421,7 +421,7 @@ extension Renderer {
     Cache.shared.setImageCacheValue(image, for: cacheKey)
     
     // Finish up
-    return Image(image: image)
+    return Image(image: image, scale: displayScale)
       .renderingMode(renderingMode)
       .antialiased(true)
       .interpolation(.high)

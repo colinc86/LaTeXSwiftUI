@@ -27,6 +27,8 @@ import SwiftUI
 
 struct LaTeX_Previews_Styles: PreviewProvider {
   
+  static var tex = (0 ..< 1000).map({ "\\frac{\($0)}{2}" })
+  
   static var previews: some View {
     VStack {
       LaTeX("Hello, $\\LaTeX$!")
@@ -53,6 +55,13 @@ struct LaTeX_Previews_Styles: PreviewProvider {
         .latexStyle(.standard)
     }
     .previewDisplayName("View Styles")
+    
+    List(tex, id: \.self) { input in
+      LaTeX(input)
+        .parsingMode(.all)
+        .renderingStyle(.original)
+        .frame(height: 50)
+    }
   }
   
 }
