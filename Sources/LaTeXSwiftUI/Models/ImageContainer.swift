@@ -1,5 +1,5 @@
 //
-//  CGRect+Extensions.swift
+//  ImageContainer.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -24,15 +24,19 @@
 //
 
 import Foundation
-import CoreGraphics
+import SwiftUI
 
-extension CGRect: @retroactive Hashable {
-    
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine("x\(origin.x)")
-    hasher.combine("y\(origin.y)")
-    hasher.combine("w\(size.width)")
-    hasher.combine("h\(size.height)")
+/// A container to store an image and its intrinsic size.
+internal struct ImageContainer: Hashable {
+  
+  /// The image.
+  let image: Image
+  
+  /// The image's size.
+  let size: CGSize
+  
+  func hash(into hasher: inout Hasher) {
+    hasher.combine(size)
   }
   
 }

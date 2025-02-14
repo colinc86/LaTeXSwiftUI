@@ -36,9 +36,6 @@ internal struct ComponentBlocksText: View {
   
   // MARK: Private properties
   
-  /// The view's renderer.
-  @EnvironmentObject private var renderer: Renderer
-  
   /// The rendering mode to use with the rendered MathJax images.
   @Environment(\.imageRenderingMode) private var imageRenderingMode
   
@@ -76,7 +73,6 @@ extension ComponentBlocksText {
   /// - Returns: A `Text` view.
   private func text(for block: ComponentBlock) -> Text {
     block.toText(
-      using: renderer,
       font: font,
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
@@ -91,6 +87,5 @@ struct ComponentBlocksTextPreviews: PreviewProvider {
     ComponentBlocksText(blocks: [ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
     ])], forceInline: false)
-    .environmentObject(Renderer())
   }
 }

@@ -1,5 +1,5 @@
 //
-//  CGRect+Extensions.swift
+//  CGSize+Extensions.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,16 +23,14 @@
 //  IN THE SOFTWARE.
 //
 
-import Foundation
 import CoreGraphics
+import Foundation
 
-extension CGRect: @retroactive Hashable {
-    
+extension CGSize: @retroactive Hashable {
+  
   public func hash(into hasher: inout Hasher) {
-    hasher.combine("x\(origin.x)")
-    hasher.combine("y\(origin.y)")
-    hasher.combine("w\(size.width)")
-    hasher.combine("h\(size.height)")
+    hasher.combine("w\(width)")
+    hasher.combine("h\(height)")
   }
   
 }

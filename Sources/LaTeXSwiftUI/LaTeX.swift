@@ -147,6 +147,9 @@ public struct LaTeX: View {
   /// The view's rendering style.
   @Environment(\.renderingStyle) private var renderingStyle
   
+  /// The rendering mode to use with the rendered MathJax images.
+  @Environment(\.imageRenderingMode) private var imageRenderingMode
+  
   /// The animation the view should apply to its rendered images.
   @Environment(\.renderingAnimation) private var renderingAnimation
   
@@ -200,7 +203,6 @@ public struct LaTeX: View {
       }
     }
     .animation(renderingAnimation, value: renderer.rendered)
-    .environmentObject(renderer)
     .onDisappear(perform: preloadTask?.cancel)
   }
   
@@ -258,7 +260,8 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode)
   }
   
   /// Renders the view's components synchronously.
@@ -272,7 +275,8 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode)
   }
   
   /// Creates the view's body based on its block mode.
