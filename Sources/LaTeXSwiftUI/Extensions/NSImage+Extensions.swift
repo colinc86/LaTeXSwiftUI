@@ -1,5 +1,5 @@
 //
-//  Image+Extensions.swift
+//  NSImage+Extensions.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
