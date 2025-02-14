@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swhitty/SwiftDraw",
       "state" : {
-        "revision" : "6dcda6c714f55a1000bf5fdcb73cc3a73c0be31b",
-        "version" : "0.14.1"
+        "branch" : "main",
+        "revision" : "3f470d7b45864fcd9d44aea24f7383a0a538ed91"
       }
     }
   ],
