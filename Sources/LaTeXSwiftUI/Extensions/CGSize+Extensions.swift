@@ -26,7 +26,7 @@
 import CoreGraphics
 import Foundation
 
-extension CGSize: Hashable {
+extension CGSize: @retroactive Hashable {
   
   public func hash(into hasher: inout Hasher) {
     hasher.combine("w\(width)")

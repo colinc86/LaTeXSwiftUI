@@ -389,7 +389,7 @@ extension Renderer {
     
     // Continue with getting the image
     let imageSize = svg.size(for: xHeight)
-    guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(with: imageSize, scale: displayScale) else { // <-- this creates very badly rendered images
+    guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(with: imageSize, scale: displayScale) else {
       return nil
     }
     

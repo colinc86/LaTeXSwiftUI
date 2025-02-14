@@ -62,8 +62,6 @@ struct LaTeX_Previews_Color: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .font(.caption2)
         .foregroundColor(.purple)
-      
-      Spacer()
     }
     .previewLayout(.sizeThatFits)
     .previewDisplayName("Hello, LaTeX!")
