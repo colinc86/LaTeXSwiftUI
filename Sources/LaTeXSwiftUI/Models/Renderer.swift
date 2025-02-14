@@ -113,7 +113,7 @@ extension Renderer {
       texOptions: texOptions)
   }
   
-  /// Renders the view's components synchronously but does not
+  /// Renders the view's components synchronously.
   ///
   /// - Parameters:
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
