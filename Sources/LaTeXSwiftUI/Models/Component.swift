@@ -66,10 +66,19 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       rawValue
     }
     
+    /// The order we should scan components when parsing.
+    static let order: [ComponentType] = [
+      .namedNoNumberEquation,
+      .namedEquation,
+      .blockEquation,
+      .texEquation,
+      .inlineEquation
+    ]
+    
     /// The component's left terminator.
-    var leftTerminator: String {
+    var leftTerminator: String? {
       switch self {
-      case .text: return ""
+      case .text: return nil
       case .inlineEquation: return "$"
       case .texEquation: return "$$"
       case .blockEquation: return "\\["
@@ -79,9 +88,9 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
     }
     
     /// The component's right terminator.
-    var rightTerminator: String {
+    var rightTerminator: String? {
       switch self {
-      case .text: return ""
+      case .text: return nil
       case .inlineEquation: return "$"
       case .texEquation: return "$$"
       case .blockEquation: return "\\]"
@@ -118,7 +127,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   
   /// The original input text that created this component.
   var originalText: String {
-    "\(type.leftTerminator)\(text)\(type.rightTerminator)"
+    "\(type.leftTerminator ?? "")\(text)\(type.rightTerminator ?? "")"
   }
   
   /// The component's original text with newlines trimmed.
@@ -151,11 +160,11 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
   init(text: String, type: ComponentType, svg: SVG? = nil, imageContainer: ImageContainer? = nil) {
     if type.isEquation {
       var text = text
-      if text.hasPrefix(type.leftTerminator) {
-        text = String(text[text.index(text.startIndex, offsetBy: type.leftTerminator.count)...])
+      if let leftTerminator = type.leftTerminator, text.hasPrefix(leftTerminator) {
+        text = String(text[text.index(text.startIndex, offsetBy: leftTerminator.count)...])
       }
-      if text.hasSuffix(type.rightTerminator) {
-        text = String(text[..<text.index(text.endIndex, offsetBy: -type.rightTerminator.count)])
+      if let rightTerminator = type.rightTerminator, text.hasSuffix(rightTerminator) {
+        text = String(text[..<text.index(text.endIndex, offsetBy: -rightTerminator.count)])
       }
       self.text = text
     }
