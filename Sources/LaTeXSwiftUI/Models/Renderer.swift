@@ -325,7 +325,7 @@ extension Renderer {
         svg: svg,
         imageContainer: ImageContainer(
           image: image,
-          size: svg.size(for: xHeight)
+          size: HashableCGSize(svg.size(for: xHeight))
         )
       ))
     }
