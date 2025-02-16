@@ -52,6 +52,10 @@ class Parser {
     return blocks
   }
   
+  /// Parses the input text in to components.
+  ///
+  /// - Parameter input: The input text.
+  /// - Returns: An array of components.
   static func parse(_ input: String) -> [Component] {
     var components: [Component] = []
     var stack = [Component.ComponentType]()
