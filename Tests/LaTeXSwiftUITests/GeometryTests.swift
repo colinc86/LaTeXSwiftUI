@@ -52,7 +52,7 @@ final class GeometryTests: XCTestCase {
     XCTAssertEqual(geometry.verticalAlignment, -1.602)
     XCTAssertEqual(geometry.width, 2.127)
     XCTAssertEqual(geometry.height, 4.638)
-    XCTAssertEqual(geometry.frame, CGRect(x: 0, y: -1342, width: 940, height: 2050))
+    XCTAssertEqual(geometry.frame.rect, CGRect(x: 0, y: -1342, width: 940, height: 2050))
   }
   
 }
