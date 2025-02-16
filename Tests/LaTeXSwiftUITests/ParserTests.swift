@@ -292,5 +292,19 @@ final class ParserTests: XCTestCase {
     XCTAssertEqual(components.count, 3)
     assertComponent(components, 1, equation, .namedNoNumberEquation)
   }
+  
+  func testDollarSignEscape() {
+    let input = "This is a dollar amount \\$5.00."
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .text)
+  }
+  
+  func testInnerEquation() {
+    let input = "\\begin{equation} $a-b=c$ \\end{equation}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .namedEquation)
+  }
 
 }
