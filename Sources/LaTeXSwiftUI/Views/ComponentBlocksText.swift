@@ -71,7 +71,7 @@ extension ComponentBlocksText {
   ///
   /// - Parameter block: The component block.
   /// - Returns: A `Text` view.
-  private func text(for block: ComponentBlock) -> Text {
+  @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
       font: font,
       displayScale: displayScale,
