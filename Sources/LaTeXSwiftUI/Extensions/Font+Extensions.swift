@@ -95,7 +95,7 @@ internal extension _Font {
         .caption2.bold(),
         .footnote.bold(),
         .body.bold():
-#if os(iOS)
+#if os(iOS) || os(visionOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitBold) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -118,7 +118,7 @@ internal extension _Font {
         .caption2.monospaced(),
         .footnote.monospaced(),
         .body.monospaced():
-#if os(iOS)
+#if os(iOS) || os(visionOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitMonoSpace) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -141,7 +141,7 @@ internal extension _Font {
         .caption2.italic(),
         .footnote.italic(),
         .body.italic():
-#if os(iOS)
+#if os(iOS) || os(visionOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitItalic) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }

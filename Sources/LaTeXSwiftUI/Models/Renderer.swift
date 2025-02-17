@@ -28,7 +28,7 @@ import MathJaxSwift
 import SwiftUI
 import SVGView
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 import UIKit
 #else
 import Cocoa
@@ -295,7 +295,7 @@ extension Renderer {
     // Render the view
     let view = SVGView(data: svg.data)
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
-#if os(iOS)
+#if os(iOS) || os(visionOS)
     renderer.scale = UIScreen.main.scale
     let image = renderer.image
 #else

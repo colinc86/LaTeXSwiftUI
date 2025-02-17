@@ -201,7 +201,7 @@ extension SVGGeometry.XHeight {
   /// - Parameter font: The font.
   /// - Returns: The points.
   func toPoints(_ font: Font) -> CGFloat {
-    #if os(iOS)
+    #if os(iOS) || os(visionOS)
     toPoints(_Font.preferredFont(from: font))
     #else
     toPoints(_Font.preferredFont(from: font))

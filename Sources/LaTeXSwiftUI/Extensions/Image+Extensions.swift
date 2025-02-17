@@ -28,7 +28,7 @@ import SwiftUI
 internal extension Image {
   
   init(image: _Image) {
-#if os(iOS)
+#if os(iOS) || os(visionOS)
     self.init(uiImage: image)
 #else
     self.init(nsImage: image)
@@ -40,7 +40,7 @@ internal extension Image {
 internal extension _Image {
   
   convenience init?(imageData: Data, scale: CGFloat? = nil) {
-#if os(iOS)
+#if os(iOS) || os(visionOS)
     self.init(data: imageData, scale: scale ?? 1)
 #else
     self.init(data: imageData)

@@ -28,7 +28,7 @@ import SwiftUI
 internal extension ImageRenderer {
   
   @MainActor var image: _Image? {
-#if os(iOS)
+#if os(iOS) || os(visionOS)
     return uiImage
 #else
     return nsImage
