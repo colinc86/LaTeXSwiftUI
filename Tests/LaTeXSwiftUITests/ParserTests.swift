@@ -116,6 +116,60 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, equation, .texEquation)
   }
   
+  func testParseParenthesesOnly() {
+    let input = "\\(\\TeX\\)"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "\\TeX", .inlineParenthesesEquation)
+  }
+  
+  func testParseParenthesesOnly_Normal() {
+    let input = "Hello, \\(\\TeX\\)!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "Hello, ", .text)
+    assertComponent(components, 1, "\\TeX", .inlineParenthesesEquation)
+    assertComponent(components, 2, "!", .text)
+  }
+  
+  func testParseParenthesesOnly_LeftEscaped() {
+    let input = "Hello, \\\\(\\TeX\\)!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .text)
+  }
+  
+  func testParseParenthesesOnly_RightEscaped() {
+    let input = "Hello, \\(\\TeX\\\\)!"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .text)
+  }
+  
+  func testParseParenthesesOnly_LeadingLineBreak() {
+    let equation = "\nf(x)=5x+2"
+    let input = "\\(\(equation)\\)"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .inlineParenthesesEquation)
+  }
+  
+  func testParseParenthesesOnly_TrailingLineBreak() {
+    let equation = "f(x)=5x+2\n"
+    let input = "\\(\(equation)\\)"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .inlineParenthesesEquation)
+  }
+  
+  func testParseParenthesesOnly_Whitespace() {
+    let equation = " \nf(x)=5x+2\n "
+    let input = "\\(\(equation)\\)"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, equation, .inlineParenthesesEquation)
+  }
+  
   func testParseBracketsOnly() {
     let input = "\\[\\TeX\\]"
     let components = Parser.parse(input)
