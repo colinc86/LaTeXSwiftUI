@@ -58,6 +58,11 @@ struct LaTeX_Previews_Styles: PreviewProvider {
       
       LaTeX("Hello, \\$1.00!")
         .ignoreEscapedCharacters()
+      
+      LaTeX("**Hello**, $\\LaTeX$!")
+      
+      LaTeX("**Hello**, $\\LaTeX$!")
+        .ignoreMarkdown()
     }
     .previewDisplayName("View Styles")
     

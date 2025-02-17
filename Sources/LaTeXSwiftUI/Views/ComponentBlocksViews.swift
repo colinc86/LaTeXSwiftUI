@@ -54,6 +54,9 @@ internal struct ComponentBlocksViews: View {
   // Whether escaped characters should be ignored or replaced.
   @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
   
+  /// Whether markdown should be ignored or rendered.
+  @Environment(\.ignoreMarkdown) private var ignoreMarkdown
+  
   // MARK: View body
   
   var body: some View {
@@ -89,7 +92,8 @@ internal struct ComponentBlocksViews: View {
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
             blockRenderingMode: blockMode,
-            ignoreEscapedCharacters: ignoreEscapedCharacters)
+            ignoreEscapedCharacters: ignoreEscapedCharacters,
+            ignoreMarkdown: ignoreMarkdown)
         }
       }
     }

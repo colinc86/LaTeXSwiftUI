@@ -67,6 +67,7 @@ extension ComponentBlock {
   ///   - blockRenderingMode: The block rendering mode.
   ///   - ignoreEscapedCharacters: Whether escaped characters should be ignored
   ///     or replaced.
+  ///   - ignoreMarkdown: Whether markdown should be ignored or rendered.
   /// - Returns: A `Text` view.
   @MainActor func toText(
     font: Font?,
@@ -74,7 +75,8 @@ extension ComponentBlock {
     renderingMode: Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
-    ignoreEscapedCharacters: Bool
+    ignoreEscapedCharacters: Bool,
+    ignoreMarkdown: Bool
   ) -> Text {
     components.enumerated().map { i, component in
       return component.convertToText(
@@ -84,7 +86,8 @@ extension ComponentBlock {
         errorMode: errorMode,
         blockRenderingMode: blockRenderingMode,
         isInEquationBlock: isEquationBlock,
-        ignoreEscapedCharacters: ignoreEscapedCharacters)
+        ignoreEscapedCharacters: ignoreEscapedCharacters,
+        ignoreMarkdown: ignoreMarkdown)
     }.reduce(Text(""), +)
   }
   
