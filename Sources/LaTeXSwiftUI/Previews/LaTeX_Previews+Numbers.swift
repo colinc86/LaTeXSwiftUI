@@ -29,8 +29,6 @@ struct LaTeX_Previews_Numbers: PreviewProvider {
   
   static var previews: some View {
     VStack {
-      LaTeX("$\\left( \\int_{a}^{b} x^2 ,dx \\right)$")
-      
       LaTeX("$$E = mc^2$$")
         .equationNumberMode(.right)
         .equationNumberOffset(10)
