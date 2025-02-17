@@ -298,7 +298,7 @@ extension Renderer {
 
 #if os(iOS)
     renderer.scale = UIScreen.main.scale
-#elif os(visionOS)
+#elseif os(visionOS)
     renderer.scale = 1.0 // Use a default scale for visionOS
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
