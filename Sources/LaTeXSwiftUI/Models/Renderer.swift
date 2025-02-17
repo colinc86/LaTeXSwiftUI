@@ -295,13 +295,15 @@ extension Renderer {
     // Render the view
     let view = SVGView(data: svg.data)
     let renderer = ImageRenderer(content: view.frame(width: width, height: height))
-#if os(iOS) || os(visionOS)
+
+#if os(iOS)
     renderer.scale = UIScreen.main.scale
-    let image = renderer.image
+#elif os(visionOS)
+    renderer.scale = 1.0 // Use a default scale for visionOS
 #else
     renderer.scale = NSScreen.main?.backingScaleFactor ?? 1
-    let image = renderer.image
 #endif
+    let image = renderer.image
     
     if let image = image {
       Cache.shared.setImageCacheValue(image, for: cacheKey)
