@@ -1,5 +1,5 @@
 //
-//  LaTeX_Previews+Styles.swift
+//  Replacer.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,50 +23,33 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
-
-struct LaTeX_Previews_Styles: PreviewProvider {
+/// Used to replace escaped characters with their non-escaped variants.
+internal class Replacer {
   
-  static var tex = (0 ..< 1000).map({ "\\frac{\($0)}{2}" })
+  /// A map of replacement strings.
+  static let escapedCharacterMap: [String: String] = [
+    "\\&": "&",
+    "\\%": "%",
+    "\\$": "$",
+    "\\#": "#",
+    "\\_": "_",
+    "\\{": "{",
+    "\\}": "}",
+    "\\~": "~",
+    "\\^": "^",
+    "\\\\": "\\"
+  ]
   
-  static var previews: some View {
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.wait)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.empty)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.original)
-        .renderingAnimation(.default)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.progress)
-        .renderingAnimation(.easeIn)
+  /// Replaces escaped characters with their non-escaped variants.
+  ///
+  /// - Parameter text: The text to replace.
+  /// - Returns: The replaced text.
+  static func replace(_ text: String) -> String {
+    var result = text
+    for (escaped, original) in escapedCharacterMap {
+      result = result.replacingOccurrences(of: escaped, with: original)
     }
-    .previewDisplayName("Rendering Style and Animated")
-    
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .latexStyle(.automatic)
-      
-      LaTeX("Hello, $$&lt;\\LaTeX$$!")
-        .latexStyle(.standard)
-      
-      LaTeX("Hello, \\$1.00!")
-      
-      LaTeX("Hello, \\$1.00!")
-        .ignoreEscapedCharacters()
-    }
-    .previewDisplayName("View Styles")
-    
-    List(tex, id: \.self) { input in
-      LaTeX(input)
-        .parsingMode(.all)
-        .renderingStyle(.original)
-        .frame(height: 50)
-    }
+    return result
   }
   
 }

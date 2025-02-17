@@ -74,6 +74,10 @@ private struct RenderingAnimationKey: EnvironmentKey {
   static let defaultValue: Animation? = .none
 }
 
+private struct IgnoreEscapedCharactersKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
 extension EnvironmentValues {
   
   /// The image rendering mode of this environment.
@@ -146,6 +150,12 @@ extension EnvironmentValues {
   var renderingAnimation: Animation? {
     get { self[RenderingAnimationKey.self] }
     set { self[RenderingAnimationKey.self] = newValue }
+  }
+  
+  /// Whether escaped characeters should be ignored or replaced.
+  var ignoreEscapedCharacters: Bool {
+    get { self[IgnoreEscapedCharactersKey.self] }
+    set { self[IgnoreEscapedCharactersKey.self] = newValue }
   }
   
 }

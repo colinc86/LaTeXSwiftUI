@@ -1,3 +1,10 @@
+//
+//  GeometryTests.swift
+//  LaTeXSwiftUI
+//
+//  Created by Colin Campbell on 5/29/23.
+//
+
 import MathJaxSwift
 import XCTest
 @testable import LaTeXSwiftUI

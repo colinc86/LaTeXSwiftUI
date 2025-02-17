@@ -25,7 +25,8 @@
 
 import Foundation
 
-class Parser {
+/// Parses text for LaTeX equations.
+internal class Parser {
   
   /// Parses the input text for component blocks.
   ///

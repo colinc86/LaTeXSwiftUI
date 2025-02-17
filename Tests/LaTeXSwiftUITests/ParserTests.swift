@@ -1,6 +1,6 @@
 //
 //  ParserTests.swift
-//  
+//  LaTeXSwiftUI
 //
 //  Created by Colin Campbell on 5/29/23.
 //

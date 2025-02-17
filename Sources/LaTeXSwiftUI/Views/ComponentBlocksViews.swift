@@ -51,6 +51,9 @@ internal struct ComponentBlocksViews: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
+  // Whether escaped characters should be ignored or replaced.
+  @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
+  
   // MARK: View body
   
   var body: some View {
@@ -85,7 +88,8 @@ internal struct ComponentBlocksViews: View {
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
-            blockRenderingMode: blockMode)
+            blockRenderingMode: blockMode,
+            ignoreEscapedCharacters: ignoreEscapedCharacters)
         }
       }
     }

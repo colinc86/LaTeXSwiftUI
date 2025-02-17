@@ -188,8 +188,10 @@ extension Component {
   ///   - displayScale: The view's display scale.
   ///   - renderingMode: The image rendering mode.
   ///   - errorMode: The error handling mode.
-  ///   - isLastComponentInBlock: Whether or not this is the last component in
-  ///     the block that contains it.
+  ///   - blockRenderingModel: The rendering mode of the block.
+  ///   - isInEquationBlock: Whether this block is in an equation block.
+  ///   - ignoreEscapedCharacters: Whether escaped characters should be ignored
+  ///     or replaced.
   /// - Returns: A text view.
   func convertToText(
     font: Font,
@@ -197,7 +199,8 @@ extension Component {
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
-    isInEquationBlock: Bool
+    isInEquationBlock: Bool,
+    ignoreEscapedCharacters: Bool
   ) -> Text {
     // Get the component's text
     let text: Text
@@ -207,7 +210,9 @@ extension Component {
         switch errorMode {
         case .original:
           // Use the original tex input
-          text = Text(blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText)
+          text = Text(replaceEscapedCharacters(
+            in: blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText,
+            ignoreEscapedCharacters: ignoreEscapedCharacters))
         case .error:
           // Use the error text
           text = Text(errorText)
@@ -225,13 +230,26 @@ extension Component {
       }
     }
     else if blockRenderingMode == .alwaysInline {
-      text = Text(originalTextTrimmingNewlines)
+      text = Text(replaceEscapedCharacters(in: originalTextTrimmingNewlines, ignoreEscapedCharacters: ignoreEscapedCharacters))
     }
     else {
-      text = Text(originalText)
+      text = Text(replaceEscapedCharacters(in: originalText, ignoreEscapedCharacters: ignoreEscapedCharacters))
     }
     
     return text
+  }
+  
+  /// Replaces the escaped characters in the input text if the component type is
+  /// `text` and ignore escaped characters is false.
+  ///
+  /// - Parameters:
+  ///   - text: The text to replace.
+  ///   - ignoreEscapedCharacters: Whether escaped characters should be ingored
+  ///     or replaced.
+  /// - Returns: The replaced text.
+  func replaceEscapedCharacters(in text: String, ignoreEscapedCharacters: Bool) -> String {
+    guard type == .text && !ignoreEscapedCharacters else { return text }
+    return Replacer.replace(text)
   }
   
 }
