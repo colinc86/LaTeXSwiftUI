@@ -33,7 +33,7 @@ internal struct ImageContainer: Hashable {
   let image: Image
   
   /// The image's size.
-  let size: CGSize
+  let size: HashableCGSize
   
   func hash(into hasher: inout Hasher) {
     hasher.combine(size)

@@ -1,5 +1,5 @@
 //
-//  CGRect+Extensions.swift
+//  Replacer.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,16 +23,33 @@
 //  IN THE SOFTWARE.
 //
 
-import Foundation
-import CoreGraphics
-
-extension CGRect: @retroactive Hashable {
-    
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine("x\(origin.x)")
-    hasher.combine("y\(origin.y)")
-    hasher.combine("w\(size.width)")
-    hasher.combine("h\(size.height)")
+/// Used to replace escaped characters with their non-escaped variants.
+internal class Replacer {
+  
+  /// A map of replacement strings.
+  static let escapedCharacterMap: [String: String] = [
+    "\\&": "&",
+    "\\%": "%",
+    "\\$": "$",
+    "\\#": "#",
+    "\\_": "_",
+    "\\{": "{",
+    "\\}": "}",
+    "\\~": "~",
+    "\\^": "^",
+    "\\\\": "\\"
+  ]
+  
+  /// Replaces escaped characters with their non-escaped variants.
+  ///
+  /// - Parameter text: The text to replace.
+  /// - Returns: The replaced text.
+  static func replace(_ text: String) -> String {
+    var result = text
+    for (escaped, original) in escapedCharacterMap {
+      result = result.replacingOccurrences(of: escaped, with: original)
+    }
+    return result
   }
   
 }

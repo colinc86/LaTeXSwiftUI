@@ -65,7 +65,7 @@ internal struct SVGGeometry: Codable, Hashable {
   let height: XHeight
 
   /// The SVG's frame.
-  let frame: CGRect
+  let frame: HashableCGRect
 
   // MARK: Initializers
 
@@ -124,7 +124,7 @@ internal struct SVGGeometry: Codable, Hashable {
     self.verticalAlignment = verticalAlignment
     self.width = width
     self.height = height
-    self.frame = frame
+    self.frame = HashableCGRect(frame)
   }
 
 }

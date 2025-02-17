@@ -1,5 +1,5 @@
 //
-//  CGSize+Extensions.swift
+//  HashableCGRect.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -26,11 +26,24 @@
 import CoreGraphics
 import Foundation
 
-extension CGSize: @retroactive Hashable {
+/// A hashable wrapper for CGRect compatible with Swift language versions < 6.
+internal struct HashableCGRect: Codable, Hashable {
+  
+  /// The rect.
+  let rect: CGRect
+  
+  /// Initializes a hashable rect with a rect.
+  ///
+  /// - Parameter rect: The rect.
+  init(_ rect: CGRect) {
+    self.rect = rect
+  }
   
   public func hash(into hasher: inout Hasher) {
-    hasher.combine("w\(width)")
-    hasher.combine("h\(height)")
+    hasher.combine("x\(rect.origin.x)")
+    hasher.combine("y\(rect.origin.y)")
+    hasher.combine("w\(rect.size.width)")
+    hasher.combine("h\(rect.size.height)")
   }
   
 }

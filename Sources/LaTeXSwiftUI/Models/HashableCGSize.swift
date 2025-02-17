@@ -1,5 +1,5 @@
 //
-//  LaTeX_Previews+Styles.swift
+//  HashableCGSize.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,50 +23,25 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
+import CoreGraphics
+import Foundation
 
-struct LaTeX_Previews_Styles: PreviewProvider {
+/// A hashable wrapper for CGSize compatible with Swift language versions < 6.
+internal struct HashableCGSize: Hashable {
   
-  static var tex = (0 ..< 1000).map({ "\\frac{\($0)}{2}" })
+  /// The size.
+  let size: CGSize
+
+  /// Initializes a hashable size with a size.
+  ///
+  /// - Parameter size: The size.
+  init(_ size: CGSize) {
+    self.size = size
+  }
   
-  static var previews: some View {
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.wait)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.empty)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.original)
-        .renderingAnimation(.default)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .renderingStyle(.progress)
-        .renderingAnimation(.easeIn)
-    }
-    .previewDisplayName("Rendering Style and Animated")
-    
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .latexStyle(.automatic)
-      
-      LaTeX("Hello, $$&lt;\\LaTeX$$!")
-        .latexStyle(.standard)
-      
-      LaTeX("Hello, \\$1.00!")
-      
-      LaTeX("Hello, \\$1.00!")
-        .ignoreEscapedCharacters()
-    }
-    .previewDisplayName("View Styles")
-    
-    List(tex, id: \.self) { input in
-      LaTeX(input)
-        .parsingMode(.all)
-        .renderingStyle(.original)
-        .frame(height: 50)
-    }
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine("w\(size.width)")
+    hasher.combine("h\(size.height)")
   }
   
 }

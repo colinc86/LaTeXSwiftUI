@@ -51,6 +51,9 @@ internal struct ComponentBlocksText: View {
   /// The view's block rendering mode.
   @Environment(\.blockMode) private var blockMode
   
+  // Whether escaped characters should be ignored or replaced.
+  @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
+  
   // MARK: View body
   
   var body: some View {
@@ -71,13 +74,14 @@ extension ComponentBlocksText {
   ///
   /// - Parameter block: The component block.
   /// - Returns: A `Text` view.
-  private func text(for block: ComponentBlock) -> Text {
+  @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
       font: font,
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
       errorMode: errorMode,
-      blockRenderingMode: blockMode)
+      blockRenderingMode: blockMode,
+      ignoreEscapedCharacters: ignoreEscapedCharacters)
   }
   
 }

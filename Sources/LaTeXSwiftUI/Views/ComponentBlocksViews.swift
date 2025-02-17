@@ -51,6 +51,9 @@ internal struct ComponentBlocksViews: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
+  // Whether escaped characters should be ignored or replaced.
+  @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
+  
   // MARK: View body
   
   var body: some View {
@@ -73,7 +76,7 @@ internal struct ComponentBlocksViews: View {
             else {
               HorizontalImageScroller(
                 image: container.image,
-                height: container.size.height)
+                height: container.size.size.height)
             }
             
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
@@ -85,7 +88,8 @@ internal struct ComponentBlocksViews: View {
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
-            blockRenderingMode: blockMode)
+            blockRenderingMode: blockMode,
+            ignoreEscapedCharacters: ignoreEscapedCharacters)
         }
       }
     }
