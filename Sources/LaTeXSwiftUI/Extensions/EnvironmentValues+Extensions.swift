@@ -78,6 +78,10 @@ private struct IgnoreEscapedCharactersKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
+private struct IgnoreMarkdownKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
 extension EnvironmentValues {
   
   /// The image rendering mode of this environment.
@@ -156,6 +160,12 @@ extension EnvironmentValues {
   var ignoreEscapedCharacters: Bool {
     get { self[IgnoreEscapedCharactersKey.self] }
     set { self[IgnoreEscapedCharactersKey.self] = newValue }
+  }
+  
+  /// Whether markdown should be ignored or rendered.
+  var ignoreMarkdown: Bool {
+    get { self[IgnoreMarkdownKey.self] }
+    set { self[IgnoreMarkdownKey.self] = newValue }
   }
   
 }

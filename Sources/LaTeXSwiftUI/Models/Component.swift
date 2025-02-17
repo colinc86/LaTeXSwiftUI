@@ -192,6 +192,7 @@ extension Component {
   ///   - isInEquationBlock: Whether this block is in an equation block.
   ///   - ignoreEscapedCharacters: Whether escaped characters should be ignored
   ///     or replaced.
+  ///   - ignoreMarkdown: Whether markdown should be ignored or rendered.
   /// - Returns: A text view.
   func convertToText(
     font: Font,
@@ -200,7 +201,8 @@ extension Component {
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
     isInEquationBlock: Bool,
-    ignoreEscapedCharacters: Bool
+    ignoreEscapedCharacters: Bool,
+    ignoreMarkdown: Bool
   ) -> Text {
     // Get the component's text
     let text: Text
@@ -210,9 +212,7 @@ extension Component {
         switch errorMode {
         case .original:
           // Use the original tex input
-          text = Text(replaceEscapedCharacters(
-            in: blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText,
-            ignoreEscapedCharacters: ignoreEscapedCharacters))
+          text = Text(blockRenderingMode == .alwaysInline ? originalTextTrimmingNewlines : originalText)
         case .error:
           // Use the error text
           text = Text(errorText)
@@ -230,10 +230,14 @@ extension Component {
       }
     }
     else if blockRenderingMode == .alwaysInline {
-      text = Text(replaceEscapedCharacters(in: originalTextTrimmingNewlines, ignoreEscapedCharacters: ignoreEscapedCharacters))
+      let input = replaceEscapedCharacters(in: originalTextTrimmingNewlines, ignoreEscapedCharacters: ignoreEscapedCharacters)
+      if ignoreMarkdown { text = Text(input) }
+      else { text = Text(LocalizedStringKey(input)) }
     }
     else {
-      text = Text(replaceEscapedCharacters(in: originalText, ignoreEscapedCharacters: ignoreEscapedCharacters))
+      let input = replaceEscapedCharacters(in: originalText, ignoreEscapedCharacters: ignoreEscapedCharacters)
+      if ignoreMarkdown { text = Text(input) }
+      else { text = Text(LocalizedStringKey(input)) }
     }
     
     return text

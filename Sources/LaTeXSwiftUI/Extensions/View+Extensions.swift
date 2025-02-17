@@ -195,4 +195,12 @@ public extension View {
     environment(\.ignoreEscapedCharacters, ignore)
   }
   
+  /// Whether markdown should be ignored or rendered.
+  ///
+  /// - Parameter ignore: Ignore markdown.
+  /// - Returns: A view that ignores or renders markdown.
+  func ignoreMarkdown(_ ignore: Bool = true) -> some View {
+    environment(\.ignoreMarkdown, ignore)
+  }
+  
 }
