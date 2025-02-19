@@ -42,6 +42,10 @@ struct LaTeX_Previews_Styles: PreviewProvider {
         .renderingAnimation(.default)
       
       LaTeX("Hello, $\\LaTeX$!")
+        .renderingStyle(.redactedOriginal)
+        .renderingAnimation(.default)
+      
+      LaTeX("Hello, $\\LaTeX$!")
         .renderingStyle(.progress)
         .renderingAnimation(.easeIn)
     }

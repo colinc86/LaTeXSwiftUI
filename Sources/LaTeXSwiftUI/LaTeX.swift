@@ -92,15 +92,17 @@ public struct LaTeX: View {
     /// The view remains empty until its finished rendering.
     case empty
     
-    /// The view displays the input text until its finished rendering.
+    /// The view displays the input text until it's finished rendering.
     case original
 
+    /// The view displays a redacted version of the view until it's finished
+    /// rendering.
     case redactedOriginal
 
-    /// The view displays a progress view until its finished rendering.
+    /// The view displays a progress view until it's finished rendering.
     case progress
     
-    /// The view blocks on the main thread until its finished rendering.
+    /// The view blocks on the main thread until it's finished rendering.
     case wait
   }
   
@@ -312,11 +314,7 @@ extension LaTeX {
     case .original:
       Text(latex)
     case .redactedOriginal:
-      Text(latex)
-        .foregroundStyle(Color.clear)
-        .background {
-            Text(latex).redacted(reason: .placeholder)
-        }
+      Text(latex).redacted(reason: .placeholder)
     case .progress:
       ProgressView()
     default:
