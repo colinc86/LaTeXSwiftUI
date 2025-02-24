@@ -198,9 +198,8 @@ extension Component {
   ///   - errorMode: The error handling mode.
   ///   - blockRenderingModel: The rendering mode of the block.
   ///   - isInEquationBlock: Whether this block is in an equation block.
-  ///   - ignoreEscapedCharacters: Whether escaped characters should be ignored
-  ///     or replaced.
-  ///   - ignoreMarkdown: Whether markdown should be ignored or rendered.
+  ///   - ignoreStringFormatting: Whether string formatting such as markdown
+  ///     should be ignored or rendered.
   /// - Returns: A text view.
   func convertToText(
     font: Font,
@@ -209,8 +208,7 @@ extension Component {
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
     isInEquationBlock: Bool,
-    ignoreEscapedCharacters: Bool,
-    ignoreMarkdown: Bool
+    ignoreStringFormatting: Bool
   ) -> Text {
     // Get the component's text
     let text: Text
@@ -238,30 +236,38 @@ extension Component {
       }
     }
     else if blockRenderingMode == .alwaysInline {
-      let input = replaceEscapedCharacters(in: originalTextTrimmingNewlines, ignoreEscapedCharacters: ignoreEscapedCharacters)
-      if ignoreMarkdown { text = Text(input) }
-      else { text = Text(LocalizedStringKey(input)) }
+      text = formattedText(input: originalTextTrimmingNewlines, ignoreStringFormatting: ignoreStringFormatting)
     }
     else {
-      let input = replaceEscapedCharacters(in: originalText, ignoreEscapedCharacters: ignoreEscapedCharacters)
-      if ignoreMarkdown { text = Text(input) }
-      else { text = Text(LocalizedStringKey(input)) }
+      text = formattedText(input: originalText, ignoreStringFormatting: ignoreStringFormatting)
     }
     
     return text
   }
   
-  /// Replaces the escaped characters in the input text if the component type is
-  /// `text` and ignore escaped characters is false.
+  /// Formats the input text and returns a text view.
   ///
   /// - Parameters:
-  ///   - text: The text to replace.
-  ///   - ignoreEscapedCharacters: Whether escaped characters should be ingored
-  ///     or replaced.
-  /// - Returns: The replaced text.
-  func replaceEscapedCharacters(in text: String, ignoreEscapedCharacters: Bool) -> String {
-    guard type == .text && !ignoreEscapedCharacters else { return text }
-    return Replacer.replace(text)
+  ///   - input: The plaintext to format.
+  ///   - ignoreStringFormatting: Whether the method should ignore formatting.
+  /// - Returns: A text view.
+  func formattedText(input: String, ignoreStringFormatting: Bool) -> Text {
+    if ignoreStringFormatting {
+      return Text(input)
+    }
+    else {
+      do {
+        return Text(try AttributedString(
+          markdown: input,
+          options: AttributedString.MarkdownParsingOptions(
+            allowsExtendedAttributes: true,
+            interpretedSyntax: .inlineOnlyPreservingWhitespace,
+            failurePolicy: .returnPartiallyParsedIfPossible)))
+      }
+      catch {
+        return Text(input)
+      }
+    }
   }
   
 }

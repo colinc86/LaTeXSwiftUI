@@ -74,11 +74,7 @@ private struct RenderingAnimationKey: EnvironmentKey {
   static let defaultValue: Animation? = .none
 }
 
-private struct IgnoreEscapedCharactersKey: EnvironmentKey {
-  static let defaultValue: Bool = false
-}
-
-private struct IgnoreMarkdownKey: EnvironmentKey {
+private struct IgnoreSringFormatting: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
@@ -156,16 +152,10 @@ extension EnvironmentValues {
     set { self[RenderingAnimationKey.self] = newValue }
   }
   
-  /// Whether escaped characeters should be ignored or replaced.
-  var ignoreEscapedCharacters: Bool {
-    get { self[IgnoreEscapedCharactersKey.self] }
-    set { self[IgnoreEscapedCharactersKey.self] = newValue }
-  }
-  
-  /// Whether markdown should be ignored or rendered.
-  var ignoreMarkdown: Bool {
-    get { self[IgnoreMarkdownKey.self] }
-    set { self[IgnoreMarkdownKey.self] = newValue }
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  var ignoreStringFormatting: Bool {
+    get { self[IgnoreSringFormatting.self] }
+    set { self[IgnoreSringFormatting.self] = newValue }
   }
   
 }

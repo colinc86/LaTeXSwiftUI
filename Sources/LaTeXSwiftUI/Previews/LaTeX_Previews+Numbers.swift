@@ -38,6 +38,11 @@ struct LaTeX_Previews_Numbers: PreviewProvider {
         .equationNumberMode(.right)
         .equationNumberOffset(10)
         .equationNumberStart(2)
+      
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} $&lt;$ \\~ \\^ \\\\")
+        .unencoded()
+      //        .ignoreEscapedCharacters()
+      //        .ignoreMarkdown()
     }
     .previewLayout(.sizeThatFits)
     .previewDisplayName("Equation Numbers")

@@ -157,11 +157,8 @@ public struct LaTeX: View {
   /// The animation the view should apply to its rendered images.
   @Environment(\.renderingAnimation) private var renderingAnimation
   
-  /// Whether escaped characters should be ignored or replaced.
-  @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
-  
-  /// Whether markdown should be ignored or rendered.
-  @Environment(\.ignoreMarkdown) private var ignoreMarkdown
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale

@@ -51,11 +51,8 @@ internal struct ComponentBlocksViews: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
-  // Whether escaped characters should be ignored or replaced.
-  @Environment(\.ignoreEscapedCharacters) private var ignoreEscapedCharacters
-  
-  /// Whether markdown should be ignored or rendered.
-  @Environment(\.ignoreMarkdown) private var ignoreMarkdown
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
   
   // MARK: View body
   
@@ -92,8 +89,7 @@ internal struct ComponentBlocksViews: View {
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
             blockRenderingMode: blockMode,
-            ignoreEscapedCharacters: ignoreEscapedCharacters,
-            ignoreMarkdown: ignoreMarkdown)
+            ignoreStringFormatting: ignoreStringFormatting)
         }
       }
     }
