@@ -1,5 +1,5 @@
 //
-//  LaTeX_Previews+Numbers.swift
+//  HashableCGRect.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,32 +23,27 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
+import CoreGraphics
+import Foundation
 
-struct LaTeX_Previews_Numbers: PreviewProvider {
+/// A hashable wrapper for CGRect compatible with Swift language versions < 6.
+internal struct HashableCGRect: Codable, Hashable {
   
-  static var previews: some View {
-    VStack {
-      LaTeX("$$E = mc^2$$")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .padding([.bottom])
-      
-      LaTeX("\\begin{equation} E = mc^2 \\end{equation} \\begin{equation} E = mc^2 \\end{equation}")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .equationNumberStart(2)
-      
-      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} $&lt;$ \\~ \\^ \\\\")
-        .unencoded()
-      //        .ignoreEscapedCharacters()
-      //        .ignoreMarkdown()
-    }
-    .previewLayout(.sizeThatFits)
-    .previewDisplayName("Equation Numbers")
-    .formatEquationNumber { n in
-      return "~[\(n)]~"
-    }
+  /// The rect.
+  let rect: CGRect
+  
+  /// Initializes a hashable rect with a rect.
+  ///
+  /// - Parameter rect: The rect.
+  init(_ rect: CGRect) {
+    self.rect = rect
+  }
+  
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine("x\(rect.origin.x)")
+    hasher.combine("y\(rect.origin.y)")
+    hasher.combine("w\(rect.size.width)")
+    hasher.combine("h\(rect.size.height)")
   }
   
 }

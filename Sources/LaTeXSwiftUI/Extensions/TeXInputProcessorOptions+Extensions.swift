@@ -48,6 +48,11 @@ extension TeXInputProcessorOptions {
       }
     }
     loadPackages = packages
+    
+    // The default inlineMath for MathJax is set to [["\\(", "\\)"]] which isn't
+    // useful for this package since we'd rather use dollar signs and reserve
+    // parentheses for grouping symbols.
+    inlineMath = [["$", "$"]]
   }
   
 }

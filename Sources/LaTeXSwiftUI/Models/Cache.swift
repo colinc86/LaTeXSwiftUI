@@ -89,11 +89,11 @@ internal class Cache {
   
   // MARK: Private properties
   
-  /// Semaphore for thread-safe access to `dataCache`.
-  let dataCacheSemaphore = DispatchSemaphore(value: 1)
+  /// The data cache queue.
+  private let dataCacheQueue = DispatchQueue(label: "latexswiftui.cache.data")
   
-  /// Semaphore for thread-safe access to `imageCache`.
-  let imageCacheSemaphore = DispatchSemaphore(value: 1)
+  /// The image cache queue.
+  private let imageCacheQueue = DispatchQueue(label: "latexswiftui.cache.image")
   
 }
 
@@ -106,9 +106,10 @@ extension Cache {
   /// - Parameter key: The key of the value to get.
   /// - Returns: A value.
   func dataCacheValue(for key: SVGCacheKey) -> Data? {
-    dataCacheSemaphore.wait()
-    defer { dataCacheSemaphore.signal() }
-    return dataCache.object(forKey: key.key() as NSString) as Data?
+    return dataCacheQueue.sync { [weak self] in
+      guard let self = self else { return nil }
+      return self.dataCache.object(forKey: key.key() as NSString) as Data?
+    }
   }
   
   /// Safely sets the cache value.
@@ -117,9 +118,10 @@ extension Cache {
   ///   - value: The value to set.
   ///   - key: The value's key.
   func setDataCacheValue(_ value: Data, for key: SVGCacheKey) {
-    dataCacheSemaphore.wait()
-    dataCache.setObject(value as NSData, forKey: key.key() as NSString)
-    dataCacheSemaphore.signal()
+    dataCacheQueue.async(flags: .barrier) { [weak self] in
+      guard let self = self else { return }
+      self.dataCache.setObject(value as NSData, forKey: key.key() as NSString)
+    }
   }
   
   /// Safely access the cache value for the given key.
@@ -127,9 +129,10 @@ extension Cache {
   /// - Parameter key: The key of the value to get.
   /// - Returns: A value.
   func imageCacheValue(for key: ImageCacheKey) -> _Image? {
-    imageCacheSemaphore.wait()
-    defer { imageCacheSemaphore.signal() }
-    return imageCache.object(forKey: key.key() as NSString)
+    return imageCacheQueue.sync { [weak self] in
+      guard let self = self else { return nil }
+      return self.imageCache.object(forKey: key.key() as NSString)
+    }
   }
   
   /// Safely sets the cache value.
@@ -138,9 +141,10 @@ extension Cache {
   ///   - value: The value to set.
   ///   - key: The value's key.
   func setImageCacheValue(_ value: _Image, for key: ImageCacheKey) {
-    imageCacheSemaphore.wait()
-    imageCache.setObject(value, forKey: key.key() as NSString)
-    imageCacheSemaphore.signal()
+    imageCacheQueue.async(flags: .barrier) { [weak self] in
+      guard let self = self else { return }
+      self.imageCache.setObject(value, forKey: key.key() as NSString)
+    }
   }
   
 }

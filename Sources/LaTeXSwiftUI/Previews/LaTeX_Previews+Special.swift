@@ -1,5 +1,5 @@
 //
-//  CGRect+Extensions.swift
+//  LaTeX_Previews+Special.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,16 +23,39 @@
 //  IN THE SOFTWARE.
 //
 
-import Foundation
-import CoreGraphics
+import SwiftUI
 
-extension CGRect: Hashable {
+struct LaTeX_Previews_Special: PreviewProvider {
   
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine("x\(origin.x)")
-    hasher.combine("y\(origin.y)")
-    hasher.combine("w\(size.width)")
-    hasher.combine("h\(size.height)")
+  static var previews: some View {
+    VStack {
+      LaTeX("Hello &lt; $\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+        .unencoded()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Unencoded HTML")
+    
+    VStack {
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+      
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Markdown")
+    
+    VStack {
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+      
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Escaped Characters")
   }
   
 }

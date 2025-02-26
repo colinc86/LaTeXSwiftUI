@@ -1,5 +1,5 @@
 //
-//  LaTeX_Previews+Numbers.swift
+//  ImageContainer.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,32 +23,20 @@
 //  IN THE SOFTWARE.
 //
 
+import Foundation
 import SwiftUI
 
-struct LaTeX_Previews_Numbers: PreviewProvider {
+/// A container to store an image and its intrinsic size.
+internal struct ImageContainer: Hashable {
   
-  static var previews: some View {
-    VStack {
-      LaTeX("$$E = mc^2$$")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .padding([.bottom])
-      
-      LaTeX("\\begin{equation} E = mc^2 \\end{equation} \\begin{equation} E = mc^2 \\end{equation}")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .equationNumberStart(2)
-      
-      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} $&lt;$ \\~ \\^ \\\\")
-        .unencoded()
-      //        .ignoreEscapedCharacters()
-      //        .ignoreMarkdown()
-    }
-    .previewLayout(.sizeThatFits)
-    .previewDisplayName("Equation Numbers")
-    .formatEquationNumber { n in
-      return "~[\(n)]~"
-    }
+  /// The image.
+  let image: Image
+  
+  /// The image's size.
+  let size: HashableCGSize
+  
+  func hash(into hasher: inout Hasher) {
+    hasher.combine(size)
   }
   
 }

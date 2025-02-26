@@ -162,4 +162,12 @@ public extension View {
     environment(\.renderingAnimation, animation)
   }
   
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  ///
+  /// - Parameter ignore: Ignore string formatting.
+  /// - Returns: A view that ignores or renders string formatting.
+  func ignoreStringFormatting(_ ignore: Bool = true) -> some View {
+    environment(\.ignoreStringFormatting, ignore)
+  }
+  
 }

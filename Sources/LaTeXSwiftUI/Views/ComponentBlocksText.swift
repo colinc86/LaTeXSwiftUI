@@ -36,9 +36,6 @@ internal struct ComponentBlocksText: View {
   
   // MARK: Private properties
   
-  /// The view's renderer.
-  @EnvironmentObject private var renderer: Renderer
-  
   /// The rendering mode to use with the rendered MathJax images.
   @Environment(\.imageRenderingMode) private var imageRenderingMode
   
@@ -53,6 +50,9 @@ internal struct ComponentBlocksText: View {
   
   /// The view's block rendering mode.
   @Environment(\.blockMode) private var blockMode
+  
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
   
   // MARK: View body
   
@@ -74,14 +74,14 @@ extension ComponentBlocksText {
   ///
   /// - Parameter block: The component block.
   /// - Returns: A `Text` view.
-  private func text(for block: ComponentBlock) -> Text {
+  @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
-      using: renderer,
       font: font,
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
       errorMode: errorMode,
-      blockRenderingMode: blockMode)
+      blockRenderingMode: blockMode,
+      ignoreStringFormatting: ignoreStringFormatting)
   }
   
 }
@@ -91,6 +91,5 @@ struct ComponentBlocksTextPreviews: PreviewProvider {
     ComponentBlocksText(blocks: [ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
     ])], forceInline: false)
-    .environmentObject(Renderer())
   }
 }
