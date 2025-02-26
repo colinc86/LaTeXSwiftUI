@@ -11,6 +11,7 @@ A SwiftUI view that renders LaTeX equations.
 - [ℹ️ About](#about)
 - [📦 Installation](#installation)
 - [⌨️ Usage](#usage)
+  - [🔤 Fonts](#fonts)
   - [⚙️ Modifiers](#modifiers)
     - [🔤 Parsing Mode](#parsing-mode)
     - [🌄 Image Rendering Mode](#image-rendering-mode)
@@ -49,7 +50,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.3.2")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.4.0")
 ```
 
 ## Usage
@@ -69,6 +70,10 @@ struct MyView: View {
 ```
 
 > <img src="./assets/images/hello.png" width="85" height="21.5">
+
+### Fonts
+
+The view needs to be able to measure the current font's x-height to correctly size the characters inside of the rendered LaTeX SVG. To do that, the view must use the `UIFont`/`NSFont` classes and do its best to convert SwiftUI's `Font` structure into the correct `UIFont` instance. Currently, the view's functionality is limited to SwiftUI's static largeTitle, title, title1, headline, etc fonts.
 
 ### Modifiers
 
