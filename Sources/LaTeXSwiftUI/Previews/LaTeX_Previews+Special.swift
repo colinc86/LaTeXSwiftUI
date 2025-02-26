@@ -1,5 +1,5 @@
 //
-//  Replacer.swift
+//  LaTeX_Previews+Special.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,33 +23,39 @@
 //  IN THE SOFTWARE.
 //
 
-/// Used to replace escaped characters with their non-escaped variants.
-internal class Replacer {
+import SwiftUI
+
+struct LaTeX_Previews_Special: PreviewProvider {
   
-  /// A map of replacement strings.
-  static let escapedCharacterMap: [String: String] = [
-    "\\&": "&",
-    "\\%": "%",
-    "\\$": "$",
-    "\\#": "#",
-    "\\_": "_",
-    "\\{": "{",
-    "\\}": "}",
-    "\\~": "~",
-    "\\^": "^",
-    "\\\\": "\\"
-  ]
-  
-  /// Replaces escaped characters with their non-escaped variants.
-  ///
-  /// - Parameter text: The text to replace.
-  /// - Returns: The replaced text.
-  static func replace(_ text: String) -> String {
-    var result = text
-    for (escaped, original) in escapedCharacterMap {
-      result = result.replacingOccurrences(of: escaped, with: original)
+  static var previews: some View {
+    VStack {
+      LaTeX("Hello &lt; $\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+        .unencoded()
     }
-    return result
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Unencoded HTML")
+    
+    VStack {
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+      
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Markdown")
+    
+    VStack {
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+      
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Escaped Characters")
   }
   
 }

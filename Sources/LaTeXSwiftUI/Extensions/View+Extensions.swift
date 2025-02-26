@@ -162,45 +162,12 @@ public extension View {
     environment(\.renderingAnimation, animation)
   }
   
-  /// Sets whether the view should ignore escaped characters or replace them.
+  /// Whether string formatting such as markdown should be ignored or rendered.
   ///
-  /// The characeters `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, and `\` are
-  /// reserved characters in LaTeX and may appear in a document with an escape
-  /// characeter preceeding them.
-  ///
-  /// Set this environment variable to `true` to render the escape and the
-  /// character, or to `false` to have the view replace the escaped characeter
-  /// with itself.
-  ///
-  /// For example
-  ///
-  /// ```
-  /// LaTeX("Bob has \$5.00")
-  /// ```
-  ///
-  /// will display `Bob has $5.00`.
-  ///
-  /// Whereas
-  ///
-  /// ```
-  /// LaTeX("Bob has $5.00")
-  ///   .ignoreEscapedCharacters()
-  /// ```
-  ///
-  /// will display `Bob has \$5.00`.
-  ///
-  /// - Parameter ignore: Whether to ignore escaped characters.
-  /// - Returns: A view that ignores or replaces escaped characters.
-  func ignoreEscapedCharacters(_ ignore: Bool = true) -> some View {
-    environment(\.ignoreEscapedCharacters, ignore)
-  }
-  
-  /// Whether markdown should be ignored or rendered.
-  ///
-  /// - Parameter ignore: Ignore markdown.
-  /// - Returns: A view that ignores or renders markdown.
-  func ignoreMarkdown(_ ignore: Bool = true) -> some View {
-    environment(\.ignoreMarkdown, ignore)
+  /// - Parameter ignore: Ignore string formatting.
+  /// - Returns: A view that ignores or renders string formatting.
+  func ignoreStringFormatting(_ ignore: Bool = true) -> some View {
+    environment(\.ignoreStringFormatting, ignore)
   }
   
 }

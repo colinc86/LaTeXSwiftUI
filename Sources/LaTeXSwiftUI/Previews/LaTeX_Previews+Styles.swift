@@ -55,18 +55,8 @@ struct LaTeX_Previews_Styles: PreviewProvider {
       LaTeX("Hello, $\\LaTeX$!")
         .latexStyle(.automatic)
       
-      LaTeX("Hello, $$&lt;\\LaTeX$$!")
+      LaTeX("Hello, $\\LaTeX$!")
         .latexStyle(.standard)
-      
-      LaTeX("Hello, \\$1.00!")
-      
-      LaTeX("Hello, \\$1.00!")
-        .ignoreEscapedCharacters()
-      
-      LaTeX("**Hello**, $\\LaTeX$!")
-      
-      LaTeX("**Hello**, $\\LaTeX$!")
-        .ignoreMarkdown()
     }
     .previewDisplayName("View Styles")
     
