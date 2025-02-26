@@ -29,8 +29,6 @@ import SwiftUI
 /// a serif font.
 public struct StandardLaTeXStyle: LaTeXStyle {
   
-  @Environment(\.font) var font
-  
   public func makeBody(content: LaTeX) -> some View {
     content
       .unencoded()
