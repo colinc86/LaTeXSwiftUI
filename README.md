@@ -22,8 +22,7 @@ A SwiftUI view that renders LaTeX equations.
       - [Equation Number Offset](#equation-number-offset)
       - [Format Equation Number](#format-equation-number)
     - [🔗 Unencode HTML](#unencode-html)
-    - [📄 Ignore Markdown](#ignore-markdown)
-    - [💲 Ignore Escaped Characters](#ignore-escaped-characters)
+    - [📄 Ignore String Formatting](#ignore-string-formatting)
     - [🕶️ Rendering Style](#rendering-style)
     - [🪩 Rendering Animation](#rendering-animation)
   - [🪮 Styles](#styles)
@@ -229,7 +228,7 @@ LaTeX("$x^2&lt;1$")
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
 
-#### Ignore Markdown
+#### Ignore String Formatting
 
 The `LaTeX` view will render the following markdown synatax.
 
@@ -242,21 +241,18 @@ The `LaTeX` view will render the following markdown synatax.
 | `` `...` `` | Monospaced |
 | `[...](...)` | Links |
 
-If you don't want markdown rendered, then you may use the `ignoreMarkdown` modifier.
+If you don't want markdown rendered, then you may use the `ignoreStringFormatting` modifier.
 
 ```swift
 LaTeX(input)
-  .ignoreMarkdown()
+  .ignoreStringFormatting()
 ```
 
-#### Ignore Escaped Characters
+##### Escaped Characters
 
 The characeters `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, and `\` are reserved characters in LaTeX and may appear in a document with an escape characeter preceeding them.
 
-The view will look for these characters preceeded by an escape, and replace them with the non-escaped version. If you would like to prevent this replacement, then you may use the `ignoreEscapedCharacters` modifier.
-
-```swift
-LaTeX
+The view will look for these characters preceeded by an escape, and replace them with the non-escaped version. If you would like to prevent this replacement, then you may use the `ignoreStringFormatting` modifier.
 
 #### Rendering Style
 
@@ -264,10 +260,11 @@ The view has four rendering styles. The `wait` style is the default style, and l
 
 | Style      | Asynchronous | Description                                                              |
 |:-----------|:-------------|:-------------------------------------------------------------------------|
-| `empty`    | Yes          | The view remains empty until its finished rendering.                     |
-| `original` | Yes          | The view displays the input text until its finished rendering.           |
-| `progress` | Yes          | The view displays a progress view until its finished rendering.          |
-| `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
+| `empty`    | Yes          | The view remains empty until it's finished rendering.                     |
+| `original` | Yes          | The view displays the input text until it's finished rendering.           |
+| `redactedOriginal` | Yes  | The view displays a redacted version of the view until it's finished rendering |
+| `progress` | Yes          | The view displays a progress view until it's finished rendering.          |
+| `wait`     | No           | *(default)* The view blocks the main queue until it's finished rendering. |
 
 
 #### Rendering Animation
