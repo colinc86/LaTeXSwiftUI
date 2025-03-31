@@ -23,15 +23,12 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
-
 internal extension Image {
   
   init(image: _Image, scale: CGFloat = 1.0) {
 #if os(iOS) || os(visionOS)
     self.init(uiImage: image)
 #else
-
     if scale > 1.0 {
       let scaledSize = NSSize(
           width: image.size.width / scale,
@@ -55,11 +52,11 @@ internal extension Image {
 
 internal extension Image {
   
-  convenience init?(imageData: Data, scale: CGFloat? = nil) {
+  init?(imageData: Data, scale: CGFloat? = nil) {
 #if os(iOS) || os(visionOS)
-    self.init(data: imageData, scale: scale ?? 1)
+    self.init(imageData: imageData, scale: scale ?? 1)
 #else
-    self.init(data: imageData)
+    self.init(nsImage: NSImage(data: imageData) ?? NSImage())
 #endif
   }
   
