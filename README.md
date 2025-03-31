@@ -8,29 +8,31 @@ A SwiftUI view that renders LaTeX equations.
 
 ## 📖 Contents
 
-- [About](#ℹ️-about)
-- [Installation](#📦-installation)
-- [Usage](#⌨️-usage)
-  - [Modifiers](#⚙️-modifiers)
-    - [Parsing Mode](#🔤-parsing-mode)
-    - [Image Rendering Mode](#🌄-image-rendering-mode)
-    - [Error Mode](#🚨-error-mode)
-    - [Block Rendering Mode](#🧱-block-rendering-mode)
-    - [Numbered Block Equations](#🔢-numbered-block-equations)
+- [ℹ️ About](#about)
+- [📦 Installation](#installation)
+- [⌨️ Usage](#usage)
+  - [🔤 Fonts](#fonts)
+  - [⚙️ Modifiers](#modifiers)
+    - [🔤 Parsing Mode](#parsing-mode)
+    - [🌄 Image Rendering Mode](#image-rendering-mode)
+    - [🚨 Error Mode](#error-mode)
+    - [🧱Block Rendering Mode](#block-rendering-mode)
+    - [🔢 Numbered Block Equations](#numbered-block-equations)
       - [Equation Number Mode](#equation-number-mode)
       - [Equation Number Start](#equation-number-start)
       - [Equation Number Offset](#equation-number-offset)
       - [Format Equation Number](#format-equation-number)
-    - [Unencode HTML](#🔗-unencode-html)
-    - [Rendering Style](#🕶️-rendering-style)
-    - [Rendering Animation](#🪩-animated)
-  - [Styles](#🪮-styles)
-  - [Caching](#🗄️-caching)
-  - [Preloading](#🏃‍♀️-preloading)
+    - [🔗 Unencode HTML](#unencode-html)
+    - [📄 Ignore String Formatting](#ignore-string-formatting)
+    - [🕶️ Rendering Style](#rendering-style)
+    - [🪩 Rendering Animation](#rendering-animation)
+  - [🪮 Styles](#styles)
+  - [🗄️ Caching](#caching)
+  - [🏃‍♀️ Preloading](#preloading)
   
-## ℹ️ About
+## About
 
-`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode marcos.
+`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode macros.
 
 The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org). Thus, the limitations of the view are heavily influenced by the [limitations](https://docs.mathjax.org/en/v2.7-latest/tex.html#differences) of MathJax.
 
@@ -43,15 +45,15 @@ It will
 It won't
 - render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
 
-## 📦 Installation
+## Installation
 
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.3.2")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.4.0")
 ```
 
-## ⌨️ Usage
+## Usage
 
 Import the package and use the view.
 
@@ -69,7 +71,11 @@ struct MyView: View {
 
 > <img src="./assets/images/hello.png" width="85" height="21.5">
 
-### ⚙️ Modifiers
+### Fonts
+
+The view needs to be able to measure the current font's x-height to correctly size the characters inside of the rendered LaTeX SVG. To do that, the view must use the `UIFont`/`NSFont` classes and do its best to convert SwiftUI's `Font` structure into the correct `UIFont` instance. Currently, the view's functionality is limited to SwiftUI's static largeTitle, title, title1, headline, etc fonts.
+
+### Modifiers
 
 The `LaTeX` view's body is built up of `Text` views so feel free to use any of the supported modifiers.
 
@@ -83,7 +89,7 @@ LaTeX("Hello, $\\LaTeX$!")
 
 Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
 
-#### 🔤 Parsing Mode
+#### Parsing Mode
 
 Text input can either be completely rendered, or the view can search for top-level equations delimited by the following terminators.
 
@@ -91,6 +97,7 @@ Text input can either be completely rendered, or the view can search for top-lev
 |-------------|
 | `$...$` |
 | `$$...$$` |
+| `\(...\)` |
 | `\[...\]` |
 | `\begin{equation}...\end{equation}` |
 | `\begin{equation*}...\end{equation*}` |
@@ -110,7 +117,7 @@ LaTeX("\\text{Euler's identity is } e^{i\\pi}+1=0\\text{.}")
 
 > <img src="./assets/images/euler.png" width="293" height="80">
 
-#### 🌄 Image Rendering Mode
+#### Image Rendering Mode
 
 You can specify the rendering mode of the rendered equations so that they either take on the style of the surrounding text or display the style rendered by MathJax. The default behavior is to use the `template` rendering mode so that images match surrounding text.
 
@@ -126,7 +133,7 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
 
 > <img src="./assets/images/rendering_mode.png" width="84.5" height="43">
 
-#### 🚨 Error Mode
+#### Error Mode
 
 When an error occurs while parsing the input the view will display the original LaTeX. You can change this behavior by modifying the view's `errorMode`.
 
@@ -148,7 +155,7 @@ LaTeX("$\\asdf$")
 
 > <img src="./assets/images/errors.png" width="199.5" height="55">
 
-#### 🧱 Block Rendering Mode
+#### Block Rendering Mode
 
 The typical "LaTeX-ish" way to render the input is with `blockViews`. This mode renders text as usual, and block equations as... blocks; on their own line and centered. MathJax 3 does not support line breaking, so the view places block equations in horizontal scroll views in case the width of the equation is more than the width of the view.
 
@@ -174,7 +181,7 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
 
 > <img src="./assets/images/blocks.png" width="430" height="350">
 
-#### 🔢 Numbered Block Equations
+#### Numbered Block Equations
 
 The `LaTeX` view can do simple numbering of block equations with the `blockViews` block mode.
 
@@ -211,7 +218,7 @@ LaTeX("$$E = mc^2$$ $$E = mc^2$$")
 
 > <img src="./assets/images/numbers.png" width="433" height="153">
 
-#### 🔗 Unencode HTML
+#### Unencode HTML
 
 Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
 
@@ -226,19 +233,46 @@ LaTeX("$x^2&lt;1$")
 
 > <img src="./assets/images/unencoded.png" width="72.5" height="34">
 
-#### 🕶️ Rendering Style
+#### Ignore String Formatting
+
+The `LaTeX` view will render the following markdown synatax.
+
+| Syntax | Description |
+|-------------|-------------|
+| `*...*` | Italic |
+| `**...**` | Bold |
+| `***...***` | Bold & Italic |
+| `~~...~~` | Strikethrough |
+| `` `...` `` | Monospaced |
+| `[...](...)` | Links |
+
+If you don't want markdown rendered, then you may use the `ignoreStringFormatting` modifier.
+
+```swift
+LaTeX(input)
+  .ignoreStringFormatting()
+```
+
+##### Escaped Characters
+
+The characeters `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, and `\` are reserved characters in LaTeX and may appear in a document with an escape characeter preceeding them.
+
+The view will look for these characters preceeded by an escape, and replace them with the non-escaped version. If you would like to prevent this replacement, then you may use the `ignoreStringFormatting` modifier.
+
+#### Rendering Style
 
 The view has four rendering styles. The `wait` style is the default style, and loads the view synchronously on the main queue. To get better performance and move SVG rendering off of the main queue, use any of the other three styles.
 
 | Style      | Asynchronous | Description                                                              |
 |:-----------|:-------------|:-------------------------------------------------------------------------|
-| `empty`    | Yes          | The view remains empty until its finished rendering.                     |
-| `original` | Yes          | The view displays the input text until its finished rendering.           |
-| `progress` | Yes          | The view displays a progress view until its finished rendering.          |
-| `wait`     | No           | *(default)* The view blocks the main queue until its finished rendering. |
+| `empty`    | Yes          | The view remains empty until it's finished rendering.                     |
+| `original` | Yes          | The view displays the input text until it's finished rendering.           |
+| `redactedOriginal` | Yes  | The view displays a redacted version of the view until it's finished rendering |
+| `progress` | Yes          | The view displays a progress view until it's finished rendering.          |
+| `wait`     | No           | *(default)* The view blocks the main queue until it's finished rendering. |
 
 
-#### 🪩 Rendering Animation
+#### Rendering Animation
 
 When using the asynchronous rendering styles `empty`, `original`, or `progress`, use this modifier to determine the animation applied to the transition between views. The default value is `none`.
 
@@ -250,7 +284,7 @@ LaTeX(input)
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
 
-### 🪮 Styles
+### Styles
 
 You can use the provided view styles or create your own.
 
@@ -288,7 +322,7 @@ public struct TitleLaTeXStyle: LaTeXStyle {
 }
 ```
 
-### 🗄️ Caching
+### Caching
 
 `LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `dataCache` and `imageCache` properties.
 
@@ -300,7 +334,7 @@ LaTeX.dataCache.removeAllObjects()
 LaTeX.imageCache.removeAllObjects()
 ```
 
-### 🏃‍♀️ Preloading
+### Preloading
 
 SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
 

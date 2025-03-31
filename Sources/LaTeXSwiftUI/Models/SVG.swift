@@ -84,4 +84,15 @@ extension SVG {
     try JSONEncoder().encode(self)
   }
   
+  /// The size of the SVG based on the current font's x-height.
+  ///
+  /// - Parameter xHeight: The font's x-height.
+  /// - Returns: A size.
+  func size(for xHeight: CGFloat) -> CGSize {
+    CGSize(
+      width: geometry.width.toPoints(xHeight),
+      height: geometry.height.toPoints(xHeight)
+    )
+  }
+  
 }

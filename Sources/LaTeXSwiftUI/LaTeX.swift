@@ -92,13 +92,17 @@ public struct LaTeX: View {
     /// The view remains empty until its finished rendering.
     case empty
     
-    /// The view displays the input text until its finished rendering.
+    /// The view displays the input text until it's finished rendering.
     case original
-    
-    /// The view displays a progress view until its finished rendering.
+
+    /// The view displays a redacted version of the view until it's finished
+    /// rendering.
+    case redactedOriginal
+
+    /// The view displays a progress view until it's finished rendering.
     case progress
     
-    /// The view blocks on the main thread until its finished rendering.
+    /// The view blocks on the main thread until it's finished rendering.
     case wait
   }
   
@@ -147,8 +151,14 @@ public struct LaTeX: View {
   /// The view's rendering style.
   @Environment(\.renderingStyle) private var renderingStyle
   
+  /// The rendering mode to use with the rendered MathJax images.
+  @Environment(\.imageRenderingMode) private var imageRenderingMode
+  
   /// The animation the view should apply to its rendered images.
   @Environment(\.renderingAnimation) private var renderingAnimation
+  
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
   
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
@@ -188,7 +198,7 @@ public struct LaTeX: View {
       else {
         // The view is not rendered nor cached
         switch renderingStyle {
-        case .empty, .original, .progress:
+        case .empty, .original, .redactedOriginal, .progress:
           // Render the components asynchronously
           loadingView().task {
             await renderAsync()
@@ -200,7 +210,6 @@ public struct LaTeX: View {
       }
     }
     .animation(renderingAnimation, value: renderer.rendered)
-    .environmentObject(renderer)
     .onDisappear(perform: preloadTask?.cancel)
   }
   
@@ -258,7 +267,8 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode)
   }
   
   /// Renders the view's components synchronously.
@@ -272,7 +282,8 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       font: font ?? .body,
-      displayScale: displayScale)
+      displayScale: displayScale,
+      renderingMode: imageRenderingMode)
   }
   
   /// Creates the view's body based on its block mode.
@@ -299,6 +310,8 @@ extension LaTeX {
       Text("")
     case .original:
       Text(latex)
+    case .redactedOriginal:
+      Text(latex).redacted(reason: .placeholder)
     case .progress:
       ProgressView()
     default:

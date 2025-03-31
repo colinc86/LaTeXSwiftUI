@@ -74,6 +74,10 @@ private struct RenderingAnimationKey: EnvironmentKey {
   static let defaultValue: Animation? = .none
 }
 
+private struct IgnoreSringFormatting: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
 extension EnvironmentValues {
   
   /// The image rendering mode of this environment.
@@ -146,6 +150,12 @@ extension EnvironmentValues {
   var renderingAnimation: Animation? {
     get { self[RenderingAnimationKey.self] }
     set { self[RenderingAnimationKey.self] = newValue }
+  }
+  
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  var ignoreStringFormatting: Bool {
+    get { self[IgnoreSringFormatting.self] }
+    set { self[IgnoreSringFormatting.self] = newValue }
   }
   
 }

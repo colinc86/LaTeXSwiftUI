@@ -1,5 +1,5 @@
 //
-//  ImageRenderer+Extensions.swift
+//  LaTeX_Previews+Special.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -25,14 +25,37 @@
 
 import SwiftUI
 
-internal extension ImageRenderer {
+struct LaTeX_Previews_Special: PreviewProvider {
   
-  @MainActor var image: _Image? {
-#if os(iOS) || os(visionOS)
-    return uiImage
-#else
-    return nsImage
-#endif
+  static var previews: some View {
+    VStack {
+      LaTeX("Hello &lt; $\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+      
+      LaTeX("Hello, $&lt;\\LaTeX$!")
+        .unencoded()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Unencoded HTML")
+    
+    VStack {
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+      
+      LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Markdown")
+    
+    VStack {
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+      
+      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
+        .ignoreStringFormatting()
+    }
+    .previewLayout(.sizeThatFits)
+    .previewDisplayName("Escaped Characters")
   }
   
 }

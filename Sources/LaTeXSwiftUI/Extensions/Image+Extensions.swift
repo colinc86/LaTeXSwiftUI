@@ -27,17 +27,33 @@ import SwiftUI
 
 internal extension Image {
   
-  init(image: _Image) {
+  init(image: _Image, scale: CGFloat = 1.0) {
 #if os(iOS) || os(visionOS)
     self.init(uiImage: image)
 #else
+
+    if scale > 1.0 {
+      let scaledSize = NSSize(
+          width: image.size.width / scale,
+          height: image.size.height / scale
+      )
+      
+      let scaledImage = image.resized(to: scaledSize)
+      if let representation = image.representations.first {
+        scaledImage.addRepresentation(representation)
+      }
+      
+      self.init(nsImage: scaledImage)
+      return
+    }
+    
     self.init(nsImage: image)
 #endif
   }
   
 }
 
-internal extension _Image {
+internal extension Image {
   
   convenience init?(imageData: Data, scale: CGFloat? = nil) {
 #if os(iOS) || os(visionOS)

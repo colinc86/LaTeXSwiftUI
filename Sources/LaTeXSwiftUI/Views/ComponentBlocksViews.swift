@@ -33,9 +33,6 @@ internal struct ComponentBlocksViews: View {
   
   // MARK: Private properties
   
-  /// The view's renderer.
-  @EnvironmentObject private var renderer: Renderer
-  
   /// The rendering mode to use with the rendered MathJax images.
   @Environment(\.imageRenderingMode) private var imageRenderingMode
   
@@ -54,17 +51,19 @@ internal struct ComponentBlocksViews: View {
   /// The text's line spacing.
   @Environment(\.lineSpacing) private var lineSpacing
   
+  /// Whether string formatting such as markdown should be ignored or rendered.
+  @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
+  
   // MARK: View body
   
   var body: some View {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
-        if block.isEquationBlock,
-           let (image, size, errorText) = renderer.convertToImage(block: block, font: font ?? .body, displayScale: displayScale, renderingMode: imageRenderingMode) {
+        if block.isEquationBlock, let container = block.container, let svg = block.svg {
           HStack(spacing: 0) {
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
             
-            if let errorText = errorText, errorMode != .rendered {
+            if let errorText = svg.errorText, errorMode != .rendered {
               switch errorMode {
               case .error:
                 Text(errorText)
@@ -76,8 +75,8 @@ internal struct ComponentBlocksViews: View {
             }
             else {
               HorizontalImageScroller(
-                image: image,
-                height: size.height)
+                image: container.image,
+                height: container.size.size.height)
             }
             
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
@@ -85,12 +84,12 @@ internal struct ComponentBlocksViews: View {
         }
         else {
           block.toText(
-            using: renderer,
             font: font,
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
-            blockRenderingMode: blockMode)
+            blockRenderingMode: blockMode,
+            ignoreStringFormatting: ignoreStringFormatting)
         }
       }
     }
@@ -103,6 +102,5 @@ struct ComponentBlocksViewsPreviews: PreviewProvider {
     ComponentBlocksViews(blocks: [ComponentBlock(components: [
       Component(text: "Hello, World!", type: .text)
     ])])
-    .environmentObject(Renderer())
   }
 }

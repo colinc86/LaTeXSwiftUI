@@ -1,5 +1,5 @@
 //
-//  LaTeX_Previews+Numbers.swift
+//  HashableCGSize.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,32 +23,25 @@
 //  IN THE SOFTWARE.
 //
 
-import SwiftUI
+import CoreGraphics
+import Foundation
 
-struct LaTeX_Previews_Numbers: PreviewProvider {
+/// A hashable wrapper for CGSize compatible with Swift language versions < 6.
+internal struct HashableCGSize: Hashable {
   
-  static var previews: some View {
-    VStack {
-      LaTeX("$$E = mc^2$$")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .padding([.bottom])
-      
-      LaTeX("\\begin{equation} E = mc^2 \\end{equation} \\begin{equation} E = mc^2 \\end{equation}")
-        .equationNumberMode(.right)
-        .equationNumberOffset(10)
-        .equationNumberStart(2)
-      
-      LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} $&lt;$ \\~ \\^ \\\\")
-        .unencoded()
-      //        .ignoreEscapedCharacters()
-      //        .ignoreMarkdown()
-    }
-    .previewLayout(.sizeThatFits)
-    .previewDisplayName("Equation Numbers")
-    .formatEquationNumber { n in
-      return "~[\(n)]~"
-    }
+  /// The size.
+  let size: CGSize
+
+  /// Initializes a hashable size with a size.
+  ///
+  /// - Parameter size: The size.
+  init(_ size: CGSize) {
+    self.size = size
+  }
+  
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine("w\(size.width)")
+    hasher.combine("h\(size.height)")
   }
   
 }
