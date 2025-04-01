@@ -50,7 +50,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.4.0")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.4.1")
 ```
 
 ## Usage
@@ -284,7 +284,7 @@ LaTeX(input)
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
 
-### Styles
+### Styles (Deprecated)
 
 You can use the provided view styles or create your own.
 
