@@ -59,10 +59,10 @@ internal class Renderer: ObservableObject {
   @MainActor @Published var rendered: Bool = false
   
   /// Whether or not the receiver is currently rendering.
-  @MainActor @Published var isRendering: Bool = false
+  @MainActor var isRendering: Bool = false
   
   /// The rendered blocks.
-  @MainActor @Published var blocks: [ComponentBlock] = []
+  @MainActor var blocks: [ComponentBlock] = []
   
   // MARK: Private properties
   
@@ -148,19 +148,14 @@ extension Renderer {
     guard !rendered else {
       return blocks
     }
-    isRendering = true
     
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
-    let renderedBlocks = render(
+    blocks = render(
       blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       font: font,
       displayScale: displayScale,
       renderingMode: renderingMode,
       texOptions: texOptions)
-    
-    blocks = renderedBlocks
-    isRendering = false
-    rendered = true
     return blocks
   }
   
