@@ -51,15 +51,6 @@ struct LaTeX_Previews_Styles: PreviewProvider {
     }
     .previewDisplayName("Rendering Style and Animated")
     
-    VStack {
-      LaTeX("Hello, $\\LaTeX$!")
-        .latexStyle(.automatic)
-      
-      LaTeX("Hello, $\\LaTeX$!")
-        .latexStyle(.standard)
-    }
-    .previewDisplayName("View Styles")
-    
     List(tex, id: \.self) { input in
       LaTeX(input)
         .parsingMode(.all)

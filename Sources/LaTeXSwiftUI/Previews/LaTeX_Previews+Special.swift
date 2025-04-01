@@ -36,7 +36,6 @@ struct LaTeX_Previews_Special: PreviewProvider {
       LaTeX("Hello, $&lt;\\LaTeX$!")
         .unencoded()
     }
-    .previewLayout(.sizeThatFits)
     .previewDisplayName("Unencoded HTML")
     
     VStack {
@@ -45,7 +44,6 @@ struct LaTeX_Previews_Special: PreviewProvider {
       LaTeX("**Hello**, ***Markdown*** _and_ $\\LaTeX$!")
         .ignoreStringFormatting()
     }
-    .previewLayout(.sizeThatFits)
     .previewDisplayName("Markdown")
     
     VStack {
@@ -54,7 +52,6 @@ struct LaTeX_Previews_Special: PreviewProvider {
       LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} \\~ \\^ \\\\")
         .ignoreStringFormatting()
     }
-    .previewLayout(.sizeThatFits)
     .previewDisplayName("Escaped Characters")
   }
   

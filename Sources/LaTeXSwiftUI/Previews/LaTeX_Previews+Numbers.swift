@@ -41,10 +41,7 @@ struct LaTeX_Previews_Numbers: PreviewProvider {
       
       LaTeX("\\& \\% \\$ \\# \\_ \\{ \\} $&lt;$ \\~ \\^ \\\\")
         .unencoded()
-      //        .ignoreEscapedCharacters()
-      //        .ignoreMarkdown()
     }
-    .previewLayout(.sizeThatFits)
     .previewDisplayName("Equation Numbers")
     .formatEquationNumber { n in
       return "~[\(n)]~"
