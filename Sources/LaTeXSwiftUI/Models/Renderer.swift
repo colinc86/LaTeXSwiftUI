@@ -416,7 +416,7 @@ extension Renderer {
     
     // Continue with getting the image
     let imageSize = svg.size(for: xHeight)
-    #if os(iOS)
+    #if os(iOS) || os(visionOS)
     guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(size: imageSize, scale: displayScale) else {
       return nil
     }

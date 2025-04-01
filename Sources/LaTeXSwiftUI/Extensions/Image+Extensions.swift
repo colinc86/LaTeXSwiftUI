@@ -50,15 +50,3 @@ internal extension Image {
   }
   
 }
-
-internal extension Image {
-  
-  init?(imageData: Data, scale: CGFloat? = nil) {
-#if os(iOS) || os(visionOS)
-    self.init(imageData: imageData, scale: scale ?? 1)
-#else
-    self.init(nsImage: NSImage(data: imageData) ?? NSImage())
-#endif
-  }
-  
-}
