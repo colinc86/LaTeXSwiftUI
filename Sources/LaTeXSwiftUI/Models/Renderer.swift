@@ -28,7 +28,7 @@ import MathJaxSwift
 import SwiftDraw
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(visionOS)
 import UIKit
 #else
 import Cocoa
@@ -58,11 +58,14 @@ internal class Renderer: ObservableObject {
   /// Whether or not the view's blocks have been rendered.
   @MainActor @Published var rendered: Bool = false
   
+  /// Whether or not the view's blocks have been rendered synchronously.
+  @MainActor var syncRendered: Bool = false
+  
   /// Whether or not the receiver is currently rendering.
-  @MainActor @Published var isRendering: Bool = false
+  @MainActor var isRendering: Bool = false
   
   /// The rendered blocks.
-  @MainActor @Published var blocks: [ComponentBlock] = []
+  @MainActor var blocks: [ComponentBlock] = []
   
   // MARK: Private properties
   
@@ -145,22 +148,21 @@ extension Renderer {
     guard !isRendering else {
       return []
     }
-    guard !rendered else {
+    guard !rendered && !syncRendered else {
       return blocks
     }
     isRendering = true
     
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
-    let renderedBlocks = render(
+    blocks = render(
       blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       font: font,
       displayScale: displayScale,
       renderingMode: renderingMode,
       texOptions: texOptions)
     
-    blocks = renderedBlocks
     isRendering = false
-    rendered = true
+    syncRendered = true
     return blocks
   }
   
@@ -187,7 +189,8 @@ extension Renderer {
   ) async {
     let isRen = await isRendering
     let ren = await rendered
-    guard !isRen && !ren else {
+    let renSync = await syncRendered
+    guard !isRen && !ren && !renSync else {
       return
     }
     await MainActor.run {
@@ -413,9 +416,15 @@ extension Renderer {
     
     // Continue with getting the image
     let imageSize = svg.size(for: xHeight)
+    #if os(iOS) || os(visionOS)
+    guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(size: imageSize, scale: displayScale) else {
+      return nil
+    }
+    #else
     guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(with: imageSize, scale: displayScale) else {
       return nil
     }
+    #endif
     
     // Set the image in the cache
     Cache.shared.setImageCacheValue(image, for: cacheKey)

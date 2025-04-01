@@ -22,13 +22,12 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 //  IN THE SOFTWARE.
 //
-
 import SwiftUI
 
 internal extension Image {
   
   init(image: _Image, scale: CGFloat = 1.0) {
-#if os(iOS)
+#if os(iOS) || os(visionOS)
     self.init(uiImage: image)
 #else
     if scale > 1.0 {

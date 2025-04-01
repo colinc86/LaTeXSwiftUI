@@ -38,5 +38,4 @@ internal struct ImageContainer: Hashable {
   func hash(into hasher: inout Hasher) {
     hasher.combine(size)
   }
-  
 }

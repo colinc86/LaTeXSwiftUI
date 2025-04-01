@@ -187,7 +187,7 @@ public struct LaTeX: View {
   
   public var body: some View {
     VStack(spacing: 0) {
-      if renderer.rendered {
+      if renderer.rendered || renderer.syncRendered {
         // If our blocks have been rendered, display them
         bodyWithBlocks(renderer.blocks)
       }
@@ -230,6 +230,7 @@ extension LaTeX {
   ///
   /// - Parameter style: The `LaTeX` view style to use.
   /// - Returns: A stylized view.
+  @available(*, deprecated, message: "This will be removed in a following version. Use other modifiers to set your style.")
   public func latexStyle<S>(_ style: S) -> some View where S: LaTeXStyle {
     style.makeBody(content: self)
   }
