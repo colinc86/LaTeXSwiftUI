@@ -63,7 +63,6 @@ struct LaTeX_Previews_Color: PreviewProvider {
         .font(.caption2)
         .foregroundColor(.purple)
     }
-    .previewLayout(.sizeThatFits)
     .previewDisplayName("Hello, LaTeX!")
   }
   

@@ -413,9 +413,15 @@ extension Renderer {
     
     // Continue with getting the image
     let imageSize = svg.size(for: xHeight)
+    #if os(iOS)
+    guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(size: imageSize, scale: displayScale) else {
+      return nil
+    }
+    #else
     guard let image = SwiftDraw.SVG(data: svg.data)?.rasterize(with: imageSize, scale: displayScale) else {
       return nil
     }
+    #endif
     
     // Set the image in the cache
     Cache.shared.setImageCacheValue(image, for: cacheKey)

@@ -230,6 +230,7 @@ extension LaTeX {
   ///
   /// - Parameter style: The `LaTeX` view style to use.
   /// - Returns: A stylized view.
+  @available(*, deprecated, message: "This will be removed in a following version. Use other modifiers to set your style.")
   public func latexStyle<S>(_ style: S) -> some View where S: LaTeXStyle {
     style.makeBody(content: self)
   }
