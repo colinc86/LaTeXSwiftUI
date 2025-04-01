@@ -187,7 +187,7 @@ public struct LaTeX: View {
   
   public var body: some View {
     VStack(spacing: 0) {
-      if renderer.rendered {
+      if renderer.rendered || renderer.syncRendered {
         // If our blocks have been rendered, display them
         bodyWithBlocks(renderer.blocks)
       }

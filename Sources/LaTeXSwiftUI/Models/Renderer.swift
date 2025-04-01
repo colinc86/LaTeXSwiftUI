@@ -58,6 +58,9 @@ internal class Renderer: ObservableObject {
   /// Whether or not the view's blocks have been rendered.
   @MainActor @Published var rendered: Bool = false
   
+  /// Whether or not the view's blocks have been rendered synchronously.
+  @MainActor var syncRendered: Bool = false
+  
   /// Whether or not the receiver is currently rendering.
   @MainActor var isRendering: Bool = false
   
@@ -145,9 +148,10 @@ extension Renderer {
     guard !isRendering else {
       return []
     }
-    guard !rendered else {
+    guard !rendered && !syncRendered else {
       return blocks
     }
+    isRendering = true
     
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     blocks = render(
@@ -156,6 +160,9 @@ extension Renderer {
       displayScale: displayScale,
       renderingMode: renderingMode,
       texOptions: texOptions)
+    
+    isRendering = false
+    syncRendered = true
     return blocks
   }
   
@@ -182,7 +189,8 @@ extension Renderer {
   ) async {
     let isRen = await isRendering
     let ren = await rendered
-    guard !isRen && !ren else {
+    let renSync = await syncRendered
+    guard !isRen && !ren && !renSync else {
       return
     }
     await MainActor.run {
