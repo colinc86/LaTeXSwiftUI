@@ -166,6 +166,9 @@ public struct LaTeX: View {
   /// The view's font.
   @Environment(\.font) private var font
   
+  /// The view's AppKit font.
+  @Environment(\.appKitFont) private var appKitFont
+  
   // MARK: Private properties
   
   /// The view's renderer.
@@ -235,6 +238,20 @@ extension LaTeX {
     style.makeBody(content: self)
   }
   
+#if os(iOS) || os(visionOS)
+  public func font(_ font: UIFont) -> some View {
+    self
+      .appKitFont(font)
+      .font(Font(font))
+  }
+#else
+  public func font(_ font: NSFont) -> some View {
+    self
+      .appKitFont(font)
+      .font(Font(font))
+  }
+#endif
+  
 }
 
 // MARK: Private methods
@@ -255,7 +272,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      font: font ?? .body,
+      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale)
   }
   
@@ -267,7 +284,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      font: font ?? .body,
+      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
@@ -282,7 +299,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      font: font ?? .body,
+      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }

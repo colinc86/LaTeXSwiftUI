@@ -170,4 +170,11 @@ public extension View {
     environment(\.ignoreStringFormatting, ignore)
   }
   
+  /// Sets the view's AppKit font, if any.
+  /// - Parameter font: The AppKit font to use.
+  /// - Returns: A view that uses the provided AppKit font.
+  internal func appKitFont(_ font: _Font? = nil) -> some View {
+    environment(\.appKitFont, font)
+  }
+  
 }

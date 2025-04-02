@@ -45,6 +45,9 @@ internal struct ComponentBlocksText: View {
   /// The view's font.
   @Environment(\.font) private var font
   
+  /// The view's AppKit font.
+  @Environment(\.appKitFont) private var appKitFont
+  
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
   
@@ -76,7 +79,7 @@ extension ComponentBlocksText {
   /// - Returns: A `Text` view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
-      font: font,
+      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
       errorMode: errorMode,

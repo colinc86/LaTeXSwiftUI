@@ -74,8 +74,12 @@ private struct RenderingAnimationKey: EnvironmentKey {
   static let defaultValue: Animation? = .none
 }
 
-private struct IgnoreSringFormatting: EnvironmentKey {
+private struct IgnoreSringFormattingKey: EnvironmentKey {
   static let defaultValue: Bool = false
+}
+
+private struct AppKitFontKey: EnvironmentKey {
+  static let defaultValue: _Font? = nil
 }
 
 extension EnvironmentValues {
@@ -154,8 +158,14 @@ extension EnvironmentValues {
   
   /// Whether string formatting such as markdown should be ignored or rendered.
   var ignoreStringFormatting: Bool {
-    get { self[IgnoreSringFormatting.self] }
-    set { self[IgnoreSringFormatting.self] = newValue }
+    get { self[IgnoreSringFormattingKey.self] }
+    set { self[IgnoreSringFormattingKey.self] = newValue }
+  }
+  
+  /// The specified AppKit font to use, if any.
+  var appKitFont: _Font? {
+    get { self[AppKitFontKey.self] }
+    set { self[AppKitFontKey.self] = newValue }
   }
   
 }
