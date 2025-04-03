@@ -166,8 +166,8 @@ public struct LaTeX: View {
   /// The view's font.
   @Environment(\.font) private var font
   
-  /// The view's AppKit font.
-  @Environment(\.appKitFont) private var appKitFont
+  /// The view's UI/NSFont font.
+  @Environment(\.platformFont) private var platformFont
   
   // MARK: Private properties
   
@@ -241,13 +241,13 @@ extension LaTeX {
 #if os(iOS) || os(visionOS)
   public func font(_ font: UIFont) -> some View {
     self
-      .appKitFont(font)
+      .platformFont(font)
       .font(Font(font))
   }
 #else
   public func font(_ font: NSFont) -> some View {
     self
-      .appKitFont(font)
+      .platformFont(font)
       .font(Font(font))
   }
 #endif
@@ -272,7 +272,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale)
   }
   
@@ -284,7 +284,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
@@ -299,7 +299,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (appKitFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }

@@ -25,34 +25,34 @@
 
 import SwiftUI
 
+#if os(iOS)
+import UIKit
+typealias PlatformFont = UIFont
+#else
+import Cocoa
+typealias PlatformFont = NSFont
+#endif
+
 struct LaTeX_Previews_Fonts: PreviewProvider {
-    
+  
   static var previews: some View {
     VStack {
       LaTeX("Hello, $\\LaTeX$!")
-        .font(.title)
+        .font(.system(size: 25))
       
       LaTeX("Hello, $\\LaTeX$!")
-        .font(UIFont.preferredFont(forTextStyle: .title1))
+        .font(PlatformFont.preferredFont(forTextStyle: .title1))
       
-      HStack {
-        Text("Test").font(.system(size: 20)).border(Color.blue)
-        Text("Test").font(Font(UIFont.systemFont(ofSize: 20))).border(Color.red)
-      }
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(PlatformFont.systemFont(ofSize: 36))
       
-      Text("Hello, ").font(.system(size: 30)) +
-      Text(Image(systemName: "star")).baselineOffset(-4)
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(PlatformFont.boldSystemFont(ofSize: 25))
       
-      Text("Hello, ").font(UIFont.systemFont(ofSize: 30)) +
-      Text(Image(systemName: "star")).baselineOffset(-4)
+      LaTeX("Hello, $\\LaTeX$!")
+        .font(PlatformFont(name: "Avenir", size: 25)!)
     }
-    .previewDisplayName("AppKit Fonts")
+    .previewDisplayName("Fonts")
   }
   
-}
-
-extension Text {
-  public func font(_ font: UIFont) -> Text {
-    self.font(Font(font))
-  }
 }

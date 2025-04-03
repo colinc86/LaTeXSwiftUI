@@ -78,7 +78,7 @@ private struct IgnoreSringFormattingKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
-private struct AppKitFontKey: EnvironmentKey {
+private struct PlatformFontKey: EnvironmentKey {
   static let defaultValue: _Font? = nil
 }
 
@@ -162,10 +162,10 @@ extension EnvironmentValues {
     set { self[IgnoreSringFormattingKey.self] = newValue }
   }
   
-  /// The specified AppKit font to use, if any.
-  var appKitFont: _Font? {
-    get { self[AppKitFontKey.self] }
-    set { self[AppKitFontKey.self] = newValue }
+  /// The specified UI/NSFont font to use, if any.
+  var platformFont: _Font? {
+    get { self[PlatformFontKey.self] }
+    set { self[PlatformFontKey.self] = newValue }
   }
   
 }
