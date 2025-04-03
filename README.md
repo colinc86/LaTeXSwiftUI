@@ -73,7 +73,40 @@ struct MyView: View {
 
 ### Fonts
 
-The view needs to be able to measure the current font's x-height to correctly size the characters inside of the rendered LaTeX SVG. To do that, the view must use the `UIFont`/`NSFont` classes and do its best to convert SwiftUI's `Font` structure into the correct `UIFont` instance. Currently, the view's functionality is limited to SwiftUI's static largeTitle, title, title1, headline, etc fonts.
+The view needs to be able to measure the current font's x-height to correctly size the characters inside of the rendered LaTeX SVG. To do that, the view must use the `UIFont`/`NSFont` classes and do its best to convert SwiftUI's `Font` structure into the correct `UIFont` instance. Currently, the view's functionality is limited to SwiftUI's static largeTitle, title, title1, headline, etc fonts, or by using `UIFont`/`NSFont` types directly.
+
+The `font` modifier has been overloaded so that you can give the `LaTeX` view `UIFont` and `NSFont` types directly. The following examples will render the size of the LaTeX correctly.
+
+```swift
+// SwiftUI perferred fonts
+LaTeX("Hello, $\\LaTeX$!")
+  .font(.title)
+
+LaTeX("Hello, $\\LaTeX$!")
+  .font(.caption)
+
+// Any UIFont/NSFont - note that they should be passed directly to the view
+LaTeX("Hello, $\\LaTeX$!")
+  .font(UIFont.systemFont(ofSize: 30))
+
+LaTeX("Hello, $\\LaTeX$!")
+  .font(UIFont(name: "Avenir", size: 25)!)
+```
+
+The following examples will _not_ render the size of the LaTeX correctly.
+
+```swift
+// SwiftUI Font type, but not a preferred font
+LaTeX("Hello, $\\LaTeX$!")
+  .font(.custom(name: "Avenir", size: 25))
+
+LaTeX("Hello, $\\LaTeX$!")
+  .font(.system(size: 25))
+
+// Wrapping UIFont/NSFont in a SwiftUI Font type
+LaTeX("Hello, $\\LaTeX$!")
+  .font(Font(UIFont.systemFont(ofSize: 30)))
+```
 
 ### Modifiers
 

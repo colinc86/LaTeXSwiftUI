@@ -192,7 +192,7 @@ extension Component {
   /// Converts the component to a `Text` view.
   ///
   /// - Parameters:
-  ///   - font: The font to use.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The view's display scale.
   ///   - renderingMode: The image rendering mode.
   ///   - errorMode: The error handling mode.
@@ -202,7 +202,7 @@ extension Component {
   ///     should be ignored or rendered.
   /// - Returns: A text view.
   func convertToText(
-    font: Font,
+    xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
@@ -227,7 +227,6 @@ extension Component {
         }
       }
       else if let imageContainer {
-        let xHeight = _Font.preferredFont(from: font).xHeight
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
         text = Text(imageContainer.image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
       }
