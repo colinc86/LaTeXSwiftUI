@@ -105,7 +105,7 @@ extension Renderer {
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
-  ///   - font: The `font environment` variable.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
   func isCached(
     latex: String,
@@ -113,13 +113,13 @@ extension Renderer {
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    font: Font,
+    xHeight: CGFloat,
     displayScale: CGFloat
   ) -> Bool {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return blocksExistInCache(
       parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
-      font: font,
+      xHeight: xHeight,
       displayScale: displayScale,
       texOptions: texOptions)
   }
@@ -132,7 +132,7 @@ extension Renderer {
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
-  ///   - font: The `font` environment variable.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
   ///   - renderingMode: The `renderingMode` environment variable.
   @MainActor func renderSync(
@@ -141,7 +141,7 @@ extension Renderer {
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    font: Font,
+    xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
   ) -> [ComponentBlock] {
@@ -156,7 +156,7 @@ extension Renderer {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     blocks = render(
       blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
-      font: font,
+      xHeight: xHeight,
       displayScale: displayScale,
       renderingMode: renderingMode,
       texOptions: texOptions)
@@ -174,7 +174,7 @@ extension Renderer {
   ///   - parsingMode: The `parsingMode` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
-  ///   - font: The `font` environment variable.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
   ///   - renderingMode: The `renderingMode` environment variable.
   func render(
@@ -183,7 +183,7 @@ extension Renderer {
     parsingMode: LaTeX.ParsingMode,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    font: Font,
+    xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
   ) async {
@@ -200,7 +200,7 @@ extension Renderer {
     let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     let renderedBlocks = render(
       blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
-      font: font,
+      xHeight: xHeight,
       displayScale: displayScale,
       renderingMode: renderingMode,
       texOptions: texOptions)
@@ -249,14 +249,14 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - blocks: The component blocks.
-  ///   - font: The view's font.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The display scale to render at.
   ///   - renderingMode: The image rendering mode.
   ///   - texOptions: The MathJax Tex input processor options.
   /// - Returns: An array of rendered blocks.
   func render(
     blocks: [ComponentBlock],
-    font: Font,
+    xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
     texOptions: TeXInputProcessorOptions
@@ -266,7 +266,7 @@ extension Renderer {
       do {
         let newComponents = try render(
           block.components,
-          xHeight: font.xHeight,
+          xHeight: xHeight,
           displayScale: displayScale,
           renderingMode: renderingMode,
           texOptions: texOptions)
@@ -288,7 +288,7 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - components: The components to render.
-  ///   - xHeight: The xHeight of the font to use.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The current display scale.
   ///   - renderingMode: The image rendering mode.
   ///   - texOptions: The MathJax TeX input processor options.
@@ -454,11 +454,11 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - blocks: The blocks.
-  ///   - font: The `font` environment variable.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
   ///   - texOptions: The `texOptions` environment variable.
   /// - Returns: Whether the blocks are in the renderer's cache.
-  func blocksExistInCache(_ blocks: [ComponentBlock], font: Font, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) -> Bool {
+  func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) -> Bool {
     for block in blocks {
       for component in block.components where component.type.isEquation {
         let dataCacheKey = Cache.SVGCacheKey(
@@ -473,7 +473,6 @@ extension Renderer {
           return false
         }
         
-        let xHeight = _Font.preferredFont(from: font).xHeight
         let imageCacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight)
         guard Cache.shared.imageCacheValue(for: imageCacheKey) != nil else {
           return false

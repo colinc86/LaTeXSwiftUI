@@ -170,4 +170,11 @@ public extension View {
     environment(\.ignoreStringFormatting, ignore)
   }
   
+  /// Sets the view's UI/NSFont font, if any.
+  /// - Parameter font: The UI/NSFont font to use.
+  /// - Returns: A view that uses the provided font.
+  internal func platformFont(_ font: _Font? = nil) -> some View {
+    environment(\.platformFont, font)
+  }
+  
 }

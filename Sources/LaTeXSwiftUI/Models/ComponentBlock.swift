@@ -60,7 +60,7 @@ extension ComponentBlock {
   /// Converts a component block to a `Text` view.
   ///
   /// - Parameters:
-  ///   - font: The font to use.
+  ///   - xHeight: The font's x-height.
   ///   - displayScale: The display scale.
   ///   - renderingMode: The rendering mode.
   ///   - errorMode: The error mode.
@@ -69,7 +69,7 @@ extension ComponentBlock {
   ///     should be ignored or rendered.
   /// - Returns: A `Text` view.
   @MainActor func toText(
-    font: Font?,
+    xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
@@ -78,7 +78,7 @@ extension ComponentBlock {
   ) -> Text {
     components.enumerated().map { i, component in
       return component.convertToText(
-        font: font ?? .body,
+        xHeight: xHeight,
         displayScale: displayScale,
         renderingMode: renderingMode,
         errorMode: errorMode,

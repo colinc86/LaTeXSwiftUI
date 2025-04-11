@@ -42,6 +42,9 @@ internal struct ComponentBlocksViews: View {
   /// The view's font.
   @Environment(\.font) private var font
   
+  /// The view's UI/NSFont font.
+  @Environment(\.platformFont) private var platformFont
+  
   /// The view's current display scale.
   @Environment(\.displayScale) private var displayScale
   
@@ -84,7 +87,7 @@ internal struct ComponentBlocksViews: View {
         }
         else {
           block.toText(
-            font: font,
+            xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
