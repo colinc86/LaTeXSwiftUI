@@ -50,7 +50,7 @@ It won't
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.4.1")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.5.0")
 ```
 
 ## Usage
