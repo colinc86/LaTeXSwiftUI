@@ -168,6 +168,9 @@ public struct LaTeX: View {
   
   /// The view's UI/NSFont font.
   @Environment(\.platformFont) private var platformFont
+
+  /// The view's DynamicTypeSize
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   
   // MARK: Private properties
   
@@ -272,7 +275,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight(for: dynamicTypeSize)) ?? Font.body.xHeight,
       displayScale: displayScale)
   }
   
@@ -284,7 +287,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight(for: dynamicTypeSize)) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
@@ -299,7 +302,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.xHeight ?? font?.xHeight(for: dynamicTypeSize)) ?? Font.body.xHeight,
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
