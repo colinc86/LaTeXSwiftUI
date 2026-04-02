@@ -26,6 +26,7 @@ A SwiftUI view that renders LaTeX equations.
     - [📄 Ignore String Formatting](#ignore-string-formatting)
     - [🕶️ Rendering Style](#rendering-style)
     - [🪩 Rendering Animation](#rendering-animation)
+    - [🌐 Script Mode](#script-mode)
   - [🪮 Styles](#styles)
   - [🗄️ Caching](#caching)
   - [🏃‍♀️ Preloading](#preloading)
@@ -40,10 +41,14 @@ It will
 - render TeX and LaTeX equations (math-mode macros),
 - render the `\text{}` macro within equations,
 - attempt to render block equations as a TeX or LaTeX engine would,
-- and number block equations (if desired).
+- number block equations (if desired),
+- scale equations for non-Latin scripts (CJK and others),
+- and normalize line spacing for inline equations on iOS 18+ / macOS 15+.
 
 It won't
 - render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
+
+The package requires Swift 6.0 and supports iOS 15+, macOS 12+.
 
 ## Installation
 
@@ -316,6 +321,42 @@ LaTeX(input)
 ```
 
 > In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
+
+> **Note:** The `LaTeX` view automatically re-renders when its input string changes, so you can bind it to `@State` variables without needing `.id()`:
+> ```swift
+> @State var text: String = ""
+>
+> var body: some View {
+>     VStack {
+>         TextField("LaTeX", text: $text)
+>         LaTeX("$\(text)$")
+>     }
+> }
+> ```
+
+#### Script Mode
+
+When displaying equations inline with non-Latin scripts such as Korean, Japanese, or Chinese, equations may appear undersized or misaligned because the rendering is calibrated to the font's Latin x-height. The `script` modifier adjusts equation scaling to match the visual height of the surrounding text.
+
+```swift
+// Korean text with properly scaled equations
+LaTeX("방정식 $x^2 + y^2 = z^2$ 은 잘 알려져 있습니다.")
+  .script(.cjk)
+
+// Japanese
+LaTeX("方程式 $E = mc^2$ は有名です。")
+  .script(.cjk)
+
+// Custom scale factor
+LaTeX("Scaled equation: $\\int_0^1 x^2 dx$")
+  .script(.custom(1.3))
+```
+
+| Script | Description |
+|:-------|:------------|
+| `.latin` | *(default)* Uses the font's x-height. Suitable for Latin, Cyrillic, and similar scripts. |
+| `.cjk` | Uses the font's cap-height. Suitable for Korean, Japanese, and Chinese. |
+| `.custom(CGFloat)` | Multiplies the font's x-height by the given factor. |
 
 ### Styles (Deprecated)
 

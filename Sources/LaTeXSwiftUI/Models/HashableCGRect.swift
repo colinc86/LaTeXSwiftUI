@@ -27,7 +27,7 @@ import CoreGraphics
 import Foundation
 
 /// A hashable wrapper for CGRect compatible with Swift language versions < 6.
-internal struct HashableCGRect: Codable, Hashable {
+internal struct HashableCGRect: Codable, Hashable, Sendable {
   
   /// The rect.
   let rect: CGRect

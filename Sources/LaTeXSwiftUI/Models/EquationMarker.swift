@@ -1,5 +1,5 @@
 //
-//  MathJax+Extensions.swift
+//  EquationMarker.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,5 +23,8 @@
 //  IN THE SOFTWARE.
 //
 
-import Foundation
-import MathJaxSwift
+import SwiftUI
+
+/// Marks a text run as containing a rendered equation image.
+@available(iOS 18.0, macOS 15.0, *)
+internal struct EquationMarker: TextAttribute {}

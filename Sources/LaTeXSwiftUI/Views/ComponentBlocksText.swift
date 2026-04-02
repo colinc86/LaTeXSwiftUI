@@ -56,15 +56,23 @@ internal struct ComponentBlocksText: View {
   
   /// Whether string formatting such as markdown should be ignored or rendered.
   @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
+
+  /// The script type for equation scaling.
+  @Environment(\.script) private var script
   
   // MARK: View body
   
-  var body: some View {
-    blocks.map { block in
+  @ViewBuilder var body: some View {
+    let textView = blocks.map { block in
       return block.isEquationBlock && !forceInline ?
       Text("\n") + text(for: block) + Text("\n") :
       text(for: block)
     }.reduce(Text(""), +)
+    if #available(iOS 18.0, macOS 15.0, *) {
+      textView.textRenderer(LineSpacingNormalizer())
+    } else {
+      textView
+    }
   }
   
 }
@@ -79,7 +87,7 @@ extension ComponentBlocksText {
   /// - Returns: A `Text` view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
       errorMode: errorMode,

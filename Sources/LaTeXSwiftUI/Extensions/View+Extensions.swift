@@ -170,6 +170,15 @@ public extension View {
     environment(\.ignoreStringFormatting, ignore)
   }
   
+  /// Sets the script type used for equation scaling relative to surrounding
+  /// text.
+  ///
+  /// - Parameter script: The script type.
+  /// - Returns: A view that scales equations for the given script.
+  func script(_ script: LaTeX.Script) -> some View {
+    environment(\.script, script)
+  }
+
   /// Sets the view's UI/NSFont font, if any.
   /// - Parameter font: The UI/NSFont font to use.
   /// - Returns: A view that uses the provided font.

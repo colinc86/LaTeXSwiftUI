@@ -26,7 +26,7 @@
 import SwiftUI
 
 /// A protocol that describes the appearance of a LaTeX view.
-public protocol LaTeXStyle {
+@MainActor public protocol LaTeXStyle {
   
   /// A view that represents a stylized LaTeX view.
   associatedtype Body: View

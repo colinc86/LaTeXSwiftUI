@@ -56,6 +56,9 @@ internal struct ComponentBlocksViews: View {
   
   /// Whether string formatting such as markdown should be ignored or rendered.
   @Environment(\.ignoreStringFormatting) private var ignoreStringFormatting
+
+  /// The script type for equation scaling.
+  @Environment(\.script) private var script
   
   // MARK: View body
   
@@ -86,13 +89,18 @@ internal struct ComponentBlocksViews: View {
           }
         }
         else {
-          block.toText(
-            xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+          let textView = block.toText(
+            xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
             blockRenderingMode: blockMode,
             ignoreStringFormatting: ignoreStringFormatting)
+          if #available(iOS 18.0, macOS 15.0, *) {
+            textView.textRenderer(LineSpacingNormalizer())
+          } else {
+            textView
+          }
         }
       }
     }

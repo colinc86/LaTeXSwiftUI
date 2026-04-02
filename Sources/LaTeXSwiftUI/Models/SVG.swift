@@ -26,10 +26,10 @@
 import Foundation
 
 /// Contains SVG information.
-internal struct SVG: Codable, Hashable {
+internal struct SVG: Codable, Hashable, Sendable {
   
   /// An error produced when creating an SVG.
-  enum SVGError: Error {
+  enum SVGError: Error, Sendable {
     case encodingSVGData
   }
   

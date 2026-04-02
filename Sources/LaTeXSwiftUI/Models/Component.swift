@@ -28,10 +28,10 @@ import MathJaxSwift
 import SwiftUI
 
 /// A LaTeX component.
-internal struct Component: CustomStringConvertible, Equatable, Hashable {
+internal struct Component: CustomStringConvertible, Equatable, Hashable, Sendable {
   
   /// A LaTeX component type.
-  enum ComponentType: String, Equatable, CustomStringConvertible {
+  enum ComponentType: String, Equatable, CustomStringConvertible, Sendable {
     
     /// A text component.
     case text
@@ -228,7 +228,15 @@ extension Component {
       }
       else if let imageContainer {
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-        text = Text(imageContainer.image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
+        let baselineOffset = blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0
+        if #available(iOS 18.0, macOS 15.0, *) {
+          text = Text(imageContainer.image)
+            .baselineOffset(baselineOffset)
+            .customAttribute(EquationMarker())
+        } else {
+          text = Text(imageContainer.image)
+            .baselineOffset(baselineOffset)
+        }
       }
       else {
         text = Text("")

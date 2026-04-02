@@ -27,7 +27,7 @@ import Foundation
 import SwiftUI
 
 /// A block of components.
-internal struct ComponentBlock: Hashable, Identifiable {
+internal struct ComponentBlock: Hashable, Identifiable, Sendable {
   
   /// The component's identifier.
   ///

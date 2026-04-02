@@ -55,10 +55,29 @@ internal extension Font {
   var xHeight: CGFloat {
     _Font.preferredFont(from: self).xHeight
   }
-  
+
+  /// Returns the effective x-height for the given script type.
+  func effectiveXHeight(for script: LaTeX.Script) -> CGFloat {
+    _Font.preferredFont(from: self).effectiveXHeight(for: script)
+  }
+
 }
 
 internal extension _Font {
+
+  /// Returns the effective x-height for the given script type.
+  func effectiveXHeight(for script: LaTeX.Script) -> CGFloat {
+    switch script {
+    case .latin:
+      return xHeight
+    case .cjk:
+      return capHeight
+    case .custom(let factor):
+      return xHeight * factor
+    }
+  }
+
+
   
   /// Returns the preferred font from a SwiftUI font.
   ///

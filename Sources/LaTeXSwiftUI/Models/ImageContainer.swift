@@ -27,7 +27,7 @@ import Foundation
 import SwiftUI
 
 /// A container to store an image and its intrinsic size.
-internal struct ImageContainer: Hashable {
+internal struct ImageContainer: Hashable, Sendable {
   
   /// The image.
   let image: Image

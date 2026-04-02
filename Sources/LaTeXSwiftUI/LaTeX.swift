@@ -35,10 +35,10 @@ public struct LaTeX: View {
   
   /// A closure that takes an equation number and returns a string to display in
   /// the view.
-  public typealias FormatEquationNumber = (_ n: Int) -> String
+  public typealias FormatEquationNumber = @Sendable (_ n: Int) -> String
   
   /// The view's block rendering mode.
-  public enum BlockMode {
+  public enum BlockMode: Sendable {
     
     /// Block equations are ignored and always rendered inline.
     case alwaysInline
@@ -51,7 +51,7 @@ public struct LaTeX: View {
   }
   
   /// The view's equation number mode.
-  public enum EquationNumberMode {
+  public enum EquationNumberMode: Sendable {
     
     /// The view should not number named block equations.
     case none
@@ -64,7 +64,7 @@ public struct LaTeX: View {
   }
   
   /// The view's error mode.
-  public enum ErrorMode {
+  public enum ErrorMode: Sendable {
     
     /// The rendered image should be displayed (if available).
     case rendered
@@ -77,7 +77,7 @@ public struct LaTeX: View {
   }
   
   /// The view's rendering mode.
-  public enum ParsingMode {
+  public enum ParsingMode: Sendable {
     
     /// Render the entire text as the equation.
     case all
@@ -86,8 +86,22 @@ public struct LaTeX: View {
     case onlyEquations
   }
   
+  /// The script type used to determine equation scaling relative to
+  /// surrounding text.
+  public enum Script: Sendable {
+
+    /// Latin and similar scripts — uses font x-height.
+    case latin
+
+    /// CJK scripts (Korean, Japanese, Chinese) — uses font cap-height.
+    case cjk
+
+    /// Custom multiplier on font x-height.
+    case custom(CGFloat)
+  }
+
   /// The view's rendering style.
-  public enum RenderingStyle {
+  public enum RenderingStyle: Sendable {
     
     /// The view remains empty until its finished rendering.
     case empty
@@ -168,7 +182,10 @@ public struct LaTeX: View {
   
   /// The view's UI/NSFont font.
   @Environment(\.platformFont) private var platformFont
-  
+
+  /// The script type for equation scaling.
+  @Environment(\.script) private var script
+
   // MARK: Private properties
   
   /// The view's renderer.
@@ -213,6 +230,9 @@ public struct LaTeX: View {
       }
     }
     .animation(renderingAnimation, value: renderer.rendered)
+    .onChange(of: latex) { _ in
+      renderer.reset()
+    }
     .onDisappear(perform: preloadTask?.cancel)
   }
   
@@ -272,7 +292,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
       displayScale: displayScale)
   }
   
@@ -284,7 +304,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
@@ -299,7 +319,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.xHeight ?? font?.xHeight) ?? Font.body.xHeight,
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
