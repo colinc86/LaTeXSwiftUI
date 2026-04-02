@@ -52,7 +52,7 @@ import Cocoa
   /// on a consistent thread.
   nonisolated(unsafe) private static let mathjax: MathJax? = {
     do {
-      return try MathJax(preferredOutputFormat: .svg)
+      return try MathJax(preferredOutputFormats: [.svg, .speech])
     }
     catch {
       NSLog("Error creating MathJax instance: \(error)")
@@ -413,9 +413,15 @@ extension Renderer {
     
     // Check for a conversion error
     let errorText = try getErrorText(from: conversionError)
-    
+
+    // Generate speech text for accessibility via the Speech Rule Engine
+    let speechText = try? mathjax.tex2speech(
+      component.text,
+      conversionOptions: component.conversionOptions,
+      inputOptions: texOptions)
+
     // Create the SVG
-    let svg = try SVG(svgString: svgString, errorText: errorText)
+    let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
     
     // Set the SVG in the cache
     Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)

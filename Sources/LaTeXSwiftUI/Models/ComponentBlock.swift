@@ -74,7 +74,8 @@ extension ComponentBlock {
     renderingMode: Image.TemplateRenderingMode,
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
-    ignoreStringFormatting: Bool
+    ignoreStringFormatting: Bool,
+    imageAccessibilityMode: LaTeX.ImageAccessibilityMode = .sre
   ) -> Text {
     components.enumerated().map { i, component in
       return component.convertToText(
@@ -84,7 +85,8 @@ extension ComponentBlock {
         errorMode: errorMode,
         blockRenderingMode: blockRenderingMode,
         isInEquationBlock: isEquationBlock,
-        ignoreStringFormatting: ignoreStringFormatting)
+        ignoreStringFormatting: ignoreStringFormatting,
+        imageAccessibilityMode: imageAccessibilityMode)
     }.reduce(Text(""), +)
   }
   

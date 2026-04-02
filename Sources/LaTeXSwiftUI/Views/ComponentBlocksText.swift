@@ -59,6 +59,9 @@ internal struct ComponentBlocksText: View {
 
   /// The script type for equation scaling.
   @Environment(\.script) private var script
+
+  /// The accessibility mode for equation images.
+  @Environment(\.imageAccessibilityMode) private var imageAccessibilityMode
   
   // MARK: View body
   
@@ -92,7 +95,8 @@ extension ComponentBlocksText {
       renderingMode: imageRenderingMode,
       errorMode: errorMode,
       blockRenderingMode: blockMode,
-      ignoreStringFormatting: ignoreStringFormatting)
+      ignoreStringFormatting: ignoreStringFormatting,
+      imageAccessibilityMode: imageAccessibilityMode)
   }
   
 }

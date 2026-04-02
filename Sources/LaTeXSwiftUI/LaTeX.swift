@@ -119,7 +119,23 @@ public struct LaTeX: View {
     /// The view blocks on the main thread until it's finished rendering.
     case wait
   }
-  
+
+  /// The accessibility mode for rendered equation images.
+  public enum ImageAccessibilityMode: Sendable {
+
+    /// No accessibility label applied (default SwiftUI behavior).
+    case none
+
+    /// Use the raw TeX input as the accessibility label.
+    case input
+
+    /// Use the Speech Rule Engine to generate natural language (default).
+    case sre
+
+    /// Use a custom string as the accessibility label.
+    case custom(String)
+  }
+
   // MARK: Static properties
   
   /// The package's shared data cache.

@@ -208,7 +208,8 @@ extension Component {
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
     isInEquationBlock: Bool,
-    ignoreStringFormatting: Bool
+    ignoreStringFormatting: Bool,
+    imageAccessibilityMode: LaTeX.ImageAccessibilityMode = .sre
   ) -> Text {
     // Get the component's text
     let text: Text
@@ -229,14 +230,26 @@ extension Component {
       else if let imageContainer {
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
         let baselineOffset = blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0
+        var imageText: Text
         if #available(iOS 18.0, macOS 15.0, *) {
-          text = Text(imageContainer.image)
+          imageText = Text(imageContainer.image)
             .baselineOffset(baselineOffset)
             .customAttribute(EquationMarker())
         } else {
-          text = Text(imageContainer.image)
+          imageText = Text(imageContainer.image)
             .baselineOffset(baselineOffset)
         }
+        switch imageAccessibilityMode {
+        case .none:
+          break
+        case .input:
+          imageText = imageText.accessibilityLabel(self.text)
+        case .sre:
+          imageText = imageText.accessibilityLabel(svg.speechText ?? self.text)
+        case .custom(let label):
+          imageText = imageText.accessibilityLabel(label)
+        }
+        text = imageText
       }
       else {
         text = Text("")

@@ -410,4 +410,65 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .text)
   }
 
+  func testMismatchedDelimiters() {
+    // $ opened but \] encountered — types don't match, should not close
+    let input = "$x\\]"
+    let components = Parser.parse(input)
+    // Unmatched $ at end of input → entire string is text
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .text)
+  }
+
+  func testBlockEquationAtStart() {
+    let input = "$$x^2$$trailing"
+    let blocks = Parser.parse(input, mode: .onlyEquations)
+    // Should not have an empty block before the equation
+    for block in blocks {
+      XCTAssertFalse(block.components.isEmpty, "Should not have empty blocks")
+    }
+    XCTAssertEqual(blocks.count, 2) // equation block + text block
+  }
+
+  func testMultipleInlineEquations() {
+    let input = "$a$ and $b$ and $c$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 5)
+    assertComponent(components, 0, "a", .inlineEquation)
+    assertComponent(components, 1, " and ", .text)
+    assertComponent(components, 2, "b", .inlineEquation)
+    assertComponent(components, 3, " and ", .text)
+    assertComponent(components, 4, "c", .inlineEquation)
+  }
+
+  func testAdjacentEquations() {
+    let input = "$a$$b$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 2)
+    assertComponent(components, 0, "a", .inlineEquation)
+    assertComponent(components, 1, "b", .inlineEquation)
+  }
+
+  func testEmptyTexEquation() {
+    let input = "$$$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "", .texEquation)
+  }
+
+  func testTextBetweenBlockEquations() {
+    let input = "$$a$$ text $$b$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "a", .texEquation)
+    assertComponent(components, 1, " text ", .text)
+    assertComponent(components, 2, "b", .texEquation)
+  }
+
+  func testNestedDollarInBlock() {
+    let input = "$$a $b$ c$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .texEquation)
+  }
+
 }

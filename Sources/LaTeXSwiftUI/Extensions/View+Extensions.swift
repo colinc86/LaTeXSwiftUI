@@ -179,6 +179,14 @@ public extension View {
     environment(\.script, script)
   }
 
+  /// Sets the accessibility mode for rendered equation images.
+  ///
+  /// - Parameter mode: The accessibility mode.
+  /// - Returns: A view with the specified accessibility behavior.
+  func imageAccessibility(_ mode: LaTeX.ImageAccessibilityMode) -> some View {
+    environment(\.imageAccessibilityMode, mode)
+  }
+
   /// Sets the view's UI/NSFont font, if any.
   /// - Parameter font: The UI/NSFont font to use.
   /// - Returns: A view that uses the provided font.

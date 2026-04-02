@@ -59,6 +59,9 @@ internal struct ComponentBlocksViews: View {
 
   /// The script type for equation scaling.
   @Environment(\.script) private var script
+
+  /// The accessibility mode for equation images.
+  @Environment(\.imageAccessibilityMode) private var imageAccessibilityMode
   
   // MARK: View body
   
@@ -95,7 +98,8 @@ internal struct ComponentBlocksViews: View {
             renderingMode: imageRenderingMode,
             errorMode: errorMode,
             blockRenderingMode: blockMode,
-            ignoreStringFormatting: ignoreStringFormatting)
+            ignoreStringFormatting: ignoreStringFormatting,
+            imageAccessibilityMode: imageAccessibilityMode)
           if #available(iOS 18.0, macOS 15.0, *) {
             textView.textRenderer(LineSpacingNormalizer())
           } else {

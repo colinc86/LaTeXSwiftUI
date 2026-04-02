@@ -26,7 +26,7 @@
 import Foundation
 
 /// Parses text for LaTeX equations.
-internal class Parser {
+internal enum Parser {
   
   /// Parses the input text for component blocks.
   ///
@@ -42,9 +42,11 @@ internal class Parser {
       if component.type.inline {
         blockComponents.append(component)
       } else {
-        blocks.append(ComponentBlock(components: blockComponents))
+        if !blockComponents.isEmpty {
+          blocks.append(ComponentBlock(components: blockComponents))
+          blockComponents.removeAll()
+        }
         blocks.append(ComponentBlock(components: [component]))
-        blockComponents.removeAll()
       }
     }
     if !blockComponents.isEmpty {
@@ -75,22 +77,20 @@ internal class Parser {
               index = input.index(index, offsetBy: end.count)
               continue inputLoop
             }
-            
-            let previousEndIndex = endIndex
-            endIndex = input.index(index, offsetBy: end.count)
 
             if stack.last == type {
+              let newEndIndex = input.index(index, offsetBy: end.count)
               let lastType = stack.removeLast()
               if stack.isEmpty {
-                if previousEndIndex < startIndex {
-                  components.append(Component(text: String(input[previousEndIndex..<startIndex]), type: .text))
+                if endIndex < startIndex {
+                  components.append(Component(text: String(input[endIndex..<startIndex]), type: .text))
                 }
-                
-                components.append(Component(text: String(input[startIndex..<endIndex]), type: lastType))
+                components.append(Component(text: String(input[startIndex..<newEndIndex]), type: lastType))
               }
+              endIndex = newEndIndex
+              index = newEndIndex
+              continue inputLoop
             }
-            index = endIndex
-            continue inputLoop
           }
         }
       }

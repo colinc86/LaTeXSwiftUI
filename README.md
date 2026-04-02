@@ -16,7 +16,7 @@ A SwiftUI view that renders LaTeX equations.
     - [🔤 Parsing Mode](#parsing-mode)
     - [🌄 Image Rendering Mode](#image-rendering-mode)
     - [🚨 Error Mode](#error-mode)
-    - [🧱Block Rendering Mode](#block-rendering-mode)
+    - [🧱 Block Rendering Mode](#block-rendering-mode)
     - [🔢 Numbered Block Equations](#numbered-block-equations)
       - [Equation Number Mode](#equation-number-mode)
       - [Equation Number Start](#equation-number-start)
@@ -27,6 +27,7 @@ A SwiftUI view that renders LaTeX equations.
     - [🕶️ Rendering Style](#rendering-style)
     - [🪩 Rendering Animation](#rendering-animation)
     - [🌐 Script Mode](#script-mode)
+    - [♿ Image Accessibility](#image-accessibility)
   - [🪮 Styles](#styles)
   - [🗄️ Caching](#caching)
   - [🏃‍♀️ Preloading](#preloading)
@@ -43,19 +44,21 @@ It will
 - attempt to render block equations as a TeX or LaTeX engine would,
 - number block equations (if desired),
 - scale equations for non-Latin scripts (CJK and others),
-- and normalize line spacing for inline equations on iOS 18+ / macOS 15+.
+- provide VoiceOver accessibility via the Speech Rule Engine,
+- normalize line spacing for inline equations on iOS 18+ / macOS 15+,
+- and render array/table borders and horizontal rules.
 
 It won't
 - render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
 
-The package requires Swift 6.0 and supports iOS 15+, macOS 12+.
+The package requires Swift 6.0 and supports iOS 15+, macOS 12+, and visionOS 1+. Rendering is performed off the main thread for optimal performance.
 
 ## Installation
 
 Add the dependency to your package manifest file.
 
 ```swift
-.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "1.5.0")
+.package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "2.0.0")
 ```
 
 ## Usage
@@ -299,7 +302,7 @@ The view will look for these characters preceeded by an escape, and replace them
 
 #### Rendering Style
 
-The view has four rendering styles. The `wait` style is the default style, and loads the view synchronously on the main queue. To get better performance and move SVG rendering off of the main queue, use any of the other three styles.
+The view has five rendering styles. All rendering (MathJax conversion and SVG rasterization) is performed off the main thread. The `wait` style blocks until rendering completes, while the other styles display a placeholder and update asynchronously.
 
 | Style      | Asynchronous | Description                                                              |
 |:-----------|:-------------|:-------------------------------------------------------------------------|
@@ -357,6 +360,34 @@ LaTeX("Scaled equation: $\\int_0^1 x^2 dx$")
 | `.latin` | *(default)* Uses the font's x-height. Suitable for Latin, Cyrillic, and similar scripts. |
 | `.cjk` | Uses the font's cap-height. Suitable for Korean, Japanese, and Chinese. |
 | `.custom(CGFloat)` | Multiplies the font's x-height by the given factor. |
+
+#### Image Accessibility
+
+Rendered equations are images that need accessibility labels for VoiceOver. By default, LaTeXSwiftUI uses MathJax's Speech Rule Engine (SRE) to generate natural language descriptions of equations automatically.
+
+```swift
+// Default (.sre) — VoiceOver reads "x squared plus y squared equals z squared"
+LaTeX("$x^2 + y^2 = z^2$")
+
+// Use the raw TeX input as the label
+LaTeX("$x^2 + y^2 = z^2$")
+  .imageAccessibility(.input)
+
+// No accessibility label (default SwiftUI behavior)
+LaTeX("$x^2 + y^2 = z^2$")
+  .imageAccessibility(.none)
+
+// Custom label
+LaTeX("$E = mc^2$")
+  .imageAccessibility(.custom("Einstein's mass-energy equivalence"))
+```
+
+| Mode | Description |
+|:-----|:------------|
+| `.sre` | *(default)* Uses the Speech Rule Engine to generate natural language. Falls back to raw TeX on failure. |
+| `.input` | Uses the raw TeX input as the accessibility label. |
+| `.none` | No accessibility label applied (default SwiftUI behavior). |
+| `.custom(String)` | Uses a custom string as the accessibility label. |
 
 ### Styles (Deprecated)
 

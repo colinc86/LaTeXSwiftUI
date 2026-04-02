@@ -16,9 +16,10 @@ let package = Package(
       targets: ["LaTeXSwiftUI"]),
   ],
   dependencies: [
-     .package(url: "https://github.com/colinc86/MathJaxSwift", branch: "v3.5.0"),
+//     .package(url: "https://github.com/colinc86/MathJaxSwift", branch: "v3.5.0"),
      .package(url: "https://github.com/swhitty/SwiftDraw", from: "0.27.0"),
-     .package(url: "https://github.com/Kitura/swift-html-entities", from: "4.0.1")
+     .package(url: "https://github.com/Kitura/swift-html-entities", from: "4.0.1"),
+     .package(name: "MathJaxSwift", path: "../MathJaxSwift")
   ],
   targets: [
     .target(
@@ -27,6 +28,9 @@ let package = Package(
         "MathJaxSwift",
         "SwiftDraw",
         .product(name: "HTMLEntities", package: "swift-html-entities")
+      ],
+      resources: [
+        .copy("PrivacyInfo.xcprivacy")
       ]),
     .testTarget(
       name: "LaTeXSwiftUITests",
