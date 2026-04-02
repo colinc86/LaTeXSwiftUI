@@ -93,6 +93,28 @@ internal enum Parser {
             }
           }
         }
+
+        // Check for generic \end{...} closing a named environment
+        if remaining.hasPrefix("\\end{") {
+          let searchStart = remaining.index(remaining.startIndex, offsetBy: 5)
+          if let closeBrace = remaining[searchStart...].firstIndex(of: "}") {
+            let name = String(remaining[searchStart..<closeBrace])
+            if case .namedEnvironment(let stackName) = stack.last, stackName == name {
+              let terminator = "\\end{\(name)}"
+              let newEndIndex = input.index(index, offsetBy: terminator.count)
+              let lastType = stack.removeLast()
+              if stack.isEmpty {
+                if endIndex < startIndex {
+                  components.append(Component(text: String(input[endIndex..<startIndex]), type: .text))
+                }
+                components.append(Component(text: String(input[startIndex..<newEndIndex]), type: lastType))
+              }
+              endIndex = newEndIndex
+              index = newEndIndex
+              continue inputLoop
+            }
+          }
+        }
       }
       
       for type in Component.ComponentType.order {
@@ -102,17 +124,36 @@ internal enum Parser {
             index = input.index(index, offsetBy: start.count)
             continue inputLoop
           }
-          
+
           if stack.isEmpty {
             startIndex = index
           }
-          
+
           stack.append(type)
           index = input.index(index, offsetBy: start.count)
           continue inputLoop
         }
       }
-      
+
+      // Check for generic \begin{...} opening a named environment
+      if remaining.hasPrefix("\\begin{") {
+        let searchStart = remaining.index(remaining.startIndex, offsetBy: 7)
+        if let closeBrace = remaining[searchStart...].firstIndex(of: "}") {
+          let name = String(remaining[searchStart..<closeBrace])
+          // equation and equation* are handled by the static types above
+          if name != "equation" && name != "equation*" {
+            if stack.isEmpty {
+              startIndex = index
+            }
+            let type = Component.ComponentType.namedEnvironment(name)
+            stack.append(type)
+            let terminator = "\\begin{\(name)}"
+            index = input.index(index, offsetBy: terminator.count)
+            continue inputLoop
+          }
+        }
+      }
+
       index = input.index(after: index)
     }
 

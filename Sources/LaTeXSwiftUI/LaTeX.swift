@@ -265,15 +265,6 @@ extension LaTeX {
     Task { await preloadTask?.value }
   }
   
-  /// Configures the `LaTeX` view with the given style.
-  ///
-  /// - Parameter style: The `LaTeX` view style to use.
-  /// - Returns: A stylized view.
-  @available(*, deprecated, message: "This will be removed in a following version. Use other modifiers to set your style.")
-  public func latexStyle<S>(_ style: S) -> some View where S: LaTeXStyle {
-    style.makeBody(content: self)
-  }
-  
 #if os(iOS) || os(visionOS)
   public func font(_ font: UIFont) -> some View {
     self
@@ -288,6 +279,61 @@ extension LaTeX {
   }
 #endif
   
+  /// Renders a LaTeX string to an array of platform images.
+  ///
+  /// Each equation found in the input produces one image. Text between
+  /// equations is not rendered.
+  ///
+  /// - Parameters:
+  ///   - latex: The LaTeX input string.
+  ///   - xHeight: The font x-height used to scale equations. If `nil`, the
+  ///     body font's x-height is used.
+  ///   - displayScale: The display scale factor (default: 2.0).
+  ///   - unencodeHTML: Whether to decode HTML entities (default: false).
+  ///   - parsingMode: The parsing mode (default: `.onlyEquations`).
+  ///   - processEscapes: Whether to process escape sequences (default: false).
+  ///   - errorMode: The error mode (default: `.rendered`).
+  /// - Returns: An array of rendered images, one per equation.
+#if os(iOS) || os(visionOS)
+  public static func renderToImages(
+    _ latex: String,
+    xHeight: CGFloat? = nil,
+    displayScale: CGFloat = 2.0,
+    unencodeHTML: Bool = false,
+    parsingMode: ParsingMode = .onlyEquations,
+    processEscapes: Bool = false,
+    errorMode: ErrorMode = .rendered
+  ) -> [UIImage] {
+    Renderer.renderToPlatformImages(
+      latex: latex,
+      unencodeHTML: unencodeHTML,
+      parsingMode: parsingMode,
+      processEscapes: processEscapes,
+      errorMode: errorMode,
+      xHeight: xHeight ?? Font.body.effectiveXHeight(for: .latin),
+      displayScale: displayScale)
+  }
+#else
+  public static func renderToImages(
+    _ latex: String,
+    xHeight: CGFloat? = nil,
+    displayScale: CGFloat = 2.0,
+    unencodeHTML: Bool = false,
+    parsingMode: ParsingMode = .onlyEquations,
+    processEscapes: Bool = false,
+    errorMode: ErrorMode = .rendered
+  ) -> [NSImage] {
+    Renderer.renderToPlatformImages(
+      latex: latex,
+      unencodeHTML: unencodeHTML,
+      parsingMode: parsingMode,
+      processEscapes: processEscapes,
+      errorMode: errorMode,
+      xHeight: xHeight ?? Font.body.effectiveXHeight(for: .latin),
+      displayScale: displayScale)
+  }
+#endif
+
 }
 
 // MARK: Private methods

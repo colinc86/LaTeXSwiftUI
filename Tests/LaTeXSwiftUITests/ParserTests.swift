@@ -471,4 +471,84 @@ final class ParserTests: XCTestCase {
     assertComponent(components, 0, input, .texEquation)
   }
 
+  // MARK: - Generic named environments
+
+  func testParseAlignEnvironment() {
+    let input = "\\begin{align}a \\\\ b\\end{align}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "a \\\\ b", .namedEnvironment("align"))
+  }
+
+  func testParseGatherEnvironment() {
+    let input = "\\begin{gather}x \\\\ y\\end{gather}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x \\\\ y", .namedEnvironment("gather"))
+  }
+
+  func testParseCasesEnvironment() {
+    let input = "\\begin{cases}x & \\text{if } x \\geq 0 \\\\ -x & \\text{if } x < 0\\end{cases}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x & \\text{if } x \\geq 0 \\\\ -x & \\text{if } x < 0", .namedEnvironment("cases"))
+  }
+
+  func testParseGenericWithSurroundingText() {
+    let input = "The system is \\begin{align}a \\\\ b\\end{align} which is linear."
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "The system is ", .text)
+    assertComponent(components, 1, "a \\\\ b", .namedEnvironment("align"))
+    assertComponent(components, 2, " which is linear.", .text)
+  }
+
+  func testParseNestedEnvironments() {
+    let input = "\\begin{align}\\begin{cases}a \\\\ b\\end{cases}\\end{align}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .namedEnvironment("align"))
+  }
+
+  func testParseUnmatchedGenericEnvironment() {
+    let input = "\\begin{align}a \\\\ b"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, input, .text)
+  }
+
+  func testParseEquationStillMatchesStaticType() {
+    let input = "\\begin{equation}x^2\\end{equation}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x^2", .namedEquation)
+  }
+
+  func testParseEquationStarStillMatchesStaticType() {
+    let input = "\\begin{equation*}x^2\\end{equation*}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x^2", .namedNoNumberEquation)
+  }
+
+  func testParseGenericEnvironmentIsBlock() {
+    let input = "text \\begin{align}a\\end{align} more"
+    let blocks = Parser.parse(input, mode: .onlyEquations)
+    XCTAssertEqual(blocks.count, 3)
+    // First block: inline text
+    XCTAssertTrue(blocks[0].components[0].type == .text)
+    // Second block: the environment (block-level, gets its own block)
+    XCTAssertTrue(blocks[1].components[0].type == .namedEnvironment("align"))
+    // Third block: trailing text
+    XCTAssertTrue(blocks[2].components[0].type == .text)
+  }
+
+  func testParseMultipleGenericEnvironments() {
+    let input = "\\begin{align}a\\end{align}\\begin{gather}b\\end{gather}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 2)
+    assertComponent(components, 0, "a", .namedEnvironment("align"))
+    assertComponent(components, 1, "b", .namedEnvironment("gather"))
+  }
+
 }

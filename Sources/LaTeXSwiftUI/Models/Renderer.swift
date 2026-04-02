@@ -253,6 +253,52 @@ extension Renderer {
     }
   }
   
+  /// Renders a LaTeX string to an array of platform images (one per equation).
+  ///
+  /// This method runs the full rendering pipeline on the dedicated render queue
+  /// and returns `UIImage`/`NSImage` instances directly.
+  ///
+  /// - Parameters:
+  ///   - latex: The LaTeX input string.
+  ///   - unencodeHTML: Whether to unencode HTML entities.
+  ///   - parsingMode: The parsing mode.
+  ///   - processEscapes: Whether to process escape sequences.
+  ///   - errorMode: The error mode.
+  ///   - xHeight: The font's x-height in points.
+  ///   - displayScale: The display scale factor.
+  /// - Returns: An array of rendered platform images.
+  nonisolated static func renderToPlatformImages(
+    latex: String,
+    unencodeHTML: Bool,
+    parsingMode: LaTeX.ParsingMode,
+    processEscapes: Bool,
+    errorMode: LaTeX.ErrorMode,
+    xHeight: CGFloat,
+    displayScale: CGFloat
+  ) -> [_Image] {
+    renderQueue.sync {
+      let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
+      let input = unencodeHTML ? latex.htmlUnescape() : latex
+      let blocks = Parser.parse(input, mode: parsingMode)
+      var images = [_Image]()
+
+      for block in blocks {
+        for component in block.components where component.type.isEquation {
+          guard let svg = try? getSVGStatic(for: component, texOptions: texOptions) else {
+            continue
+          }
+          let imageSize = svg.size(for: xHeight)
+          guard let image = rasterizeSVG(data: svg.data, size: imageSize, scale: displayScale) else {
+            continue
+          }
+          images.append(image)
+        }
+      }
+
+      return images
+    }
+  }
+
 }
 
 // MARK: Private methods
@@ -475,6 +521,56 @@ extension Renderer {
       .interpolation(.high)
   }
   
+  /// Gets the component's SVG without requiring a `Renderer` instance.
+  ///
+  /// Must be called on `renderQueue`.
+  ///
+  /// - Parameters:
+  ///   - component: The component.
+  ///   - texOptions: The TeX input processor options.
+  /// - Returns: An SVG.
+  nonisolated private static func getSVGStatic(
+    for component: Component,
+    texOptions: TeXInputProcessorOptions
+  ) throws -> SVG? {
+    let svgCacheKey = Cache.SVGCacheKey(
+      componentText: component.text,
+      conversionOptions: component.conversionOptions,
+      texOptions: texOptions)
+
+    if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
+      return try SVG(data: svgData)
+    }
+
+    guard let mathjax = mathjax else {
+      return nil
+    }
+
+    var conversionError: Error?
+    let svgString = mathjax.tex2svg(
+      component.text,
+      styles: false,
+      conversionOptions: component.conversionOptions,
+      inputOptions: texOptions,
+      error: &conversionError)
+
+    var errorText: String?
+    if let mjError = conversionError as? MathJaxError, case .conversionError(let innerError) = mjError {
+      errorText = innerError
+    } else if let error = conversionError {
+      throw error
+    }
+
+    let speechText = try? mathjax.tex2speech(
+      component.text,
+      conversionOptions: component.conversionOptions,
+      inputOptions: texOptions)
+
+    let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
+    Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
+    return svg
+  }
+
   /// Rasterizes SVG data to a platform image using a thread-safe
   /// CGBitmapContext.
   ///

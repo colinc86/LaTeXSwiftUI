@@ -1,59 +1,43 @@
 # LaTeXSwiftUI
 
-A SwiftUI view that renders LaTeX equations.
+✨ Beautifully rendered LaTeX equations in SwiftUI — powered by MathJax.
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fcolinc86%2FLaTeXSwiftUI%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/colinc86/LaTeXSwiftUI) [![Unit Tests](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml/badge.svg)](https://github.com/colinc86/LaTeXSwiftUI/actions/workflows/swift.yml)
 
 <center><img src="./assets/images/device.png" width="362"></center>
 
+## 🆕 What's New in v2
+
+- ♿ **[Accessibility](#-accessibility)** — VoiceOver support via the Speech Rule Engine (SRE)
+- 🌐 **[Script Scaling](#script-mode)** — CJK and non-Latin script support with `.script()`
+- 📐 **[Line Spacing](#line-spacing)** — Automatic normalization on iOS 18+ / macOS 15+
+- 📊 **[Arrays & Tables](#arrays--tables)** — `array`, `matrix`, `cases`, and more with borders and rules
+- 🔲 **[Redacted Placeholder](#rendering-style)** — New `redactedOriginal` async rendering style
+- 🖼️ **[Render to Image](#-rendering-to-images)** — Render LaTeX to `UIImage`/`NSImage` without a SwiftUI view
+- 🧩 **[Generic Environments](#generic-environments)** — `\begin{align}`, `\begin{cases}`, etc. work standalone
+
 ## 📖 Contents
 
-- [ℹ️ About](#about)
-- [📦 Installation](#installation)
-- [⌨️ Usage](#usage)
-  - [🔤 Fonts](#fonts)
-  - [⚙️ Modifiers](#modifiers)
-    - [🔤 Parsing Mode](#parsing-mode)
-    - [🌄 Image Rendering Mode](#image-rendering-mode)
-    - [🚨 Error Mode](#error-mode)
-    - [🧱 Block Rendering Mode](#block-rendering-mode)
-    - [🔢 Numbered Block Equations](#numbered-block-equations)
-      - [Equation Number Mode](#equation-number-mode)
-      - [Equation Number Start](#equation-number-start)
-      - [Equation Number Offset](#equation-number-offset)
-      - [Format Equation Number](#format-equation-number)
-    - [🔗 Unencode HTML](#unencode-html)
-    - [📄 Ignore String Formatting](#ignore-string-formatting)
-    - [🕶️ Rendering Style](#rendering-style)
-    - [🪩 Rendering Animation](#rendering-animation)
-    - [🌐 Script Mode](#script-mode)
-    - [♿ Image Accessibility](#image-accessibility)
-  - [🪮 Styles](#styles)
-  - [🗄️ Caching](#caching)
-  - [🏃‍♀️ Preloading](#preloading)
-  
-## About
+- [ℹ️ About](#-about)
+- [📦 Installation](#-installation)
+- [🚀 Quick Start](#-quick-start)
+- [⌨️ Usage](#%EF%B8%8F-usage)
+  - [🔤 Fonts](#-fonts)
+  - [🔧 Parsing & Input](#-parsing--input)
+  - [🎨 Visual & Layout](#-visual--layout)
+  - [♿ Accessibility](#-accessibility)
+  - [🖼️ Rendering to Images](#-rendering-to-images)
+  - [⚡ Performance & Caching](#-performance--caching)
 
-`LaTexSwiftUI` is a package that exposes a view named `LaTeX` that can parse and render TeX and LaTeX equations which contain math-mode macros.
+## ℹ️ About
 
-The view utilizes the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org). Thus, the limitations of the view are heavily influenced by the [limitations](https://docs.mathjax.org/en/v2.7-latest/tex.html#differences) of MathJax.
+`LaTeXSwiftUI` is a package that exposes a `LaTeX` view capable of parsing and rendering TeX and LaTeX equations containing math-mode macros. It uses the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org), so the view's capabilities are influenced by MathJax's [supported features](https://docs.mathjax.org/en/latest/input/tex/extensions.html).
 
-It will
-- render TeX and LaTeX equations (math-mode macros),
-- render the `\text{}` macro within equations,
-- attempt to render block equations as a TeX or LaTeX engine would,
-- number block equations (if desired),
-- scale equations for non-Latin scripts (CJK and others),
-- provide VoiceOver accessibility via the Speech Rule Engine,
-- normalize line spacing for inline equations on iOS 18+ / macOS 15+,
-- and render array/table borders and horizontal rules.
+The view renders math-mode equations (inline and block), `\text{}` within equations, numbered block equations, any `\begin{...}...\end{...}` environment (including `align`, `gather`, `cases`, `array`, and more), and provides VoiceOver accessibility via the Speech Rule Engine. It scales equations for non-Latin scripts and normalizes line spacing on iOS 18+ / macOS 15+. You can also render equations directly to `UIImage`/`NSImage` without a SwiftUI view. It does **not** render full LaTeX documents or text-mode macros.
 
-It won't
-- render TeX and LaTeX documents (text-mode macros, with the exception of the rule above).
+Requires Swift 6.0. Supports iOS 15+, macOS 12+, and visionOS 1+. All rendering is performed off the main thread.
 
-The package requires Swift 6.0 and supports iOS 15+, macOS 12+, and visionOS 1+. Rendering is performed off the main thread for optimal performance.
-
-## Installation
+## 📦 Installation
 
 Add the dependency to your package manifest file.
 
@@ -61,9 +45,7 @@ Add the dependency to your package manifest file.
 .package(url: "https://github.com/colinc86/LaTeXSwiftUI", from: "2.0.0")
 ```
 
-## Usage
-
-Import the package and use the view.
+## 🚀 Quick Start
 
 ```swift
 import LaTeXSwiftUI
@@ -79,46 +61,7 @@ struct MyView: View {
 
 > <img src="./assets/images/hello.png" width="85" height="21.5">
 
-### Fonts
-
-The view needs to be able to measure the current font's x-height to correctly size the characters inside of the rendered LaTeX SVG. To do that, the view must use the `UIFont`/`NSFont` classes and do its best to convert SwiftUI's `Font` structure into the correct `UIFont` instance. Currently, the view's functionality is limited to SwiftUI's static largeTitle, title, title1, headline, etc fonts, or by using `UIFont`/`NSFont` types directly.
-
-The `font` modifier has been overloaded so that you can give the `LaTeX` view `UIFont` and `NSFont` types directly. The following examples will render the size of the LaTeX correctly.
-
-```swift
-// SwiftUI perferred fonts
-LaTeX("Hello, $\\LaTeX$!")
-  .font(.title)
-
-LaTeX("Hello, $\\LaTeX$!")
-  .font(.caption)
-
-// Any UIFont/NSFont - note that they should be passed directly to the view
-LaTeX("Hello, $\\LaTeX$!")
-  .font(UIFont.systemFont(ofSize: 30))
-
-LaTeX("Hello, $\\LaTeX$!")
-  .font(UIFont(name: "Avenir", size: 25)!)
-```
-
-The following examples will _not_ render the size of the LaTeX correctly.
-
-```swift
-// SwiftUI Font type, but not a preferred font
-LaTeX("Hello, $\\LaTeX$!")
-  .font(.custom(name: "Avenir", size: 25))
-
-LaTeX("Hello, $\\LaTeX$!")
-  .font(.system(size: 25))
-
-// Wrapping UIFont/NSFont in a SwiftUI Font type
-LaTeX("Hello, $\\LaTeX$!")
-  .font(Font(UIFont.systemFont(ofSize: 30)))
-```
-
-### Modifiers
-
-The `LaTeX` view's body is built up of `Text` views so feel free to use any of the supported modifiers.
+That's it! The `LaTeX` view's body is built from `Text` views, so standard SwiftUI modifiers work out of the box.
 
 ```swift
 LaTeX("Hello, $\\LaTeX$!")
@@ -128,11 +71,32 @@ LaTeX("Hello, $\\LaTeX$!")
 
 > <img src="./assets/images/hello_blue.png" width="87" height="21.5">
 
-Along with supporting the built-in SwiftUI modifies, `LaTeXSwiftUI` defines more to let you configure the view.
+## ⌨️ Usage
+
+### 🔤 Fonts
+
+The view measures the current font's x-height to correctly size rendered equations. It converts SwiftUI's `Font` to `UIFont`/`NSFont` internally, which currently works with SwiftUI's preferred fonts (`largeTitle`, `title`, `headline`, `caption`, etc.) and platform font types passed directly.
+
+```swift
+// SwiftUI preferred fonts
+LaTeX("Hello, $\\LaTeX$!")
+  .font(.title)
+
+// UIFont/NSFont passed directly
+LaTeX("Hello, $\\LaTeX$!")
+  .font(UIFont.systemFont(ofSize: 30))
+
+LaTeX("Hello, $\\LaTeX$!")
+  .font(UIFont(name: "Avenir", size: 25)!)
+```
+
+> ⚠️ Custom SwiftUI fonts (`.custom(name:size:)`, `.system(size:)`) and `UIFont`/`NSFont` wrapped in `Font()` will not size equations correctly. Use preferred fonts or pass platform font types directly.
+
+### 🔧 Parsing & Input
 
 #### Parsing Mode
 
-Text input can either be completely rendered, or the view can search for top-level equations delimited by the following terminators.
+The view can search for top-level equations delimited by the following terminators, or render the entire input as math.
 
 | Terminators |
 |-------------|
@@ -142,13 +106,19 @@ Text input can either be completely rendered, or the view can search for top-lev
 | `\[...\]` |
 | `\begin{equation}...\end{equation}` |
 | `\begin{equation*}...\end{equation*}` |
+| `\begin{...}...\end{...}` |
 
- The default behavior is to only render equations with `onlyEquations`. Use the `parsingMode` modifier to change the default behavior.
+##### Generic Environments
+
+Any `\begin{name}...\end{name}` environment is automatically recognized as a block equation — including `align`, `gather`, `cases`, `array`, `matrix`, `pmatrix`, and more. There's no need to wrap them in `$$...$$`.
+
+```swift
+LaTeX("The function is \\begin{cases} x & \\text{if } x \\geq 0 \\\\ -x & \\text{if } x < 0 \\end{cases}")
+```
 
 ```swift
 // Only parse equations (default)
 LaTeX("Euler's identity is $e^{i\\pi}+1=0$.")
-  .font(.system(size: 18))
   .parsingMode(.onlyEquations)
 
 // Parse the entire input
@@ -158,16 +128,55 @@ LaTeX("\\text{Euler's identity is } e^{i\\pi}+1=0\\text{.}")
 
 > <img src="./assets/images/euler.png" width="293" height="80">
 
-#### Image Rendering Mode
+#### Unencode HTML
 
-You can specify the rendering mode of the rendered equations so that they either take on the style of the surrounding text or display the style rendered by MathJax. The default behavior is to use the `template` rendering mode so that images match surrounding text.
+Input may contain HTML entities such as `&lt;` which LaTeX won't parse. Use the `unencoded` modifier to decode them.
 
 ```swift
-// Render images to match the surrounding text
+LaTeX("$x^2&lt;1$")
+  .errorMode(.error)
+
+// Replace "&lt;" with "<"
+LaTeX("$x^2&lt;1$")
+  .unencoded()
+```
+
+> <img src="./assets/images/unencoded.png" width="72.5" height="34">
+
+#### String Formatting
+
+The view renders the following markdown syntax by default.
+
+| Syntax | Description |
+|-------------|-------------|
+| `*...*` | Italic |
+| `**...**` | Bold |
+| `***...***` | Bold & Italic |
+| `~~...~~` | Strikethrough |
+| `` `...` `` | Monospaced |
+| `[...](...)` | Links |
+
+The reserved LaTeX characters `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, and `\` are also unescaped when preceded by a backslash. Use `ignoreStringFormatting()` to disable both markdown rendering and escape replacement.
+
+```swift
+LaTeX(input)
+  .ignoreStringFormatting()
+```
+
+Use `processEscapes()` to allow `\$` for literal dollar signs and `\\` for literal backslashes within your input.
+
+### 🎨 Visual & Layout
+
+#### Image Rendering Mode
+
+Equations can match the surrounding text style or display the original MathJax-rendered colors.
+
+```swift
+// Match surrounding text (default)
 LaTeX("Hello, $\\color{red}\\LaTeX$!")
   .imageRenderingMode(.template)
 
-// Display the original rendered image
+// Display original rendered colors
 LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
   .imageRenderingMode(.original)
 ```
@@ -176,46 +185,38 @@ LaTeX("Hello, ${\\color{red} \\LaTeX}$!")
 
 #### Error Mode
 
-When an error occurs while parsing the input the view will display the original LaTeX. You can change this behavior by modifying the view's `errorMode`.
+Control how the view handles rendering errors.
 
-> Note: when the `rendered` mode is used, MathJax is instructed to load the `noerrors` and `noundefined` packages. In the other two modes, `original` and `error`, these packages are not loaded by MathJax and errors are either displayed in the view, or caught and replaced with the original text.
+> When `rendered` mode is used, MathJax loads the `noerrors` and `noundefined` packages. In the other modes, errors are either displayed or replaced with the original text.
 
 ```swift
-// Display the original text instead of the equation
 LaTeX("$\\asdf$")
-  .errorMode(.original)
+  .errorMode(.original)  // Show original text
 
-// Display the error text instead of the equation
 LaTeX("$\\asdf$")
-  .errorMode(.error)
+  .errorMode(.error)     // Show error message
 
-// Display the rendered image (if available)
 LaTeX("$\\asdf$")
-  .errorMode(.rendered)
+  .errorMode(.rendered)  // Show rendered image if available
 ```
 
 > <img src="./assets/images/errors.png" width="199.5" height="55">
 
 #### Block Rendering Mode
 
-The typical "LaTeX-ish" way to render the input is with `blockViews`. This mode renders text as usual, and block equations as... blocks; on their own line and centered. MathJax 3 does not support line breaking, so the view places block equations in horizontal scroll views in case the width of the equation is more than the width of the view.
-
-In the case that you want to force block equations as inline, you can use the `alwaysInline` mode. You can also keep block styling with `blockText`, but the blocks will not be centered in their views. These modes can be helpful if you have a lengthy input string and need to only display it on a single or few lines.
+Block equations can be rendered centered on their own line (`blockViews`, the default), forced inline (`alwaysInline`), or as text with newlines (`blockText`). Block equations are placed in horizontal scroll views when they exceed the view width.
 
 ```swift
-/// The default block mode 
 LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
   .blockMode(.blockViews)
 
 Divider()
 
-/// Force blocks to render as inline
 LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
   .blockMode(.alwaysInline)
 
 Divider()
 
-/// Force blocks to render as text with newlines
 LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it has zeros at the roots of $f(x)=ax^2+bx+c$.")
   .blockMode(.blockText)
 ```
@@ -224,23 +225,14 @@ LaTeX("The quadratic formula is $$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$$ and it h
 
 #### Numbered Block Equations
 
-The `LaTeX` view can do simple numbering of block equations with the `blockViews` block mode.
+The view supports simple numbering of block equations when using `blockViews` mode.
 
-##### Equation Number Mode
-
-Use the `equationNumberMode` modifier to change between `left`, `right` and `none`.
-
-##### Equation Number Start
-
-The default starting number is `1`, but if you need to start at a different value, you can specify it with the `equationNumberStart` modifier.
-
-##### Equation Number Offset
-
-To change the left or right offset of the equation number, use the `equationNumberOffset` modifier.
-
-##### Format Equation Number
-
-You can set a closure on the view to do your own custom formatting. The `formatEquationNumber` modifier takes a closure that is passed the equation number and returns a string.
+| Modifier | Description |
+|:---------|:------------|
+| `.equationNumberMode(_:)` | Position: `.left`, `.right`, or `.none` (default) |
+| `.equationNumberStart(_:)` | Starting number (default: `1`) |
+| `.equationNumberOffset(_:)` | Left or right offset in points |
+| `.formatEquationNumber(_:)` | Custom formatting closure `(Int) -> String` |
 
 ```swift
 LaTeX("$$E = mc^2$$")
@@ -259,71 +251,25 @@ LaTeX("$$E = mc^2$$ $$E = mc^2$$")
 
 > <img src="./assets/images/numbers.png" width="433" height="153">
 
-#### Unencode HTML
-
-Input may contain HTML entities such as `&lt;` which will not be parsed by LaTeX as anything meaningful. In this case, you may use the `unencoded` modifier.
-
-```swift
-LaTeX("$x^2&lt;1$")
-  .errorMode(.error)
-
-// Replace "&lt;" with "<"
-LaTeX("$x^2&lt;1$")
-  .unencoded()
-```
-
-> <img src="./assets/images/unencoded.png" width="72.5" height="34">
-
-#### Ignore String Formatting
-
-The `LaTeX` view will render the following markdown synatax.
-
-| Syntax | Description |
-|-------------|-------------|
-| `*...*` | Italic |
-| `**...**` | Bold |
-| `***...***` | Bold & Italic |
-| `~~...~~` | Strikethrough |
-| `` `...` `` | Monospaced |
-| `[...](...)` | Links |
-
-If you don't want markdown rendered, then you may use the `ignoreStringFormatting` modifier.
-
-```swift
-LaTeX(input)
-  .ignoreStringFormatting()
-```
-
-##### Escaped Characters
-
-The characeters `&`, `%`, `$`, `#`, `_`, `{`, `}`, `~`, `^`, and `\` are reserved characters in LaTeX and may appear in a document with an escape characeter preceeding them.
-
-The view will look for these characters preceeded by an escape, and replace them with the non-escaped version. If you would like to prevent this replacement, then you may use the `ignoreStringFormatting` modifier.
-
 #### Rendering Style
 
-The view has five rendering styles. All rendering (MathJax conversion and SVG rasterization) is performed off the main thread. The `wait` style blocks until rendering completes, while the other styles display a placeholder and update asynchronously.
+All rendering (MathJax conversion and SVG rasterization) is performed off the main thread. Choose a rendering style to control loading behavior.
 
-| Style      | Asynchronous | Description                                                              |
-|:-----------|:-------------|:-------------------------------------------------------------------------|
-| `empty`    | Yes          | The view remains empty until it's finished rendering.                     |
-| `original` | Yes          | The view displays the input text until it's finished rendering.           |
-| `redactedOriginal` | Yes  | The view displays a redacted version of the view until it's finished rendering |
-| `progress` | Yes          | The view displays a progress view until it's finished rendering.          |
-| `wait`     | No           | *(default)* The view blocks the main queue until it's finished rendering. |
+| Style      | Async | Description                                                              |
+|:-----------|:------|:-------------------------------------------------------------------------|
+| `empty`    | Yes   | The view remains empty until rendering completes.                         |
+| `original` | Yes   | The view displays the input text until rendering completes.               |
+| `redactedOriginal` | Yes | The view displays a redacted placeholder until rendering completes. 🆕 |
+| `progress` | Yes   | The view displays a progress indicator until rendering completes.         |
+| `wait`     | No    | *(default)* The view blocks until rendering completes.                    |
 
-
-#### Rendering Animation
-
-When using the asynchronous rendering styles `empty`, `original`, or `progress`, use this modifier to determine the animation applied to the transition between views. The default value is `none`.
+When using an asynchronous style, use `renderingAnimation` to animate the transition.
 
 ```swift
 LaTeX(input)
   .renderingStyle(.original)
   .renderingAnimation(.easeIn)
 ```
-
-> In the above example, the input text will be displayed until the SVGs have been rendered at which point the rendered views will animate in to view.
 
 > **Note:** The `LaTeX` view automatically re-renders when its input string changes, so you can bind it to `@State` variables without needing `.id()`:
 > ```swift
@@ -339,10 +285,10 @@ LaTeX(input)
 
 #### Script Mode
 
-When displaying equations inline with non-Latin scripts such as Korean, Japanese, or Chinese, equations may appear undersized or misaligned because the rendering is calibrated to the font's Latin x-height. The `script` modifier adjusts equation scaling to match the visual height of the surrounding text.
+🆕 When displaying equations inline with non-Latin scripts such as Korean, Japanese, or Chinese, equations may appear undersized or misaligned. The `script` modifier adjusts equation scaling to match the surrounding text.
 
 ```swift
-// Korean text with properly scaled equations
+// Korean
 LaTeX("방정식 $x^2 + y^2 = z^2$ 은 잘 알려져 있습니다.")
   .script(.cjk)
 
@@ -361,9 +307,23 @@ LaTeX("Scaled equation: $\\int_0^1 x^2 dx$")
 | `.cjk` | Uses the font's cap-height. Suitable for Korean, Japanese, and Chinese. |
 | `.custom(CGFloat)` | Multiplies the font's x-height by the given factor. |
 
-#### Image Accessibility
+#### Line Spacing
 
-Rendered equations are images that need accessibility labels for VoiceOver. By default, LaTeXSwiftUI uses MathJax's Speech Rule Engine (SRE) to generate natural language descriptions of equations automatically.
+🆕 On iOS 18+ / macOS 15+, the view automatically normalizes line spacing when inline equations cause uneven line gaps. This uses a custom `TextRenderer` and requires no configuration.
+
+#### Arrays & Tables
+
+🆕 The view renders LaTeX array and table environments including `array`, `matrix`, `pmatrix`, `vmatrix`, and `cases`. Horizontal rules (`\hline`) and vertical column borders are supported.
+
+```swift
+LaTeX("$$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$$")
+
+LaTeX("$$\\begin{cases} x & \\text{if } x \\geq 0 \\\\ -x & \\text{if } x < 0 \\end{cases}$$")
+```
+
+### ♿ Accessibility
+
+🆕 Rendered equations are images that need accessibility labels for VoiceOver. By default, LaTeXSwiftUI uses MathJax's Speech Rule Engine (SRE) to generate natural language descriptions automatically.
 
 ```swift
 // Default (.sre) — VoiceOver reads "x squared plus y squared equals z squared"
@@ -373,7 +333,7 @@ LaTeX("$x^2 + y^2 = z^2$")
 LaTeX("$x^2 + y^2 = z^2$")
   .imageAccessibility(.input)
 
-// No accessibility label (default SwiftUI behavior)
+// No accessibility label
 LaTeX("$x^2 + y^2 = z^2$")
   .imageAccessibility(.none)
 
@@ -386,62 +346,45 @@ LaTeX("$E = mc^2$")
 |:-----|:------------|
 | `.sre` | *(default)* Uses the Speech Rule Engine to generate natural language. Falls back to raw TeX on failure. |
 | `.input` | Uses the raw TeX input as the accessibility label. |
-| `.none` | No accessibility label applied (default SwiftUI behavior). |
+| `.none` | No accessibility label (default SwiftUI behavior). |
 | `.custom(String)` | Uses a custom string as the accessibility label. |
 
-### Styles (Deprecated)
+### 🖼️ Rendering to Images
 
-You can use the provided view styles or create your own.
-
-```swift
-// The default view style.
-LaTeX(input)
-  .latexStyle(.automatic)
-
-// A "standard" style with HTML elements unencoded and block equations numbered.
-LaTeX(input)
-  .latexStyle(.standard)  
-```
-
-To create your own style, conform to the `LaTeXStyle` protocol. Its `makeBody(content:)` method takes a `LaTeX` view and returns a stylized version of the view.
-
-The following would create a style for the first title used at the [top](#latexswiftui) of this README.
+🆕 You can render LaTeX equations directly to `UIImage` (iOS/visionOS) or `NSImage` (macOS) without using the `LaTeX` SwiftUI view. This is useful for UIKit integration, image export, or custom rendering pipelines.
 
 ```swift
-@available(iOS 16.1, *)
-public struct TitleLaTeXStyle: LaTeXStyle {
-  
-  public func makeBody(content: LaTeX) -> some View {
-    content
-      .fontDesign(.serif)
-      .font(.largeTitle)
-      .foregroundStyle(
-          LinearGradient(
-            colors: [.red, .orange, .yellow, .green, .blue, .indigo, .purple],
-            startPoint: .leading,
-            endPoint: .trailing
-          )
-        )
-  }
-  
+// Render all equations to images
+let images = LaTeX.renderToImages("$x^2 + y^2 = z^2$")
+
+// With custom options
+let images = LaTeX.renderToImages(
+  "Euler's identity: $e^{i\\pi}+1=0$ and $\\int_0^1 x\\,dx$",
+  displayScale: 3.0,
+  processEscapes: true
+)
+
+// Each equation produces one image
+for image in images {
+  imageView.image = image
 }
 ```
 
-### Caching
+### ⚡ Performance & Caching
 
-`LaTeXSwiftUI` caches its SVG responses from MathJax and the images rendered as a result of the view's environment. If you want to control the cache, then you can access the static `dataCache` and `imageCache` properties.
+All rendering is performed off the main thread. The package caches both SVG data from MathJax and the rasterized images. You can control the caches directly.
 
 ```swift
-// Clear the SVG data cache.
+// Clear the SVG data cache
 LaTeX.dataCache.removeAllObjects()
 
-// Clear the rendered image cache.
+// Clear the rendered image cache
 LaTeX.imageCache.removeAllObjects()
 ```
 
-### Preloading
+#### Preloading
 
-SVGs and images are rendered and cached on demand, but there may be situations where you want to preload the data so that there is minimal lag when the view appears.
+SVGs and images are rendered on demand, but you can preload them to minimize lag when the view appears. Call `preload` **last** in the modifier chain.
 
 ```swift
 VStack {
@@ -456,5 +399,3 @@ VStack {
   }
 }
 ```
-
-SVGs and images are rendered as a result of the view's environment, so it is important to call the `preload` method last in the view's modifier chain if you use it.
