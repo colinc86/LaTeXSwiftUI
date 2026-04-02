@@ -1,5 +1,5 @@
 {
-  "originHash" : "c271968a509e2845fdddfd1ab17ef7d57f386d42b78b29b1b82c2cabd6351b50",
+  "originHash" : "dcb5fa589ce6e9ea938743267bec07344c747ba156cb57965e99c88dde202a67",
   "pins" : [
     {
       "identity" : "mathjaxswift",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/colinc86/MathJaxSwift",
       "state" : {
         "branch" : "v3.5.0",
-        "revision" : "bffb1a1780f26646bac93373a4ad4a0c76cb31cb"
+        "revision" : "e717718a24392d9ff0f7774de571438c83595c5c"
       }
     },
     {

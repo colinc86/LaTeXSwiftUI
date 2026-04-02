@@ -58,12 +58,18 @@ internal struct SVG: Codable, Hashable, Sendable {
   ///   - errorText: The error text that was generated when creating the SVG.
   init(svgString: String, errorText: String? = nil) throws {
     self.errorText = errorText
-    
+
+    // Patch SVG elements that rely on CSS for stroke styling.
+    // SwiftDraw doesn't apply CSS stylesheets, so we inline the
+    // stroke attributes that MathJax's CSS would normally provide
+    // for array borders and horizontal rules.
+    let patchedSVG = Self.patchStrokeAttributes(svgString)
+
     // Get the SVG's geometry
-    geometry = try SVGGeometry(svg: svgString)
-    
+    geometry = try SVGGeometry(svg: patchedSVG)
+
     // Get the SVG data
-    if let svgData = svgString.data(using: .utf8) {
+    if let svgData = patchedSVG.data(using: .utf8) {
       data = svgData
     }
     else {
@@ -84,6 +90,70 @@ extension SVG {
     try JSONEncoder().encode(self)
   }
   
+  /// Patches SVG elements that rely on MathJax CSS for stroke styling.
+  ///
+  /// MathJax renders array borders and horizontal rules using `<line>` and
+  /// `<rect>` elements with `data-frame` or `data-line` attributes. These
+  /// elements depend on a CSS rule for their appearance:
+  ///
+  ///     [data-frame],[data-line]{stroke-width:70px;fill:none}
+  ///
+  /// SwiftDraw does not apply CSS stylesheets, so these elements render
+  /// invisibly. This method inlines the stroke attributes directly onto
+  /// the affected elements.
+  ///
+  /// - Parameter svgString: The raw SVG string from MathJax.
+  /// - Returns: The patched SVG string.
+  private static func patchStrokeAttributes(_ svgString: String) -> String {
+    // MathJax uses <line> for array column separators and horizontal
+    // rules, and <rect data-frame> for outer table borders. These
+    // elements rely on parent <g> inheritance or CSS for stroke color,
+    // but SwiftDraw doesn't support either. We inline the stroke
+    // attribute on these elements so they render correctly.
+    var result = svgString
+
+    // Patch <line> elements that have data-line (internal separators
+    // and horizontal rules). These have neither stroke nor stroke-width.
+    // MathJax's CSS uses 70 SVG units for their stroke width.
+    if let dataLineRegex = try? NSRegularExpression(
+      pattern: #"(<line\b[^>]*\bdata-line\b[^>]*?)(\/?>)"#) {
+      let mutable = NSMutableString(string: result)
+      dataLineRegex.replaceMatches(
+        in: mutable, options: [],
+        range: NSRange(location: 0, length: mutable.length),
+        withTemplate: ##"$1 stroke="#000" stroke-width="70" $2"##)
+      result = mutable as String
+    }
+
+    // Patch <line> elements that have stroke-width but no stroke color
+    // (outer border lines). These already have the correct width.
+    if let borderLineRegex = try? NSRegularExpression(
+      pattern: #"(<line\b(?![^>]*\bdata-line\b)(?![^>]*\bstroke=")[^>]*?\bstroke-width="[^"]*"[^>]*?)(\/?>)"#) {
+      let mutable = NSMutableString(string: result)
+      borderLineRegex.replaceMatches(
+        in: mutable, options: [],
+        range: NSRange(location: 0, length: mutable.length),
+        withTemplate: ##"$1 stroke="#000" $2"##)
+      result = mutable as String
+    }
+
+    // Patch <rect> elements with data-frame (outer table borders).
+    // These need stroke, stroke-width, and fill="none" to render as
+    // borders. We don't patch other <rect> elements because MathJax
+    // uses those for filled regions (fraction bars, etc.).
+    if let rectRegex = try? NSRegularExpression(
+      pattern: #"(<rect\b[^>]*\bdata-frame\b(?![^>]*\bstroke=")[^>]*?)(\/?>)"#) {
+      let mutable = NSMutableString(string: result)
+      rectRegex.replaceMatches(
+        in: mutable, options: [],
+        range: NSRange(location: 0, length: mutable.length),
+        withTemplate: ##"$1 stroke="#000" stroke-width="70" fill="none" $2"##)
+      result = mutable as String
+    }
+
+    return result
+  }
+
   /// The size of the SVG based on the current font's x-height.
   ///
   /// - Parameter xHeight: The font's x-height.

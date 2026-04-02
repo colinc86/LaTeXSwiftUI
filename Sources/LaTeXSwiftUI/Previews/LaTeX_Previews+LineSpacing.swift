@@ -55,7 +55,7 @@ struct LaTeX_Previews_LineSpacing: PreviewProvider {
     VStack(alignment: .leading, spacing: 24) {
       Text("Tall inline equation")
         .font(.caption)
-      LaTeX("This is a sentance before the next one. The integral $\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$ is known as the Gaussian integral and appears frequently in probability theory and statistical mechanics.")
+      LaTeX("The integral $\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$ is known as the Gaussian integral and appears frequently in probability theory and statistical mechanics.")
         .blockMode(.alwaysInline)
     }
     .frame(width: 300)

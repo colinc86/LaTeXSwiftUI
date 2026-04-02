@@ -386,6 +386,23 @@ final class ParserTests: XCTestCase {
     XCTAssertGreaterThan(components.count, 0)
   }
 
+  func testSVGStrokePatch() throws {
+    let mathjax = try MathJax(preferredOutputFormat: .svg)
+    let texOptions = TeXInputProcessorOptions(processEscapes: false, errorMode: .original)
+    let input = "\\begin{array}{|c|c|c|} \\hline a & b & c \\\\ \\hline d & e & f \\\\ \\hline \\end{array}"
+    var error: Error?
+    let svgString = mathjax.tex2svg(input, styles: false, conversionOptions: ConversionOptions(display: true), inputOptions: texOptions, error: &error)
+    XCTAssertNil(error)
+
+    let svg = try SVG(svgString: svgString)
+    let patchedString = String(data: svg.data, encoding: .utf8)!
+
+    // Verify the patch added stroke to line elements
+    XCTAssertTrue(patchedString.contains(#"data-line="v"#), "Should have data-line attributes")
+    XCTAssertTrue(patchedString.contains("stroke="), "Should have patched stroke attributes")
+    XCTAssertFalse(patchedString.contains("data-background"), "Should not have error background")
+  }
+
   func testUnmatchedBlockDelimiter() {
     let input = "Text with \\[ unmatched block"
     let components = Parser.parse(input)

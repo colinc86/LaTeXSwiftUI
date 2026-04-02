@@ -68,7 +68,6 @@ internal struct LineSpacingNormalizer: TextRenderer {
     }
 
     // Get baseline Y positions for each line.
-    // typographicBounds.origin.y is the baseline Y position.
     let baselines = lines.map { $0.typographicBounds.origin.y }
 
     // Compute baseline-to-baseline gaps between adjacent lines.
@@ -97,7 +96,6 @@ internal struct LineSpacingNormalizer: TextRenderer {
       let prevBottom = baselines[i - 1] + lines[i - 1].typographicBounds.descent - corrections[i - 1]
       let currTop = baselines[i] - lines[i].typographicBounds.ascent - cumulativeCorrection
       if currTop < prevBottom {
-        // Reduce correction to prevent overlap
         cumulativeCorrection -= (prevBottom - currTop)
       }
 

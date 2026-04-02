@@ -83,7 +83,7 @@ private struct ScriptKey: EnvironmentKey {
 }
 
 private struct PlatformFontKey: EnvironmentKey {
-  static let defaultValue: _Font? = nil
+  static let defaultValue: _Font? = nil // leave this as static let
 }
 
 extension EnvironmentValues {
