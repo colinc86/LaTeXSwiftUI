@@ -115,7 +115,18 @@ internal class Parser {
       
       index = input.index(after: index)
     }
-    
+
+    // If the stack is non-empty, the opening delimiter was unmatched.
+    // Treat the text from the previous endIndex through end-of-input
+    // as plain text (the unmatched delimiter is not a real equation).
+    if !stack.isEmpty {
+      stack.removeAll()
+      if endIndex < index {
+        components.append(Component(text: String(input[endIndex..<index]), type: .text))
+      }
+      return components
+    }
+
     if endIndex < index {
       components.append(Component(text: String(input[endIndex..<index]), type: .text))
     }
