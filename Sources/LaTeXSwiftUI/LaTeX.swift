@@ -63,6 +63,15 @@ public struct LaTeX: View {
     case right
   }
   
+  /// An error thrown when LaTeX validation fails.
+  public struct ValidationError: LocalizedError {
+
+    /// The error message from MathJax.
+    public let message: String
+
+    public var errorDescription: String? { message }
+  }
+
   /// The view's error mode.
   public enum ErrorMode: Sendable {
     
@@ -340,12 +349,38 @@ extension LaTeX {
   }
 #endif
 
+  /// Validates a LaTeX equation string.
+  ///
+  /// The input is treated as a raw equation (no delimiters needed). If the
+  /// LaTeX is invalid, a ``ValidationError`` is thrown containing the error
+  /// message from MathJax.
+  ///
+  /// - Parameters:
+  ///   - latex: The LaTeX equation string.
+  ///   - processEscapes: Whether to process escape sequences (default: false).
+  /// - Throws: ``ValidationError`` if the input is not valid LaTeX.
+  public static func validate(_ latex: String, processEscapes: Bool = false) throws {
+    try Renderer.validate(latex: latex, processEscapes: processEscapes)
+  }
+
+  /// Returns whether a LaTeX equation string is valid.
+  ///
+  /// The input is treated as a raw equation (no delimiters needed).
+  ///
+  /// - Parameters:
+  ///   - latex: The LaTeX equation string.
+  ///   - processEscapes: Whether to process escape sequences (default: false).
+  /// - Returns: `true` if the input is valid LaTeX, `false` otherwise.
+  public static func isValid(_ latex: String, processEscapes: Bool = false) -> Bool {
+    (try? validate(latex, processEscapes: processEscapes)) != nil
+  }
+
 }
 
 // MARK: Private methods
 
 extension LaTeX {
-  
+
   /// Checks the renderer's caches for the current view.
   ///
   /// If this method returns `true`, then there is no need to do an async

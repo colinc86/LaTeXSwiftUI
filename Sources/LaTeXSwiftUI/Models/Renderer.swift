@@ -299,6 +299,46 @@ extension Renderer {
     }
   }
 
+  /// Validates a LaTeX equation string by attempting a TeX-to-SVG conversion
+  /// with error-suppressing packages removed.
+  ///
+  /// Must not be called from `renderQueue`.
+  ///
+  /// - Parameters:
+  ///   - latex: The raw LaTeX equation string (no delimiters).
+  ///   - processEscapes: Whether to process escape sequences.
+  /// - Throws: ``LaTeX/ValidationError`` if the input is invalid.
+  nonisolated static func validate(
+    latex: String,
+    processEscapes: Bool
+  ) throws {
+    try renderQueue.sync {
+      guard let mathjax = mathjax else {
+        return
+      }
+
+      let texOptions = TeXInputProcessorOptions(
+        processEscapes: processEscapes,
+        errorMode: .error)
+      let conversionOptions = ConversionOptions(display: false)
+
+      var conversionError: Error?
+      _ = mathjax.tex2svg(
+        latex,
+        styles: false,
+        conversionOptions: conversionOptions,
+        inputOptions: texOptions,
+        error: &conversionError)
+
+      if let mjError = conversionError as? MathJaxError,
+         case .conversionError(let innerError) = mjError {
+        throw LaTeX.ValidationError(message: innerError)
+      } else if let error = conversionError {
+        throw error
+      }
+    }
+  }
+
 }
 
 // MARK: Private methods
