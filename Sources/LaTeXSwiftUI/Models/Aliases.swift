@@ -35,4 +35,9 @@ import Cocoa
 internal typealias _Image = NSImage
 internal typealias _Font = NSFont
 internal typealias _Color = NSColor
+
+// UIFont and NSFont are effectively immutable once created but NSFont doesn't
+// conform to Sendable. This retroactive conformance is safe because font
+// objects are not mutated after initialization.
+extension _Font: @retroactive @unchecked Sendable {}
 #endif

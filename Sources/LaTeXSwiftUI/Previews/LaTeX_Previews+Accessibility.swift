@@ -1,5 +1,5 @@
 //
-//  MathJax+Extensions.swift
+//  LaTeX_Previews+Accessibility.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -23,19 +23,45 @@
 //  IN THE SOFTWARE.
 //
 
-import Foundation
-import MathJaxSwift
+import SwiftUI
 
-internal extension MathJax {
-  
-  static var svgRenderer: MathJax? = {
-    do {
-      return try MathJax(preferredOutputFormat: .svg)
+/// Demonstrates accessibility modes for rendered equations.
+///
+/// Use Accessibility Inspector (Xcode > Open Developer Tool > Accessibility
+/// Inspector) to verify VoiceOver labels on each equation.
+struct LaTeX_Previews_Accessibility: PreviewProvider {
+
+  static var previews: some View {
+    VStack(alignment: .leading, spacing: 20) {
+      Group {
+        Text("Default (.sre)")
+          .font(.caption)
+        LaTeX("$x^2 + y^2 = z^2$")
+      }
+
+      Group {
+        Text(".input")
+          .font(.caption)
+        LaTeX("$x^2 + y^2 = z^2$")
+          .imageAccessibility(.input)
+      }
+
+      Group {
+        Text(".none")
+          .font(.caption)
+        LaTeX("$x^2 + y^2 = z^2$")
+          .imageAccessibility(.none)
+      }
+
+      Group {
+        Text(".custom")
+          .font(.caption)
+        LaTeX("$E = mc^2$")
+          .imageAccessibility(.custom("Einstein's mass-energy equivalence"))
+      }
     }
-    catch {
-      NSLog("Error creating MathJax instance: \(error)")
-      return nil
-    }
-  }()
-  
+    .padding()
+    .previewDisplayName("Accessibility Modes")
+  }
+
 }

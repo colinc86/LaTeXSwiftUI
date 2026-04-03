@@ -1,5 +1,5 @@
 //
-//  DefaultLaTeXStyle.swift
+//  LaTeX_Previews+Dynamic.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -25,19 +25,46 @@
 
 import SwiftUI
 
-/// The default LaTeX view style.
-public struct DefaultLaTeXStyle: LaTeXStyle {
-  
-  public func makeBody(content: LaTeX) -> some View {
-    // Just return the view
-    content
-  }
-  
-}
+/// Demonstrates that LaTeX views update when their input text changes.
+struct LaTeX_Previews_Dynamic: PreviewProvider {
 
-extension LaTeXStyle where Self == DefaultLaTeXStyle {
-  
-  /// The default LaTeX view style.
-  public static var automatic: Self { Self() }
-  
+  struct DynamicInputExample: View {
+    @State private var text: String = "x^2 + y^2 = z^2"
+
+    var body: some View {
+      VStack(spacing: 16) {
+        TextField("Enter LaTeX", text: $text)
+          .textFieldStyle(.roundedBorder)
+
+        LaTeX("$\(text)$")
+      }
+      .padding()
+    }
+  }
+
+  struct ToggleExample: View {
+    @State private var showIntegral: Bool = false
+
+    var body: some View {
+      VStack(spacing: 16) {
+        Toggle("Show integral", isOn: $showIntegral)
+
+        if showIntegral {
+          LaTeX("$$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$")
+        } else {
+          LaTeX("$$E = mc^2$$")
+        }
+      }
+      .padding()
+    }
+  }
+
+  static var previews: some View {
+    DynamicInputExample()
+      .previewDisplayName("Dynamic Input")
+
+    ToggleExample()
+      .previewDisplayName("Toggle Equation")
+  }
+
 }

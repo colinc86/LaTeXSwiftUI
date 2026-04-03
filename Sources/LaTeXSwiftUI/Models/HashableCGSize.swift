@@ -27,7 +27,7 @@ import CoreGraphics
 import Foundation
 
 /// A hashable wrapper for CGSize compatible with Swift language versions < 6.
-internal struct HashableCGSize: Hashable {
+internal struct HashableCGSize: Hashable, Sendable {
   
   /// The size.
   let size: CGSize

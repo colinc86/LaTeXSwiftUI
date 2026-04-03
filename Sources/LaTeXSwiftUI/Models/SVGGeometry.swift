@@ -27,7 +27,7 @@ import Foundation
 import SwiftUI
 
 /// The geometry of a SVG.
-internal struct SVGGeometry: Codable, Hashable {
+internal struct SVGGeometry: Codable, Hashable, Sendable {
 
   // MARK: Types
 

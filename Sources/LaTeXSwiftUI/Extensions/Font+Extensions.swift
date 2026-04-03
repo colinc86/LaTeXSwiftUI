@@ -58,26 +58,57 @@ internal extension Font {
     _Font.preferredFont(from: self).xHeight
   }
 
- /// Secondary version that reads the DynamicTypeSize
- func xHeight(for sizeCategory: DynamicTypeSize) -> CGFloat {
-    _Font.preferredFont(from: self, for: sizeCategory).xHeight
- }
-  
+  /// Returns the effective x-height for the given script type.
+  func effectiveXHeight(for script: LaTeX.Script, sizeCategory: DynamicTypeSize? = nil) -> CGFloat {
+    _Font.preferredFont(from: self, sizeCategory: sizeCategory).effectiveXHeight(for: script)
+  }
+
 }
 
 internal extension _Font {
+
+  /// Returns the effective x-height for the given script type.
+  func effectiveXHeight(for script: LaTeX.Script) -> CGFloat {
+    switch script {
+    case .latin:
+      return xHeight
+    case .cjk:
+      return capHeight
+    case .custom(let factor):
+      return xHeight * factor
+    }
+  }
+
+
   
   /// Returns the preferred font from a SwiftUI font.
   ///
-  /// - Parameter font: The font.
+  /// - Parameters:
+  ///   - font: The font.
+  ///   - sizeCategory: The dynamic type size to use for scaling. If `nil`,
+  ///     the current system setting is used.
   /// - Returns: The preferred font.
-  class func preferredFont(from font: Font) -> _Font {
+  class func preferredFont(from font: Font, sizeCategory: DynamicTypeSize? = nil) -> _Font {
     guard let textStyle = font.textStyle() else {
+#if os(iOS) || os(visionOS)
+      if let sizeCategory {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+        return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
+      }
+#endif
       return _Font.preferredFont(forTextStyle: .body)
     }
-    //let _font = _Font.preferredFont(forTextStyle: textStyle)
-    let traits = UITraitCollection(preferredContentSizeCategory: .large)
-    let _font = _Font.preferredFont(forTextStyle: textStyle, compatibleWith: traits)
+#if os(iOS) || os(visionOS)
+    let _font: _Font
+    if let sizeCategory {
+      let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+      _font = _Font.preferredFont(forTextStyle: textStyle, compatibleWith: traits)
+    } else {
+      _font = _Font.preferredFont(forTextStyle: textStyle)
+    }
+#else
+    let _font = _Font.preferredFont(forTextStyle: textStyle)
+#endif
     
     switch font {
     case .largeTitle,
@@ -163,68 +194,24 @@ internal extension _Font {
 #endif
       
     default:
-      return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
+#if os(iOS) || os(visionOS)
+      if let sizeCategory {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+        return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
+      }
+#endif
+      return _Font.preferredFont(forTextStyle: .body)
     }
   }
 
-class func preferredFont(from font: Font, for sizeCategory: DynamicTypeSize) -> _Font {
-        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
-        
-        guard let textStyle = font.textStyle() else {
-            return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
-        }
-        
-        let _font = _Font.preferredFont(forTextStyle: textStyle, compatibleWith: traits)
-        
-        switch font {
-        case .largeTitle, .title, .title2, .title3, .headline, .subheadline, .callout, .caption, .caption2, .footnote, .body:
-            return _font
-            
-        case .largeTitle.bold(), .title.bold(), .title2.bold(), .title3.bold(), .headline.bold(), .subheadline.bold(), .callout.bold(), .caption.bold(), .caption2.bold(), .footnote.bold(), .body.bold():
-#if os(iOS) || os(visionOS)
-            if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitBold) {
-                return _Font(descriptor: descriptor, size: _font.pointSize)
-            } else {
-                return _font
-            }
-#else
-            let descriptor = _font.fontDescriptor.withSymbolicTraits(.bold)
-            return _Font(descriptor: descriptor, size: _font.pointSize) ?? _Font.systemFont(ofSize: _font.pointSize)
-#endif
-            
-        case .largeTitle.monospaced(), .title.monospaced(), .title2.monospaced(), .title3.monospaced(), .headline.monospaced(), .subheadline.monospaced(), .callout.monospaced(), .caption.monospaced(), .caption2.monospaced(), .footnote.monospaced(), .body.monospaced():
-#if os(iOS) || os(visionOS)
-            if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitMonoSpace) {
-                return _Font(descriptor: descriptor, size: _font.pointSize)
-            } else {
-                return _font
-            }
-#else
-            let descriptor = _font.fontDescriptor.withSymbolicTraits(.monoSpace)
-            return _Font(descriptor: descriptor, size: _font.pointSize) ?? _Font.systemFont(ofSize: _font.pointSize)
-#endif
-            
-        case .largeTitle.italic(), .title.italic(), .title2.italic(), .title3.italic(), .headline.italic(), .subheadline.italic(), .callout.italic(), .caption.italic(), .caption2.italic(), .footnote.italic(), .body.italic():
-#if os(iOS) || os(visionOS)
-            if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitItalic) {
-                return _Font(descriptor: descriptor, size: _font.pointSize)
-            } else {
-                return _font
-            }
-#else
-            let descriptor = _font.fontDescriptor.withSymbolicTraits(.italic)
-            return _Font(descriptor: descriptor, size: _font.pointSize) ?? _Font.systemFont(ofSize: _font.pointSize)
-#endif
-        default:
-            return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
-        }
-    }
-  
 }
 
+#if os(iOS) || os(visionOS)
 extension UIContentSizeCategory {
-  init(_ swiftUI: DynamicTypeSize) {
-    switch swiftUI {
+
+  /// Creates a `UIContentSizeCategory` from a SwiftUI `DynamicTypeSize`.
+  init(_ dynamicTypeSize: DynamicTypeSize) {
+    switch dynamicTypeSize {
     case .xSmall: self = .extraSmall
     case .small: self = .small
     case .medium: self = .medium
@@ -240,4 +227,6 @@ extension UIContentSizeCategory {
     @unknown default: self = .large
     }
   }
+
 }
+#endif

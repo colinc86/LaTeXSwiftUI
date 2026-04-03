@@ -1,5 +1,5 @@
 //
-//  LaTeXStyle.swift
+//  EquationMarker.swift
 //  LaTeXSwiftUI
 //
 //  Copyright (c) 2023 Colin Campbell
@@ -25,15 +25,6 @@
 
 import SwiftUI
 
-/// A protocol that describes the appearance of a LaTeX view.
-public protocol LaTeXStyle {
-  
-  /// A view that represents a stylized LaTeX view.
-  associatedtype Body: View
-  
-  /// Creates a stylized LaTeX view.
-  ///
-  /// - Parameter content: The current LaTeX view.
-  /// - Returns: A stylized LaTeX view.
-  func makeBody(content: LaTeX) -> Body
-}
+/// Marks a text run as containing a rendered equation image.
+@available(iOS 18.0, macOS 15.0, *)
+internal struct EquationMarker: TextAttribute {}

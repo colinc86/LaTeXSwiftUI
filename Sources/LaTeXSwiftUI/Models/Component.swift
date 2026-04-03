@@ -28,49 +28,63 @@ import MathJaxSwift
 import SwiftUI
 
 /// A LaTeX component.
-internal struct Component: CustomStringConvertible, Equatable, Hashable {
+internal struct Component: CustomStringConvertible, Equatable, Hashable, Sendable {
   
   /// A LaTeX component type.
-  enum ComponentType: String, Equatable, CustomStringConvertible {
-    
+  enum ComponentType: Equatable, Hashable, CustomStringConvertible, Sendable {
+
     /// A text component.
     case text
-    
+
     /// An inline equation component.
     ///
     /// - Example: `$x^2$`
     case inlineEquation
-    
+
     /// An inline equation component.
     ///
     /// - Example: `\(x^2\)`
     case inlineParenthesesEquation
-    
+
     /// A TeX-style block equation.
     ///
     /// - Example: `$$x^2$$`.
     case texEquation
-    
+
     /// A block equation.
     ///
     /// - Example: `\[x^2\]`
     case blockEquation
-    
+
     /// A named equation component.
     ///
     /// - Example: `\begin{equation}x^2\end{equation}`
     case namedEquation
-    
+
     /// A named equation component.
     ///
     /// - Example: `\begin{equation*}x^2\end{equation*}`
     case namedNoNumberEquation
-    
+
+    /// A generic named environment.
+    ///
+    /// - Example: `\begin{align}x^2\end{align}`
+    case namedEnvironment(String)
+
     /// The component's description.
     var description: String {
-      rawValue
+      switch self {
+      case .text: return "text"
+      case .inlineEquation: return "inlineEquation"
+      case .inlineParenthesesEquation: return "inlineParenthesesEquation"
+      case .texEquation: return "texEquation"
+      case .blockEquation: return "blockEquation"
+      case .namedEquation: return "namedEquation"
+      case .namedNoNumberEquation: return "namedNoNumberEquation"
+      case .namedEnvironment(let name): return "namedEnvironment(\(name))"
+      }
     }
-    
+
     /// The order we should scan components when parsing.
     static let order: [ComponentType] = [
       .namedNoNumberEquation,
@@ -80,7 +94,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       .inlineEquation,
       .inlineParenthesesEquation
     ]
-    
+
     /// The component's left terminator.
     var leftTerminator: String? {
       switch self {
@@ -91,9 +105,10 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       case .blockEquation: return "\\["
       case .namedEquation: return "\\begin{equation}"
       case .namedNoNumberEquation: return "\\begin{equation*}"
+      case .namedEnvironment(let name): return "\\begin{\(name)}"
       }
     }
-    
+
     /// The component's right terminator.
     var rightTerminator: String? {
       switch self {
@@ -104,9 +119,10 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       case .blockEquation: return "\\]"
       case .namedEquation: return "\\end{equation}"
       case .namedNoNumberEquation: return "\\end{equation*}"
+      case .namedEnvironment(let name): return "\\end{\(name)}"
       }
     }
-    
+
     /// Whether or not this component is inline.
     var inline: Bool {
       switch self {
@@ -114,7 +130,7 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable {
       default: return false
       }
     }
-    
+
     /// True iff the component is not `text`.
     var isEquation: Bool {
       return self != .text
@@ -208,7 +224,8 @@ extension Component {
     errorMode: LaTeX.ErrorMode,
     blockRenderingMode: LaTeX.BlockMode,
     isInEquationBlock: Bool,
-    ignoreStringFormatting: Bool
+    ignoreStringFormatting: Bool,
+    imageAccessibilityMode: LaTeX.ImageAccessibilityMode = .sre
   ) -> Text {
     // Get the component's text
     let text: Text
@@ -228,7 +245,27 @@ extension Component {
       }
       else if let imageContainer {
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
-        text = Text(imageContainer.image).baselineOffset(blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0)
+        let baselineOffset = blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0
+        var imageText: Text
+        if #available(iOS 18.0, macOS 15.0, *) {
+          imageText = Text(imageContainer.image)
+            .baselineOffset(baselineOffset)
+            .customAttribute(EquationMarker())
+        } else {
+          imageText = Text(imageContainer.image)
+            .baselineOffset(baselineOffset)
+        }
+        switch imageAccessibilityMode {
+        case .none:
+          break
+        case .input:
+          imageText = imageText.accessibilityLabel(self.text)
+        case .sre:
+          imageText = imageText.accessibilityLabel(svg.speechText ?? self.text)
+        case .custom(let label):
+          imageText = imageText.accessibilityLabel(label)
+        }
+        text = imageText
       }
       else {
         text = Text("")

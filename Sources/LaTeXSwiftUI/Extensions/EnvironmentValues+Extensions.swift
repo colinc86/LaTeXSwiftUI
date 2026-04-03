@@ -78,8 +78,16 @@ private struct IgnoreSringFormattingKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
+private struct ScriptKey: EnvironmentKey {
+  static let defaultValue: LaTeX.Script = .latin
+}
+
+private struct ImageAccessibilityModeKey: EnvironmentKey {
+  static let defaultValue: LaTeX.ImageAccessibilityMode = .sre
+}
+
 private struct PlatformFontKey: EnvironmentKey {
-  static let defaultValue: _Font? = nil
+  static let defaultValue: _Font? = nil // leave this as static let
 }
 
 extension EnvironmentValues {
@@ -162,10 +170,22 @@ extension EnvironmentValues {
     set { self[IgnoreSringFormattingKey.self] = newValue }
   }
   
+  /// The script type used for equation scaling.
+  var script: LaTeX.Script {
+    get { self[ScriptKey.self] }
+    set { self[ScriptKey.self] = newValue }
+  }
+
+  /// The accessibility mode for rendered equation images.
+  var imageAccessibilityMode: LaTeX.ImageAccessibilityMode {
+    get { self[ImageAccessibilityModeKey.self] }
+    set { self[ImageAccessibilityModeKey.self] = newValue }
+  }
+
   /// The specified UI/NSFont font to use, if any.
   var platformFont: _Font? {
     get { self[PlatformFontKey.self] }
     set { self[PlatformFontKey.self] = newValue }
   }
-  
+
 }
