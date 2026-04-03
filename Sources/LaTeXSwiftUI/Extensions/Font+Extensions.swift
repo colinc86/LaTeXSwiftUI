@@ -57,8 +57,8 @@ internal extension Font {
   }
 
   /// Returns the effective x-height for the given script type.
-  func effectiveXHeight(for script: LaTeX.Script) -> CGFloat {
-    _Font.preferredFont(from: self).effectiveXHeight(for: script)
+  func effectiveXHeight(for script: LaTeX.Script, sizeCategory: DynamicTypeSize? = nil) -> CGFloat {
+    _Font.preferredFont(from: self, sizeCategory: sizeCategory).effectiveXHeight(for: script)
   }
 
 }
@@ -81,13 +81,32 @@ internal extension _Font {
   
   /// Returns the preferred font from a SwiftUI font.
   ///
-  /// - Parameter font: The font.
+  /// - Parameters:
+  ///   - font: The font.
+  ///   - sizeCategory: The dynamic type size to use for scaling. If `nil`,
+  ///     the current system setting is used.
   /// - Returns: The preferred font.
-  class func preferredFont(from font: Font) -> _Font {
+  class func preferredFont(from font: Font, sizeCategory: DynamicTypeSize? = nil) -> _Font {
     guard let textStyle = font.textStyle() else {
+#if os(iOS) || os(visionOS)
+      if let sizeCategory {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+        return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
+      }
+#endif
       return _Font.preferredFont(forTextStyle: .body)
     }
+#if os(iOS) || os(visionOS)
+    let _font: _Font
+    if let sizeCategory {
+      let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+      _font = _Font.preferredFont(forTextStyle: textStyle, compatibleWith: traits)
+    } else {
+      _font = _Font.preferredFont(forTextStyle: textStyle)
+    }
+#else
     let _font = _Font.preferredFont(forTextStyle: textStyle)
+#endif
     
     switch font {
     case .largeTitle,
@@ -173,8 +192,39 @@ internal extension _Font {
 #endif
       
     default:
+#if os(iOS) || os(visionOS)
+      if let sizeCategory {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
+        return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
+      }
+#endif
       return _Font.preferredFont(forTextStyle: .body)
     }
   }
-  
+
 }
+
+#if os(iOS) || os(visionOS)
+extension UIContentSizeCategory {
+
+  /// Creates a `UIContentSizeCategory` from a SwiftUI `DynamicTypeSize`.
+  init(_ dynamicTypeSize: DynamicTypeSize) {
+    switch dynamicTypeSize {
+    case .xSmall: self = .extraSmall
+    case .small: self = .small
+    case .medium: self = .medium
+    case .large: self = .large
+    case .xLarge: self = .extraLarge
+    case .xxLarge: self = .extraExtraLarge
+    case .xxxLarge: self = .extraExtraExtraLarge
+    case .accessibility1: self = .accessibilityMedium
+    case .accessibility2: self = .accessibilityLarge
+    case .accessibility3: self = .accessibilityExtraLarge
+    case .accessibility4: self = .accessibilityExtraExtraLarge
+    case .accessibility5: self = .accessibilityExtraExtraExtraLarge
+    @unknown default: self = .large
+    }
+  }
+
+}
+#endif

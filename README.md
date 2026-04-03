@@ -13,6 +13,7 @@
 - 📐 **[Line Spacing](#line-spacing)** — Automatic normalization on iOS 18+ / macOS 15+
 - 📊 **[Arrays & Tables](#arrays--tables)** — `array`, `matrix`, `cases`, and more with borders and rules
 - 🔲 **[Redacted Placeholder](#rendering-style)** — New `redactedOriginal` async rendering style
+- 📏 **Dynamic Type** — Equations scale with system text size settings
 - 🖼️ **[Render to Image](#-rendering-to-images)** — Render LaTeX to `UIImage`/`NSImage` without a SwiftUI view
 - 🧩 **[Generic Environments](#generic-environments)** — `\begin{align}`, `\begin{cases}`, etc. work standalone
 
@@ -33,7 +34,7 @@
 
 `LaTeXSwiftUI` is a package that exposes a `LaTeX` view capable of parsing and rendering TeX and LaTeX equations containing math-mode macros. It uses the [MathJaxSwift](https://www.github.com/colinc86/MathJaxSwift) package to render equations with [MathJax](https://www.mathjax.org), so the view's capabilities are influenced by MathJax's [supported features](https://docs.mathjax.org/en/latest/input/tex/extensions.html).
 
-The view renders math-mode equations (inline and block), `\text{}` within equations, numbered block equations, any `\begin{...}...\end{...}` environment (including `align`, `gather`, `cases`, `array`, and more), and provides VoiceOver accessibility via the Speech Rule Engine. It scales equations for non-Latin scripts and normalizes line spacing on iOS 18+ / macOS 15+. You can also render equations directly to `UIImage`/`NSImage` without a SwiftUI view. It does **not** render full LaTeX documents or text-mode macros.
+The view renders math-mode equations (inline and block), `\text{}` within equations, numbered block equations, any `\begin{...}...\end{...}` environment (including `align`, `gather`, `cases`, `array`, and more), and provides VoiceOver accessibility via the Speech Rule Engine. It scales equations for non-Latin scripts and normalizes line spacing on iOS 18+ / macOS 15+. You can also render equations directly to `UIImage`/`NSImage` without a SwiftUI view. Equations automatically scale with Dynamic Type accessibility settings. It does **not** render full LaTeX documents or text-mode macros.
 
 Requires Swift 6.0. Supports iOS 15+, macOS 12+, and visionOS 1+. All rendering is performed off the main thread.
 

@@ -60,6 +60,9 @@ internal struct ComponentBlocksViews: View {
   /// The script type for equation scaling.
   @Environment(\.script) private var script
 
+  /// The view's dynamic type size.
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   /// The accessibility mode for equation images.
   @Environment(\.imageAccessibilityMode) private var imageAccessibilityMode
   
@@ -93,7 +96,7 @@ internal struct ComponentBlocksViews: View {
         }
         else {
           let textView = block.toText(
-            xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
+            xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
             displayScale: displayScale,
             renderingMode: imageRenderingMode,
             errorMode: errorMode,

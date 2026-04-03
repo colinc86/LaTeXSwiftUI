@@ -202,6 +202,9 @@ public struct LaTeX: View {
   /// The script type for equation scaling.
   @Environment(\.script) private var script
 
+  /// The view's dynamic type size.
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   // MARK: Private properties
   
   /// The view's renderer.
@@ -247,6 +250,9 @@ public struct LaTeX: View {
     }
     .animation(renderingAnimation, value: renderer.rendered)
     .onChange(of: latex) { _ in
+      renderer.reset()
+    }
+    .onChange(of: dynamicTypeSize) { _ in
       renderer.reset()
     }
     .onDisappear(perform: preloadTask?.cancel)
@@ -354,7 +360,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale)
   }
   
@@ -366,7 +372,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
@@ -381,7 +387,7 @@ extension LaTeX {
       parsingMode: parsingMode,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }

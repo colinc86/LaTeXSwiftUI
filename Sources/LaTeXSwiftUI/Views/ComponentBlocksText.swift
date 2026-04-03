@@ -60,11 +60,14 @@ internal struct ComponentBlocksText: View {
   /// The script type for equation scaling.
   @Environment(\.script) private var script
 
+  /// The view's dynamic type size.
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
   /// The accessibility mode for equation images.
   @Environment(\.imageAccessibilityMode) private var imageAccessibilityMode
-  
+
   // MARK: View body
-  
+
   @ViewBuilder var body: some View {
     let textView = blocks.map { block in
       return block.isEquationBlock && !forceInline ?
@@ -90,7 +93,7 @@ extension ComponentBlocksText {
   /// - Returns: A `Text` view.
   @MainActor private func text(for block: ComponentBlock) -> Text {
     block.toText(
-      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script)) ?? Font.body.effectiveXHeight(for: script),
+      xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode,
       errorMode: errorMode,
