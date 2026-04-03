@@ -62,7 +62,7 @@ internal final class Cache: @unchecked Sendable {
     static let keyType: String = "svg"
     let componentText: String
     let conversionOptions: ConversionOptions
-    let texOptions: TeXInputProcessorOptions
+    let inputOptions: Renderer.InputOptions
     internal var fallbackKey: String { componentText }
   }
   

@@ -27,7 +27,15 @@ import Foundation
 
 /// Parses text for LaTeX equations.
 internal enum Parser {
-  
+
+  /// Notation hint tags recognized before opening delimiters.
+  private static let notationHints: [(tag: String, notation: LaTeX.Notation)] = [
+    ("[latex]", .latex),
+    ("[mml]", .mml),
+    ("[am]", .am),
+    ("[auto]", .auto),
+  ]
+
   /// Parses the input text for component blocks.
   ///
   /// - Parameters:
@@ -35,7 +43,19 @@ internal enum Parser {
   ///   - mode: The rendering mode.
   /// - Returns: An array of component blocks.
   static func parse(_ text: String, mode: LaTeX.ParsingMode) -> [ComponentBlock] {
-    let components = mode == .all ? [Component(text: text, type: .inlineEquation)] : parse(text)
+    let components: [Component]
+    if mode == .all {
+      // Check for a leading notation hint when the entire input is one equation
+      let hint = notationHints.first { text.hasPrefix($0.tag) }
+      if let hint {
+        let stripped = String(text[text.index(text.startIndex, offsetBy: hint.tag.count)...])
+        components = [Component(text: stripped, type: .inlineEquation, notationHint: hint.notation)]
+      } else {
+        components = [Component(text: text, type: .inlineEquation)]
+      }
+    } else {
+      components = parse(text)
+    }
     var blocks = [ComponentBlock]()
     var blockComponents = [Component]()
     for component in components {
@@ -63,12 +83,17 @@ internal enum Parser {
     var components: [Component] = []
     var stack = [Component.ComponentType]()
     var index = input.startIndex
-    var startIndex = index
+    // `textGapStart` marks where the preceding text gap begins (at the hint
+    // tag if present, otherwise at the opening delimiter).
+    // `delimStart` marks the opening delimiter itself (equation text).
+    var textGapStart = index
+    var delimStart = index
     var endIndex = index
-    
+    var currentHint: LaTeX.Notation? = nil
+
     inputLoop: while index < input.endIndex {
-      let remaining = input[index...]
-      
+      var remaining = input[index...]
+
       if !stack.isEmpty {
         for type in Component.ComponentType.order {
           guard let end = type.rightTerminator else { continue }
@@ -82,10 +107,11 @@ internal enum Parser {
               let newEndIndex = input.index(index, offsetBy: end.count)
               let lastType = stack.removeLast()
               if stack.isEmpty {
-                if endIndex < startIndex {
-                  components.append(Component(text: String(input[endIndex..<startIndex]), type: .text))
+                if endIndex < textGapStart {
+                  components.append(Component(text: String(input[endIndex..<textGapStart]), type: .text))
                 }
-                components.append(Component(text: String(input[startIndex..<newEndIndex]), type: lastType))
+                components.append(Component(text: String(input[delimStart..<newEndIndex]), type: lastType, notationHint: currentHint))
+                currentHint = nil
               }
               endIndex = newEndIndex
               index = newEndIndex
@@ -104,10 +130,11 @@ internal enum Parser {
               let newEndIndex = input.index(index, offsetBy: terminator.count)
               let lastType = stack.removeLast()
               if stack.isEmpty {
-                if endIndex < startIndex {
-                  components.append(Component(text: String(input[endIndex..<startIndex]), type: .text))
+                if endIndex < textGapStart {
+                  components.append(Component(text: String(input[endIndex..<textGapStart]), type: .text))
                 }
-                components.append(Component(text: String(input[startIndex..<newEndIndex]), type: lastType))
+                components.append(Component(text: String(input[delimStart..<newEndIndex]), type: lastType, notationHint: currentHint))
+                currentHint = nil
               }
               endIndex = newEndIndex
               index = newEndIndex
@@ -116,7 +143,27 @@ internal enum Parser {
           }
         }
       }
-      
+
+      // Check for a notation hint before an opening delimiter
+      if stack.isEmpty {
+        for (tag, notation) in notationHints {
+          if remaining.hasPrefix(tag) {
+            let afterTag = input.index(index, offsetBy: tag.count)
+            let rest = input[afterTag...]
+            let hasDelimiter = Component.ComponentType.order.contains {
+              $0.leftTerminator.map { rest.hasPrefix($0) } ?? false
+            } || rest.hasPrefix("\\begin{")
+            if hasDelimiter {
+              currentHint = notation
+              textGapStart = index
+              index = afterTag
+              remaining = input[index...]
+              break
+            }
+          }
+        }
+      }
+
       for type in Component.ComponentType.order {
         guard let start = type.leftTerminator else { continue }
         if remaining.hasPrefix(start) {
@@ -126,7 +173,10 @@ internal enum Parser {
           }
 
           if stack.isEmpty {
-            startIndex = index
+            if currentHint == nil {
+              textGapStart = index
+            }
+            delimStart = index
           }
 
           stack.append(type)
@@ -143,7 +193,10 @@ internal enum Parser {
           // equation and equation* are handled by the static types above
           if name != "equation" && name != "equation*" {
             if stack.isEmpty {
-              startIndex = index
+              if currentHint == nil {
+                textGapStart = index
+              }
+              delimStart = index
             }
             let type = Component.ComponentType.namedEnvironment(name)
             stack.append(type)
@@ -162,6 +215,7 @@ internal enum Parser {
     // as plain text (the unmatched delimiter is not a real equation).
     if !stack.isEmpty {
       stack.removeAll()
+      currentHint = nil
       if endIndex < index {
         components.append(Component(text: String(input[endIndex..<index]), type: .text))
       }
@@ -171,7 +225,7 @@ internal enum Parser {
     if endIndex < index {
       components.append(Component(text: String(input[endIndex..<index]), type: .text))
     }
-    
+
     return components
   }
 }

@@ -26,6 +26,10 @@
 import MathJaxSwift
 import SwiftUI
 
+private struct NotationKey: EnvironmentKey {
+  static let defaultValue: LaTeX.Notation = .latex
+}
+
 private struct ImageRenderingModeKey: EnvironmentKey {
   static let defaultValue: Image.TemplateRenderingMode = .template
 }
@@ -92,6 +96,12 @@ private struct PlatformFontKey: EnvironmentKey {
 
 extension EnvironmentValues {
   
+  /// The input notation format of this environment.
+  var notation: LaTeX.Notation {
+    get { self[NotationKey.self] }
+    set { self[NotationKey.self] = newValue }
+  }
+
   /// The image rendering mode of this environment.
   var imageRenderingMode: Image.TemplateRenderingMode {
     get { self[ImageRenderingModeKey.self] }

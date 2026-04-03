@@ -139,13 +139,17 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable, Sendabl
   
   /// The component's inner text.
   let text: String
-  
+
   /// The component's type.
   let type: ComponentType
-  
+
+  /// An inline notation hint parsed from the input, or `nil` to use the
+  /// environment's notation value.
+  let notationHint: LaTeX.Notation?
+
   /// The component's SVG image.
   let svg: SVG?
-  
+
   /// The component's image in its container.
   let imageContainer: ImageContainer?
   
@@ -179,9 +183,10 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable, Sendabl
   /// - Parameters:
   ///   - text: The component's text.
   ///   - type: The component's type.
+  ///   - notationHint: An inline notation hint, or `nil` to use the env var.
   ///   - svg: The rendered SVG (only applies to equations).
   ///   - imageContainer: The container of the component's image.
-  init(text: String, type: ComponentType, svg: SVG? = nil, imageContainer: ImageContainer? = nil) {
+  init(text: String, type: ComponentType, notationHint: LaTeX.Notation? = nil, svg: SVG? = nil, imageContainer: ImageContainer? = nil) {
     if type.isEquation {
       var text = text
       if let leftTerminator = type.leftTerminator, text.hasPrefix(leftTerminator) {
@@ -195,8 +200,9 @@ internal struct Component: CustomStringConvertible, Equatable, Hashable, Sendabl
     else {
       self.text = text
     }
-    
+
     self.type = type
+    self.notationHint = notationHint
     self.svg = svg
     self.imageContainer = imageContainer
   }

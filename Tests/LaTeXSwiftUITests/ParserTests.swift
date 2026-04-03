@@ -11,12 +11,12 @@ import XCTest
 
 final class ParserTests: XCTestCase {
 
-  func assertComponent(_ components: [Component], _ index: Int, _ text: String, _ type: Component.ComponentType, file: StaticString = #file, line: UInt = #line) {
+  func assertComponent(_ components: [Component], _ index: Int, _ text: String, _ type: Component.ComponentType, notationHint: LaTeX.Notation? = nil, file: StaticString = #file, line: UInt = #line) {
     guard index < components.count else {
-      XCTFail()
+      XCTFail(file: file, line: line)
       return
     }
-    XCTAssertEqual(components[index], Component(text: text, type: type))
+    XCTAssertEqual(components[index], Component(text: text, type: type, notationHint: notationHint), file: file, line: line)
   }
   
   func testParseEmpty() {
@@ -549,6 +549,94 @@ final class ParserTests: XCTestCase {
     XCTAssertEqual(components.count, 2)
     assertComponent(components, 0, "a", .namedEnvironment("align"))
     assertComponent(components, 1, "b", .namedEnvironment("gather"))
+  }
+
+  // MARK: Notation hint tests
+
+  func testNotationHintInline() {
+    let input = "[latex]$x^2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x^2", .inlineEquation, notationHint: .latex)
+  }
+
+  func testNotationHintMML() {
+    let input = "[mml]$<math><mi>x</mi></math>$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    XCTAssertEqual(components[0].notationHint, .mml)
+  }
+
+  func testNotationHintAM() {
+    let input = "[am]$1/2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "1/2", .inlineEquation, notationHint: .am)
+  }
+
+  func testNotationHintAutoBlock() {
+    let input = "[auto]$$x^2$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x^2", .texEquation, notationHint: .auto)
+  }
+
+  func testNotationHintWithSurroundingText() {
+    let input = "Hello [latex]$x^2$ world"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "Hello ", .text)
+    assertComponent(components, 1, "x^2", .inlineEquation, notationHint: .latex)
+    assertComponent(components, 2, " world", .text)
+  }
+
+  func testNotationHintBogusTagNotConsumed() {
+    let input = "[bogus]$x^2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 2)
+    assertComponent(components, 0, "[bogus]", .text)
+    assertComponent(components, 1, "x^2", .inlineEquation)
+    XCTAssertNil(components[1].notationHint)
+  }
+
+  func testNotationHintSpaceBeforeDelimiterNotConsumed() {
+    let input = "[latex] $x^2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 2)
+    assertComponent(components, 0, "[latex] ", .text)
+    assertComponent(components, 1, "x^2", .inlineEquation)
+    XCTAssertNil(components[1].notationHint)
+  }
+
+  func testNotationHintWithNamedEnvironment() {
+    let input = "[mml]\\begin{equation}x\\end{equation}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "x", .namedEquation, notationHint: .mml)
+  }
+
+  func testNoNotationHintByDefault() {
+    let input = "$x^2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    XCTAssertNil(components[0].notationHint)
+  }
+
+  func testMixedNotationHints() {
+    let input = "[latex]$x^2$ and [am]$1/2$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    XCTAssertEqual(components[0].notationHint, .latex)
+    assertComponent(components, 1, " and ", .text)
+    XCTAssertEqual(components[2].notationHint, .am)
+  }
+
+  func testNotationHintParsingModeAll() {
+    let blocks = Parser.parse("[mml]x", mode: .all)
+    XCTAssertEqual(blocks.count, 1)
+    let component = blocks[0].components[0]
+    XCTAssertEqual(component.text, "x")
+    XCTAssertEqual(component.notationHint, .mml)
   }
 
 }

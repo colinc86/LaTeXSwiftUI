@@ -61,7 +61,14 @@ import Cocoa
   }()
 
   // MARK: Types
-  
+
+  /// Wraps the notation-specific MathJax input processor options.
+  enum InputOptions: Codable {
+    case tex(TeXInputProcessorOptions)
+    case mml(MMLInputProcessorOptions)
+    case am(AMInputProcessorOptions)
+  }
+
   /// A set of values used to create an array of parsed component blocks.
   struct ParsingSource: Equatable, Sendable {
     
@@ -119,6 +126,7 @@ extension Renderer {
   ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
+  ///   - notation: The `notation` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - xHeight: The font's x-height.
@@ -127,17 +135,19 @@ extension Renderer {
     latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
+    notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> Bool {
-    let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
     return blocksExistInCache(
       parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
       xHeight: xHeight,
       displayScale: displayScale,
-      texOptions: texOptions)
+      notation: notation,
+      processEscapes: processEscapes,
+      errorMode: errorMode)
   }
   
   /// Renders the view's components synchronously.
@@ -146,6 +156,7 @@ extension Renderer {
   ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
+  ///   - notation: The `notation` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - xHeight: The font's x-height.
@@ -155,6 +166,7 @@ extension Renderer {
     latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
+    notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     xHeight: CGFloat,
@@ -172,13 +184,14 @@ extension Renderer {
     // Dispatch to the render queue to keep JSContext access on a
     // consistent thread.
     blocks = Self.renderQueue.sync { [self] in
-      let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
       return render(
         blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
         xHeight: xHeight,
         displayScale: displayScale,
         renderingMode: renderingMode,
-        texOptions: texOptions)
+        notation: notation,
+        processEscapes: processEscapes,
+        errorMode: errorMode)
     }
 
     isRendering = false
@@ -192,6 +205,7 @@ extension Renderer {
   ///   - latex: The LaTeX input string.
   ///   - unencodeHTML: The `unencodeHTML` environment variable.
   ///   - parsingMode: The `parsingMode` environment variable.
+  ///   - notation: The `notation` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
   ///   - xHeight: The font's x-height.
@@ -201,6 +215,7 @@ extension Renderer {
     latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
+    notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     xHeight: CGFloat,
@@ -214,6 +229,7 @@ extension Renderer {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: xHeight,
@@ -230,6 +246,7 @@ extension Renderer {
     latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
+    notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     xHeight: CGFloat,
@@ -240,28 +257,29 @@ extension Renderer {
       Self.renderQueue.async { [self] in
         let parsedBlocks = parseBlocks(
           latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode)
-        let texOptions = TeXInputProcessorOptions(
-          processEscapes: processEscapes, errorMode: errorMode)
         let result = render(
           blocks: parsedBlocks,
           xHeight: xHeight,
           displayScale: displayScale,
           renderingMode: renderingMode,
-          texOptions: texOptions)
+          notation: notation,
+          processEscapes: processEscapes,
+          errorMode: errorMode)
         continuation.resume(returning: result)
       }
     }
   }
   
-  /// Renders a LaTeX string to an array of platform images (one per equation).
+  /// Renders an input string to an array of platform images (one per equation).
   ///
   /// This method runs the full rendering pipeline on the dedicated render queue
   /// and returns `UIImage`/`NSImage` instances directly.
   ///
   /// - Parameters:
-  ///   - latex: The LaTeX input string.
+  ///   - latex: The input string.
   ///   - unencodeHTML: Whether to unencode HTML entities.
   ///   - parsingMode: The parsing mode.
+  ///   - notation: The input notation format.
   ///   - processEscapes: Whether to process escape sequences.
   ///   - errorMode: The error mode.
   ///   - xHeight: The font's x-height in points.
@@ -271,20 +289,23 @@ extension Renderer {
     latex: String,
     unencodeHTML: Bool,
     parsingMode: LaTeX.ParsingMode,
+    notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> [_Image] {
     renderQueue.sync {
-      let texOptions = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode)
       let input = unencodeHTML ? latex.htmlUnescape() : latex
       let blocks = Parser.parse(input, mode: parsingMode)
       var images = [_Image]()
 
       for block in blocks {
         for component in block.components where component.type.isEquation {
-          guard let svg = try? getSVGStatic(for: component, texOptions: texOptions) else {
+          let inputOptions = resolveInputOptions(
+            for: component, notation: notation,
+            processEscapes: processEscapes, errorMode: errorMode)
+          guard let svg = try? getSVGStatic(for: component, inputOptions: inputOptions) else {
             continue
           }
           let imageSize = svg.size(for: xHeight)
@@ -299,17 +320,22 @@ extension Renderer {
     }
   }
 
-  /// Validates a LaTeX equation string by attempting a TeX-to-SVG conversion
-  /// with error-suppressing packages removed.
+  /// Validates an equation string by attempting a conversion with
+  /// error-suppressing packages removed (for TeX notation).
+  ///
+  /// When `notation` is `.auto`, each notation is tried in order. The input
+  /// is considered valid if any notation succeeds.
   ///
   /// Must not be called from `renderQueue`.
   ///
   /// - Parameters:
-  ///   - latex: The raw LaTeX equation string (no delimiters).
-  ///   - processEscapes: Whether to process escape sequences.
+  ///   - latex: The raw equation string (no delimiters).
+  ///   - notation: The input notation format.
+  ///   - processEscapes: Whether to process escape sequences (TeX only).
   /// - Throws: ``LaTeX/ValidationError`` if the input is invalid.
   nonisolated static func validate(
     latex: String,
+    notation: LaTeX.Notation,
     processEscapes: Bool
   ) throws {
     try renderQueue.sync {
@@ -317,18 +343,54 @@ extension Renderer {
         return
       }
 
-      let texOptions = TeXInputProcessorOptions(
-        processEscapes: processEscapes,
-        errorMode: .error)
+      if notation == .auto {
+        let detected = sniffNotation(latex)
+        let inputOptions = makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: .error)
+        let conversionOptions = ConversionOptions(display: false)
+
+        var conversionError: Error?
+        switch inputOptions {
+        case .tex(let opts):
+          _ = mathjax.tex2svg(
+            latex, styles: false, conversionOptions: conversionOptions,
+            inputOptions: opts, error: &conversionError)
+        case .mml(let opts):
+          _ = mathjax.mml2svg(
+            latex, styles: false, conversionOptions: conversionOptions,
+            inputOptions: opts, error: &conversionError)
+        case .am(let opts):
+          _ = mathjax.am2svg(
+            latex, styles: false, conversionOptions: conversionOptions,
+            inputOptions: opts, error: &conversionError)
+        }
+
+        if let mjError = conversionError as? MathJaxError,
+           case .conversionError(let innerError) = mjError {
+          throw LaTeX.ValidationError(message: innerError)
+        } else if let error = conversionError {
+          throw error
+        }
+        return
+      }
+
+      let inputOptions = makeInputOptions(notation: notation, processEscapes: processEscapes, errorMode: .error)
       let conversionOptions = ConversionOptions(display: false)
 
       var conversionError: Error?
-      _ = mathjax.tex2svg(
-        latex,
-        styles: false,
-        conversionOptions: conversionOptions,
-        inputOptions: texOptions,
-        error: &conversionError)
+      switch inputOptions {
+      case .tex(let opts):
+        _ = mathjax.tex2svg(
+          latex, styles: false, conversionOptions: conversionOptions,
+          inputOptions: opts, error: &conversionError)
+      case .mml(let opts):
+        _ = mathjax.mml2svg(
+          latex, styles: false, conversionOptions: conversionOptions,
+          inputOptions: opts, error: &conversionError)
+      case .am(let opts):
+        _ = mathjax.am2svg(
+          latex, styles: false, conversionOptions: conversionOptions,
+          inputOptions: opts, error: &conversionError)
+      }
 
       if let mjError = conversionError as? MathJaxError,
          case .conversionError(let innerError) = mjError {
@@ -368,6 +430,75 @@ extension Renderer {
     return blocks
   }
   
+  /// Creates the appropriate input options for the given notation.
+  ///
+  /// - Note: `.auto` is resolved to `.latex` here. For actual auto-detection,
+  ///   use ``resolveInputOptions(for:notation:processEscapes:errorMode:)``.
+  nonisolated static func makeInputOptions(
+    notation: LaTeX.Notation,
+    processEscapes: Bool,
+    errorMode: LaTeX.ErrorMode,
+    display: Bool = true
+  ) -> InputOptions {
+    switch notation {
+    case .latex, .auto:
+      return .tex(TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode))
+    case .mml:
+      return .mml(MMLInputProcessorOptions())
+    case .am:
+      let opts = AMInputProcessorOptions()
+      opts.displaystyle = display
+      return .am(opts)
+    }
+  }
+
+  /// Resolves the input options for a component, taking its notation hint
+  /// into account. If the effective notation is `.auto`, the notation is
+  /// inferred by sniffing the content.
+  nonisolated static func resolveInputOptions(
+    for component: Component,
+    notation: LaTeX.Notation,
+    processEscapes: Bool,
+    errorMode: LaTeX.ErrorMode
+  ) -> InputOptions {
+    let display = !component.type.inline
+    let effective = component.notationHint ?? notation
+    guard effective == .auto else {
+      return makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: errorMode, display: display)
+    }
+
+    // Auto-detect by sniffing the content. MathJax parsers are too
+    // permissive for trial-and-error (TeX will happily render MathML
+    // tags as text without reporting an error), so we use heuristics.
+    let detected = sniffNotation(component.text)
+    return makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: errorMode, display: display)
+  }
+
+  /// Sniffs the content to guess the notation.
+  ///
+  /// - MathML: contains `<math` or `<mrow` or similar MathML tags.
+  /// - LaTeX: contains `\` commands (e.g. `\frac`, `\sum`, `\begin`).
+  /// - AsciiMath: fallback when neither MathML nor LaTeX markers are found.
+  private nonisolated static func sniffNotation(_ text: String) -> LaTeX.Notation {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    // MathML: look for opening MathML tags
+    if trimmed.hasPrefix("<math") || trimmed.contains("<mrow") || trimmed.contains("<mi>")
+        || trimmed.contains("<mn>") || trimmed.contains("<mo>") || trimmed.contains("<mfrac")
+        || trimmed.contains("<msup") || trimmed.contains("<msub") || trimmed.contains("<msqrt") {
+      return .mml
+    }
+
+    // LaTeX: look for backslash commands
+    if trimmed.contains("\\") {
+      return .latex
+    }
+
+    // If it's simple like "x^2 + y" it could be either LaTeX or AM.
+    // Default to LaTeX since it's the most common.
+    return .latex
+  }
+
   /// Renders the view's component blocks.
   ///
   /// - Parameters:
@@ -375,14 +506,18 @@ extension Renderer {
   ///   - xHeight: The font's x-height.
   ///   - displayScale: The display scale to render at.
   ///   - renderingMode: The image rendering mode.
-  ///   - texOptions: The MathJax Tex input processor options.
+  ///   - notation: The environment notation.
+  ///   - processEscapes: Whether to process escape sequences.
+  ///   - errorMode: The error mode.
   /// - Returns: An array of rendered blocks.
   nonisolated func render(
     blocks: [ComponentBlock],
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
-    texOptions: TeXInputProcessorOptions
+    notation: LaTeX.Notation,
+    processEscapes: Bool,
+    errorMode: LaTeX.ErrorMode
   ) -> [ComponentBlock] {
     var newBlocks = [ComponentBlock]()
     for block in blocks {
@@ -392,8 +527,10 @@ extension Renderer {
           xHeight: xHeight,
           displayScale: displayScale,
           renderingMode: renderingMode,
-          texOptions: texOptions)
-        
+          notation: notation,
+          processEscapes: processEscapes,
+          errorMode: errorMode)
+
         newBlocks.append(ComponentBlock(components: newComponents))
       }
       catch {
@@ -402,10 +539,10 @@ extension Renderer {
         continue
       }
     }
-    
+
     return newBlocks
   }
-  
+
   /// Renders the components and stores the new images in a new set of
   /// components.
   ///
@@ -414,14 +551,18 @@ extension Renderer {
   ///   - xHeight: The font's x-height.
   ///   - displayScale: The current display scale.
   ///   - renderingMode: The image rendering mode.
-  ///   - texOptions: The MathJax TeX input processor options.
+  ///   - notation: The environment notation.
+  ///   - processEscapes: Whether to process escape sequences.
+  ///   - errorMode: The error mode.
   /// - Returns: An array of components.
   nonisolated private func render(
     _ components: [Component],
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
-    texOptions: TeXInputProcessorOptions
+    notation: LaTeX.Notation,
+    processEscapes: Bool,
+    errorMode: LaTeX.ErrorMode
   ) throws -> [Component] {
     // Iterate through the input components and render
     var renderedComponents = [Component]()
@@ -431,23 +572,29 @@ extension Renderer {
         renderedComponents.append(component)
         continue
       }
-      
+
+      // Resolve notation per-component (hint overrides env var)
+      let inputOptions = Self.resolveInputOptions(
+        for: component, notation: notation,
+        processEscapes: processEscapes, errorMode: errorMode)
+
       // Get the svg
-      guard let svg = try getSVG(for: component, texOptions: texOptions) else {
+      guard let svg = try getSVG(for: component, inputOptions: inputOptions) else {
         renderedComponents.append(component)
         continue
       }
-      
+
       // Get the image
       guard let image = getImage(for: svg, xHeight: xHeight, displayScale: displayScale, renderingMode: renderingMode) else {
-        renderedComponents.append(Component(text: component.text, type: component.type, svg: svg))
+        renderedComponents.append(Component(text: component.text, type: component.type, notationHint: component.notationHint, svg: svg))
         continue
       }
-      
+
       // Save the rendered component
       renderedComponents.append(Component(
         text: component.text,
         type: component.type,
+        notationHint: component.notationHint,
         svg: svg,
         imageContainer: ImageContainer(
           image: image,
@@ -455,28 +602,28 @@ extension Renderer {
         )
       ))
     }
-    
+
     // All done
     return renderedComponents
   }
-  
+
   /// Gets the component's SVG, if possible.
   ///
   /// The SVG cache is checked first.
   ///
   /// - Parameters:
   ///   - component: The component.
-  ///   - texOptions: The TeX input processor options to use.
+  ///   - inputOptions: The input processor options to use.
   /// - Returns: An SVG.
   nonisolated func getSVG(
     for component: Component,
-    texOptions: TeXInputProcessorOptions
+    inputOptions: InputOptions
   ) throws -> SVG? {
     // Create our SVG cache key
     let svgCacheKey = Cache.SVGCacheKey(
       componentText: component.text,
       conversionOptions: component.conversionOptions,
-      texOptions: texOptions)
+      inputOptions: inputOptions)
 
     // Do we have the SVG in the cache?
     if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
@@ -487,31 +634,46 @@ extension Renderer {
     guard let mathjax = Self.mathjax else {
       return nil
     }
-    
-    // Perform the TeX -> SVG conversion
+
+    // Perform the conversion
     var conversionError: Error?
-    let svgString = mathjax.tex2svg(
-      component.text,
-      styles: false,
-      conversionOptions: component.conversionOptions,
-      inputOptions: texOptions,
-      error: &conversionError)
-    
+    let svgString: String
+    let speechText: String?
+
+    switch inputOptions {
+    case .tex(let opts):
+      svgString = mathjax.tex2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.tex2speech(
+        component.text, conversionOptions: component.conversionOptions,
+        inputOptions: opts)
+    case .mml(let opts):
+      svgString = mathjax.mml2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.mml2speech(component.text)
+    case .am(let opts):
+      svgString = mathjax.am2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.am2speech(
+        component.text, conversionOptions: component.conversionOptions,
+        inputOptions: opts)
+    }
+
     // Check for a conversion error
     let errorText = try getErrorText(from: conversionError)
 
-    // Generate speech text for accessibility via the Speech Rule Engine
-    let speechText = try? mathjax.tex2speech(
-      component.text,
-      conversionOptions: component.conversionOptions,
-      inputOptions: texOptions)
-
     // Create the SVG
     let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
-    
+
     // Set the SVG in the cache
     Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
-    
+
     // Finish up
     return svg
   }
@@ -567,16 +729,16 @@ extension Renderer {
   ///
   /// - Parameters:
   ///   - component: The component.
-  ///   - texOptions: The TeX input processor options.
+  ///   - inputOptions: The input processor options.
   /// - Returns: An SVG.
   nonisolated private static func getSVGStatic(
     for component: Component,
-    texOptions: TeXInputProcessorOptions
+    inputOptions: InputOptions
   ) throws -> SVG? {
     let svgCacheKey = Cache.SVGCacheKey(
       componentText: component.text,
       conversionOptions: component.conversionOptions,
-      texOptions: texOptions)
+      inputOptions: inputOptions)
 
     if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
       return try SVG(data: svgData)
@@ -587,12 +749,33 @@ extension Renderer {
     }
 
     var conversionError: Error?
-    let svgString = mathjax.tex2svg(
-      component.text,
-      styles: false,
-      conversionOptions: component.conversionOptions,
-      inputOptions: texOptions,
-      error: &conversionError)
+    let svgString: String
+    let speechText: String?
+
+    switch inputOptions {
+    case .tex(let opts):
+      svgString = mathjax.tex2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.tex2speech(
+        component.text, conversionOptions: component.conversionOptions,
+        inputOptions: opts)
+    case .mml(let opts):
+      svgString = mathjax.mml2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.mml2speech(component.text)
+    case .am(let opts):
+      svgString = mathjax.am2svg(
+        component.text, styles: false,
+        conversionOptions: component.conversionOptions,
+        inputOptions: opts, error: &conversionError)
+      speechText = try? mathjax.am2speech(
+        component.text, conversionOptions: component.conversionOptions,
+        inputOptions: opts)
+    }
 
     var errorText: String?
     if let mjError = conversionError as? MathJaxError, case .conversionError(let innerError) = mjError {
@@ -600,11 +783,6 @@ extension Renderer {
     } else if let error = conversionError {
       throw error
     }
-
-    let speechText = try? mathjax.tex2speech(
-      component.text,
-      conversionOptions: component.conversionOptions,
-      inputOptions: texOptions)
 
     let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
     Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
@@ -672,15 +850,20 @@ extension Renderer {
   ///   - blocks: The blocks.
   ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
-  ///   - texOptions: The `texOptions` environment variable.
+  ///   - notation: The environment notation.
+  ///   - processEscapes: Whether to process escape sequences.
+  ///   - errorMode: The error mode.
   /// - Returns: Whether the blocks are in the renderer's cache.
-  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, texOptions: TeXInputProcessorOptions) -> Bool {
+  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode) -> Bool {
     for block in blocks {
       for component in block.components where component.type.isEquation {
+        let inputOptions = Self.makeInputOptions(
+          notation: component.notationHint ?? notation,
+          processEscapes: processEscapes, errorMode: errorMode)
         let dataCacheKey = Cache.SVGCacheKey(
           componentText: component.text,
           conversionOptions: component.conversionOptions,
-          texOptions: texOptions)
+          inputOptions: inputOptions)
         guard let svgData = Cache.shared.dataCacheValue(for: dataCacheKey) else {
           return false
         }

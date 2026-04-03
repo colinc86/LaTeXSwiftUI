@@ -53,6 +53,14 @@ public extension View {
     return self
   }
   
+  /// Sets the input notation format.
+  ///
+  /// - Parameter notation: The notation format.
+  /// - Returns: A view that uses the given notation for rendering.
+  func notation(_ notation: LaTeX.Notation) -> some View {
+    environment(\.notation, notation)
+  }
+
   /// Sets the image rendering mode for images rendered by MathJax.
   ///
   /// - Parameter mode: The template rendering mode.

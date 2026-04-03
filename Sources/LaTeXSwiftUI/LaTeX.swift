@@ -37,6 +37,30 @@ public struct LaTeX: View {
   /// the view.
   public typealias FormatEquationNumber = @Sendable (_ n: Int) -> String
   
+  /// The input notation format.
+  public enum Notation: Hashable, Sendable {
+
+    /// TeX/LaTeX notation.
+    case latex
+
+    /// MathML notation.
+    case mml
+
+    /// AsciiMath notation.
+    case am
+
+    /// Auto-detect the notation by trying each format until one succeeds.
+    ///
+    /// Notations are tried from most strict to least strict (mml, am,
+    /// latex) since the LaTeX parser is very permissive. If the
+    /// environment's notation is a concrete value, it is tried first.
+    ///
+    /// When set as the environment default, every equation without a
+    /// notation hint incurs up to three MathJax conversion attempts,
+    /// which may impact rendering performance.
+    case auto
+  }
+
   /// The view's block rendering mode.
   public enum BlockMode: Sendable {
     
@@ -172,6 +196,9 @@ public struct LaTeX: View {
   
   // MARK: Environment variables
   
+  /// The input notation format.
+  @Environment(\.notation) private var notation
+
   /// What to do in the case of an error.
   @Environment(\.errorMode) private var errorMode
   
@@ -300,12 +327,13 @@ extension LaTeX {
   /// equations is not rendered.
   ///
   /// - Parameters:
-  ///   - latex: The LaTeX input string.
+  ///   - latex: The input string.
   ///   - xHeight: The font x-height used to scale equations. If `nil`, the
   ///     body font's x-height is used.
   ///   - displayScale: The display scale factor (default: 2.0).
   ///   - unencodeHTML: Whether to decode HTML entities (default: false).
   ///   - parsingMode: The parsing mode (default: `.onlyEquations`).
+  ///   - notation: The input notation format (default: `.latex`).
   ///   - processEscapes: Whether to process escape sequences (default: false).
   ///   - errorMode: The error mode (default: `.rendered`).
   /// - Returns: An array of rendered images, one per equation.
@@ -316,6 +344,7 @@ extension LaTeX {
     displayScale: CGFloat = 2.0,
     unencodeHTML: Bool = false,
     parsingMode: ParsingMode = .onlyEquations,
+    notation: Notation = .latex,
     processEscapes: Bool = false,
     errorMode: ErrorMode = .rendered
   ) -> [UIImage] {
@@ -323,6 +352,7 @@ extension LaTeX {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: xHeight ?? Font.body.effectiveXHeight(for: .latin),
@@ -335,6 +365,7 @@ extension LaTeX {
     displayScale: CGFloat = 2.0,
     unencodeHTML: Bool = false,
     parsingMode: ParsingMode = .onlyEquations,
+    notation: Notation = .latex,
     processEscapes: Bool = false,
     errorMode: ErrorMode = .rendered
   ) -> [NSImage] {
@@ -342,6 +373,7 @@ extension LaTeX {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: xHeight ?? Font.body.effectiveXHeight(for: .latin),
@@ -349,30 +381,34 @@ extension LaTeX {
   }
 #endif
 
-  /// Validates a LaTeX equation string.
+  /// Validates an equation string.
   ///
   /// The input is treated as a raw equation (no delimiters needed). If the
-  /// LaTeX is invalid, a ``ValidationError`` is thrown containing the error
+  /// input is invalid, a ``ValidationError`` is thrown containing the error
   /// message from MathJax.
   ///
   /// - Parameters:
-  ///   - latex: The LaTeX equation string.
-  ///   - processEscapes: Whether to process escape sequences (default: false).
-  /// - Throws: ``ValidationError`` if the input is not valid LaTeX.
-  public static func validate(_ latex: String, processEscapes: Bool = false) throws {
-    try Renderer.validate(latex: latex, processEscapes: processEscapes)
+  ///   - latex: The equation string.
+  ///   - notation: The input notation format (default: `.latex`).
+  ///   - processEscapes: Whether to process escape sequences (default: false,
+  ///     only applies to `.latex` notation).
+  /// - Throws: ``ValidationError`` if the input is not valid.
+  public static func validate(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) throws {
+    try Renderer.validate(latex: latex, notation: notation, processEscapes: processEscapes)
   }
 
-  /// Returns whether a LaTeX equation string is valid.
+  /// Returns whether an equation string is valid.
   ///
   /// The input is treated as a raw equation (no delimiters needed).
   ///
   /// - Parameters:
-  ///   - latex: The LaTeX equation string.
-  ///   - processEscapes: Whether to process escape sequences (default: false).
-  /// - Returns: `true` if the input is valid LaTeX, `false` otherwise.
-  public static func isValid(_ latex: String, processEscapes: Bool = false) -> Bool {
-    (try? validate(latex, processEscapes: processEscapes)) != nil
+  ///   - latex: The equation string.
+  ///   - notation: The input notation format (default: `.latex`).
+  ///   - processEscapes: Whether to process escape sequences (default: false,
+  ///     only applies to `.latex` notation).
+  /// - Returns: `true` if the input is valid, `false` otherwise.
+  public static func isValid(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) -> Bool {
+    (try? validate(latex, notation: notation, processEscapes: processEscapes)) != nil
   }
 
 }
@@ -393,6 +429,7 @@ extension LaTeX {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
@@ -405,6 +442,7 @@ extension LaTeX {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
@@ -420,6 +458,7 @@ extension LaTeX {
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
+      notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
