@@ -195,6 +195,50 @@ public extension View {
     environment(\.imageAccessibilityMode, mode)
   }
 
+  /// Enables automatic line breaking for long equations.
+  ///
+  /// - Parameter lineBreaking: The line breaking configuration, or `nil` to
+  ///   disable. Use `.automatic` for default settings.
+  /// - Returns: A view that breaks long equations.
+  func lineBreaking(_ lineBreaking: LaTeX.LineBreaking?) -> some View {
+    environment(\.lineBreaking, lineBreaking)
+  }
+
+  /// Sets the horizontal alignment for block (display) equations.
+  ///
+  /// - Parameter alignment: The display alignment.
+  /// - Returns: A view with the specified equation alignment.
+  func displayAlignment(_ alignment: LaTeX.DisplayAlignment) -> some View {
+    environment(\.displayAlignment, alignment)
+  }
+
+  /// Sets the Speech Rule Engine locale for accessibility speech output.
+  ///
+  /// - Parameter locale: The speech locale.
+  /// - Returns: A view that generates speech in the given locale.
+  func speechLocale(_ locale: LaTeX.SpeechLocale) -> some View {
+    environment(\.speechLocale, locale)
+  }
+
+  /// Sets the Speech Rule Engine speech style for accessibility output.
+  ///
+  /// - Parameter style: The speech style.
+  /// - Returns: A view that uses the given speech style.
+  func speechStyle(_ style: LaTeX.SpeechStyle) -> some View {
+    environment(\.speechStyle, style)
+  }
+
+  /// Sets the TeX packages to load for equation rendering.
+  ///
+  /// When `nil` (the default), all available packages are loaded. Only
+  /// applies to `.latex` notation.
+  ///
+  /// - Parameter packages: The set of package names to load.
+  /// - Returns: A view that uses the specified TeX packages.
+  func texPackages(_ packages: Set<String>) -> some View {
+    environment(\.texPackages, packages)
+  }
+
   /// Disables caching and evicts any previously cached data for the
   /// equations in this view.
   ///

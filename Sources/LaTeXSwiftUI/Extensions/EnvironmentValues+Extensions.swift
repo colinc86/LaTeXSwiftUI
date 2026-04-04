@@ -82,6 +82,26 @@ private struct IgnoreSringFormattingKey: EnvironmentKey {
   static let defaultValue: Bool = false
 }
 
+private struct LineBreakingKey: EnvironmentKey {
+  static let defaultValue: LaTeX.LineBreaking? = nil
+}
+
+private struct DisplayAlignmentKey: EnvironmentKey {
+  static let defaultValue: LaTeX.DisplayAlignment = .center
+}
+
+private struct SpeechLocaleKey: EnvironmentKey {
+  static let defaultValue: LaTeX.SpeechLocale = .english
+}
+
+private struct SpeechStyleKey: EnvironmentKey {
+  static let defaultValue: LaTeX.SpeechStyle = .default
+}
+
+private struct TeXPackagesKey: EnvironmentKey {
+  static let defaultValue: Set<String>? = nil
+}
+
 private struct ScriptKey: EnvironmentKey {
   static let defaultValue: LaTeX.Script = .latin
 }
@@ -188,6 +208,36 @@ extension EnvironmentValues {
   var script: LaTeX.Script {
     get { self[ScriptKey.self] }
     set { self[ScriptKey.self] = newValue }
+  }
+
+  /// The line breaking configuration, or `nil` to disable.
+  var lineBreaking: LaTeX.LineBreaking? {
+    get { self[LineBreakingKey.self] }
+    set { self[LineBreakingKey.self] = newValue }
+  }
+
+  /// The horizontal alignment for block equations.
+  var displayAlignment: LaTeX.DisplayAlignment {
+    get { self[DisplayAlignmentKey.self] }
+    set { self[DisplayAlignmentKey.self] = newValue }
+  }
+
+  /// The SRE speech locale.
+  var speechLocale: LaTeX.SpeechLocale {
+    get { self[SpeechLocaleKey.self] }
+    set { self[SpeechLocaleKey.self] = newValue }
+  }
+
+  /// The SRE speech style.
+  var speechStyle: LaTeX.SpeechStyle {
+    get { self[SpeechStyleKey.self] }
+    set { self[SpeechStyleKey.self] = newValue }
+  }
+
+  /// The TeX packages to load, or `nil` to use all.
+  var texPackages: Set<String>? {
+    get { self[TeXPackagesKey.self] }
+    set { self[TeXPackagesKey.self] = newValue }
   }
 
   /// The accessibility mode for rendered equation images.

@@ -74,6 +74,108 @@ public struct LaTeX: View {
     case blockViews
   }
   
+  /// A CSS length value used by MathJax for dimensions.
+  public struct CSSLength: Hashable, Sendable, CustomStringConvertible {
+
+    /// The numeric value.
+    public var value: Double
+
+    /// The CSS unit.
+    public var unit: Unit
+
+    /// CSS length units supported by MathJax.
+    public enum Unit: String, Hashable, Sendable {
+      /// Font-relative unit (relative to the element's font size).
+      case em
+      /// Pixels.
+      case px
+      /// Percentage of the container.
+      case percent = "%"
+    }
+
+    public var description: String {
+      "\(value)\(unit.rawValue)"
+    }
+
+    public init(_ value: Double, _ unit: Unit) {
+      self.value = value
+      self.unit = unit
+    }
+
+    /// Creates a length in em units.
+    public static func em(_ value: Double) -> CSSLength { CSSLength(value, .em) }
+
+    /// Creates a length in pixels.
+    public static func px(_ value: Double) -> CSSLength { CSSLength(value, .px) }
+
+    /// Creates a length as a percentage.
+    public static func percent(_ value: Double) -> CSSLength { CSSLength(value, .percent) }
+  }
+
+  /// The speech output style for the Speech Rule Engine.
+  public enum SpeechStyle: String, Hashable, Sendable {
+
+    /// Default verbosity.
+    case `default` = "default"
+
+    /// Brief output.
+    case brief = "brief"
+
+    /// Super-brief output.
+    case sbrief = "sbrief"
+  }
+
+  /// A locale supported by the bundled Speech Rule Engine.
+  public enum SpeechLocale: String, Hashable, Sendable {
+
+    /// English.
+    case english = "en"
+
+    /// German.
+    case german = "de"
+
+    /// French.
+    case french = "fr"
+
+    /// Spanish.
+    case spanish = "es"
+  }
+
+  /// Configuration for automatic line breaking of long equations.
+  public struct LineBreaking: Hashable, Sendable {
+
+    /// The maximum width before breaking.
+    public var width: CSSLength
+
+    /// Whether to allow breaks in inline equations.
+    public var inline: Bool
+
+    /// The vertical spacing between broken lines.
+    public var lineleading: CSSLength
+
+    public init(width: CSSLength = .em(100), inline: Bool = false, lineleading: CSSLength = .em(0.2)) {
+      self.width = width
+      self.inline = inline
+      self.lineleading = lineleading
+    }
+
+    /// Automatic line breaking with default settings.
+    public static let automatic = LineBreaking()
+  }
+
+  /// Horizontal alignment for block (display) equations.
+  public enum DisplayAlignment: String, Hashable, Sendable {
+
+    /// Align equations to the left.
+    case left = "left"
+
+    /// Center equations (default).
+    case center = "center"
+
+    /// Align equations to the right.
+    case right = "right"
+  }
+
   /// The view's equation number mode.
   public enum EquationNumberMode: Sendable {
     
@@ -189,8 +291,16 @@ public struct LaTeX: View {
 #endif
   
   
+  // MARK: Package sets
+
+  /// TeX packages for chemistry notation (e.g. `\ce{H2O}`).
+  public static let chemistryPackages: Set<String> = ["base", "ams", "mhchem", "newcommand", "autoload"]
+
+  /// TeX packages for physics notation (e.g. `\bra{\psi}`, `\braket`).
+  public static let physicsPackages: Set<String> = ["base", "ams", "physics", "braket", "newcommand", "autoload"]
+
   // MARK: Public properties
-  
+
   /// The view's LaTeX input string.
   public let latex: String
   
@@ -243,6 +353,21 @@ public struct LaTeX: View {
 
   /// The view's dynamic type size.
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+  /// Line breaking configuration.
+  @Environment(\.lineBreaking) private var lineBreaking
+
+  /// Display alignment for block equations.
+  @Environment(\.displayAlignment) private var displayAlignment
+
+  /// Speech locale for accessibility.
+  @Environment(\.speechLocale) private var speechLocale
+
+  /// Speech style for accessibility.
+  @Environment(\.speechStyle) private var speechStyle
+
+  /// TeX packages to load.
+  @Environment(\.texPackages) private var texPackages
 
   // MARK: Private properties
   
@@ -414,6 +539,44 @@ extension LaTeX {
     (try? validate(latex, notation: notation, processEscapes: processEscapes)) != nil
   }
 
+  /// Converts an equation string to MathML.
+  ///
+  /// - Parameters:
+  ///   - input: The equation string (no delimiters).
+  ///   - notation: The input notation format (default: `.latex`).
+  ///   - processEscapes: Whether to process escape sequences (default: false,
+  ///     only applies to `.latex` notation).
+  /// - Returns: The MathML string.
+  public static func toMathML(
+    _ input: String,
+    notation: Notation = .latex,
+    processEscapes: Bool = false
+  ) throws -> String {
+    try Renderer.convertToMathML(input: input, notation: notation, processEscapes: processEscapes)
+  }
+
+  /// Converts an equation string to speech text.
+  ///
+  /// - Parameters:
+  ///   - input: The equation string (no delimiters).
+  ///   - notation: The input notation format (default: `.latex`).
+  ///   - processEscapes: Whether to process escape sequences (default: false,
+  ///     only applies to `.latex` notation).
+  ///   - locale: The speech locale (default: `"en"`).
+  ///   - style: The speech style (default: `.default`).
+  /// - Returns: The speech text.
+  public static func toSpeech(
+    _ input: String,
+    notation: Notation = .latex,
+    processEscapes: Bool = false,
+    locale: SpeechLocale = .english,
+    style: SpeechStyle = .default
+  ) throws -> String {
+    try Renderer.convertToSpeech(
+      input: input, notation: notation, processEscapes: processEscapes,
+      locale: locale.rawValue, style: style.rawValue)
+  }
+
 }
 
 // MARK: Private methods
@@ -436,6 +599,7 @@ extension LaTeX {
       notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
+      texPackages: texPackages,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale)
   }
@@ -450,6 +614,11 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
+      lineBreaking: lineBreaking,
+      displayAlignment: displayAlignment,
+      speechLocale: speechLocale.rawValue,
+      speechStyle: speechStyle,
+      texPackages: texPackages,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
@@ -467,6 +636,11 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
+      lineBreaking: lineBreaking,
+      displayAlignment: displayAlignment,
+      speechLocale: speechLocale.rawValue,
+      speechStyle: speechStyle,
+      texPackages: texPackages,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)

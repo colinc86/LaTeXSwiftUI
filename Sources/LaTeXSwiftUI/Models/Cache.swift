@@ -63,6 +63,8 @@ internal final class Cache: @unchecked Sendable {
     let componentText: String
     let conversionOptions: ConversionOptions
     let inputOptions: Renderer.InputOptions
+    var speechLocale: String = "en"
+    var speechStyle: String = "default"
     internal var fallbackKey: String { componentText }
   }
   

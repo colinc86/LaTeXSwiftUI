@@ -138,6 +138,7 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
+    texPackages: Set<String>?,
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> Bool {
@@ -147,7 +148,8 @@ extension Renderer {
       displayScale: displayScale,
       notation: notation,
       processEscapes: processEscapes,
-      errorMode: errorMode)
+      errorMode: errorMode,
+      texPackages: texPackages)
   }
   
   /// Renders the view's components synchronously.
@@ -170,6 +172,11 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool = false,
+    lineBreaking: LaTeX.LineBreaking? = nil,
+    displayAlignment: LaTeX.DisplayAlignment = .center,
+    speechLocale: String = "en",
+    speechStyle: LaTeX.SpeechStyle = .default,
+    texPackages: Set<String>? = nil,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -182,8 +189,6 @@ extension Renderer {
     }
     isRendering = true
 
-    // Dispatch to the render queue to keep JSContext access on a
-    // consistent thread.
     blocks = Self.renderQueue.sync { [self] in
       return render(
         blocks: parseBlocks(latex: latex, unencodeHTML: unencodeHTML, parsingMode: parsingMode),
@@ -193,7 +198,12 @@ extension Renderer {
         notation: notation,
         processEscapes: processEscapes,
         errorMode: errorMode,
-        noCache: noCache)
+        noCache: noCache,
+        lineBreaking: lineBreaking,
+        displayAlignment: displayAlignment,
+        speechLocale: speechLocale,
+        speechStyle: speechStyle,
+        texPackages: texPackages)
     }
 
     isRendering = false
@@ -201,19 +211,6 @@ extension Renderer {
     return blocks
   }
 
-  /// Renders the view's components asynchronously.
-  ///
-  /// - Parameters:
-  ///   - latex: The LaTeX input string.
-  ///   - unencodeHTML: The `unencodeHTML` environment variable.
-  ///   - parsingMode: The `parsingMode` environment variable.
-  ///   - notation: The `notation` environment variable.
-  ///   - processEscapes: The `processEscapes` environment variable.
-  ///   - errorMode: The `errorMode` environment variable.
-  ///   - noCache: Whether to bypass and evict cached data.
-  ///   - xHeight: The font's x-height.
-  ///   - displayScale: The `displayScale` environment variable.
-  ///   - renderingMode: The `renderingMode` environment variable.
   func render(
     latex: String,
     unencodeHTML: Bool,
@@ -222,6 +219,11 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool = false,
+    lineBreaking: LaTeX.LineBreaking? = nil,
+    displayAlignment: LaTeX.DisplayAlignment = .center,
+    speechLocale: String = "en",
+    speechStyle: LaTeX.SpeechStyle = .default,
+    texPackages: Set<String>? = nil,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -237,6 +239,11 @@ extension Renderer {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
+      lineBreaking: lineBreaking,
+      displayAlignment: displayAlignment,
+      speechLocale: speechLocale,
+      speechStyle: speechStyle,
+      texPackages: texPackages,
       xHeight: xHeight,
       displayScale: displayScale,
       renderingMode: renderingMode)
@@ -246,7 +253,6 @@ extension Renderer {
     rendered = true
   }
 
-  /// Performs parsing and rendering on the dedicated render queue.
   nonisolated private func renderOffMain(
     latex: String,
     unencodeHTML: Bool,
@@ -255,6 +261,11 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool,
+    lineBreaking: LaTeX.LineBreaking?,
+    displayAlignment: LaTeX.DisplayAlignment,
+    speechLocale: String,
+    speechStyle: LaTeX.SpeechStyle,
+    texPackages: Set<String>?,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -271,7 +282,12 @@ extension Renderer {
           notation: notation,
           processEscapes: processEscapes,
           errorMode: errorMode,
-          noCache: noCache)
+          noCache: noCache,
+          lineBreaking: lineBreaking,
+          displayAlignment: displayAlignment,
+          speechLocale: speechLocale,
+          speechStyle: speechStyle,
+          texPackages: texPackages)
         continuation.resume(returning: result)
       }
     }
@@ -408,6 +424,95 @@ extension Renderer {
     }
   }
 
+  /// Converts an equation string to MathML.
+  ///
+  /// Must not be called from `renderQueue`.
+  ///
+  /// - Parameters:
+  ///   - input: The raw equation string (no delimiters).
+  ///   - notation: The input notation format.
+  ///   - processEscapes: Whether to process escape sequences (TeX only).
+  /// - Returns: The MathML string.
+  nonisolated static func convertToMathML(
+    input: String,
+    notation: LaTeX.Notation,
+    processEscapes: Bool
+  ) throws -> String {
+    try renderQueue.sync {
+      guard let mathjax = mathjax else {
+        throw LaTeX.ValidationError(message: "MathJax is not available")
+      }
+
+      let effective = notation == .auto ? sniffNotation(input) : notation
+      if effective == .mml { return input }
+
+      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error)
+
+      var err: Error?
+      let result: String
+      switch inputOptions {
+      case .tex(let opts):
+        result = mathjax.tex2mml(input, inputOptions: opts, error: &err)
+      case .am(let opts):
+        result = mathjax.am2mml(input, inputOptions: opts, error: &err)
+      case .mml:
+        return input
+      }
+
+      if let mjError = err as? MathJaxError,
+         case .conversionError(let innerError) = mjError {
+        throw LaTeX.ValidationError(message: innerError)
+      } else if let error = err {
+        throw error
+      }
+      return result
+    }
+  }
+
+  /// Converts an equation string to speech text.
+  ///
+  /// Must not be called from `renderQueue`.
+  ///
+  /// - Parameters:
+  ///   - input: The raw equation string (no delimiters).
+  ///   - notation: The input notation format.
+  ///   - processEscapes: Whether to process escape sequences (TeX only).
+  ///   - locale: The SRE locale (e.g. "en", "de", "fr").
+  ///   - style: The SRE speech style.
+  /// - Returns: The speech text.
+  nonisolated static func convertToSpeech(
+    input: String,
+    notation: LaTeX.Notation,
+    processEscapes: Bool,
+    locale: String,
+    style: String
+  ) throws -> String {
+    try renderQueue.sync {
+      guard let mathjax = mathjax else {
+        throw LaTeX.ValidationError(message: "MathJax is not available")
+      }
+
+      let effective = notation == .auto ? sniffNotation(input) : notation
+      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error)
+
+      let sreOptions = SREOptions()
+      sreOptions.locale = locale
+      sreOptions.style = style
+      sreOptions.domain = "mathspeak"
+      let documentOptions = DocumentOptions()
+      documentOptions.sre = sreOptions
+
+      switch inputOptions {
+      case .tex(let opts):
+        return try mathjax.tex2speech(input, documentOptions: documentOptions, inputOptions: opts)
+      case .am(let opts):
+        return try mathjax.am2speech(input, documentOptions: documentOptions, inputOptions: opts)
+      case .mml:
+        return try mathjax.mml2speech(input)
+      }
+    }
+  }
+
 }
 
 // MARK: Private methods
@@ -445,11 +550,12 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    display: Bool = true
+    display: Bool = true,
+    texPackages: Set<String>? = nil
   ) -> InputOptions {
     switch notation {
     case .latex, .auto:
-      return .tex(TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode))
+      return .tex(TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode, packages: texPackages))
     case .mml:
       return .mml(MMLInputProcessorOptions())
     case .am:
@@ -466,19 +572,17 @@ extension Renderer {
     for component: Component,
     notation: LaTeX.Notation,
     processEscapes: Bool,
-    errorMode: LaTeX.ErrorMode
+    errorMode: LaTeX.ErrorMode,
+    texPackages: Set<String>? = nil
   ) -> InputOptions {
     let display = !component.type.inline
     let effective = component.notationHint ?? notation
     guard effective == .auto else {
-      return makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: errorMode, display: display)
+      return makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages)
     }
 
-    // Auto-detect by sniffing the content. MathJax parsers are too
-    // permissive for trial-and-error (TeX will happily render MathML
-    // tags as text without reporting an error), so we use heuristics.
     let detected = sniffNotation(component.text)
-    return makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: errorMode, display: display)
+    return makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages)
   }
 
   /// Sniffs the content to guess the notation.
@@ -525,7 +629,12 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    noCache: Bool = false
+    noCache: Bool = false,
+    lineBreaking: LaTeX.LineBreaking? = nil,
+    displayAlignment: LaTeX.DisplayAlignment = .center,
+    speechLocale: String = "en",
+    speechStyle: LaTeX.SpeechStyle = .default,
+    texPackages: Set<String>? = nil
   ) -> [ComponentBlock] {
     var newBlocks = [ComponentBlock]()
     for block in blocks {
@@ -538,7 +647,12 @@ extension Renderer {
           notation: notation,
           processEscapes: processEscapes,
           errorMode: errorMode,
-          noCache: noCache)
+          noCache: noCache,
+          lineBreaking: lineBreaking,
+          displayAlignment: displayAlignment,
+          speechLocale: speechLocale,
+          speechStyle: speechStyle,
+          texPackages: texPackages)
 
         newBlocks.append(ComponentBlock(components: newComponents))
       }
@@ -552,8 +666,6 @@ extension Renderer {
     return newBlocks
   }
 
-  /// Renders the components and stores the new images in a new set of
-  /// components.
   nonisolated private func render(
     _ components: [Component],
     xHeight: CGFloat,
@@ -562,35 +674,39 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    noCache: Bool
+    noCache: Bool,
+    lineBreaking: LaTeX.LineBreaking?,
+    displayAlignment: LaTeX.DisplayAlignment,
+    speechLocale: String,
+    speechStyle: LaTeX.SpeechStyle,
+    texPackages: Set<String>?
   ) throws -> [Component] {
-    // Iterate through the input components and render
     var renderedComponents = [Component]()
     for component in components {
-      // Only render equation components
       guard component.type.isEquation else {
         renderedComponents.append(component)
         continue
       }
 
-      // Resolve notation per-component (hint overrides env var)
       let inputOptions = Self.resolveInputOptions(
         for: component, notation: notation,
-        processEscapes: processEscapes, errorMode: errorMode)
+        processEscapes: processEscapes, errorMode: errorMode,
+        texPackages: texPackages)
 
-      // Get the svg
-      guard let svg = try getSVG(for: component, inputOptions: inputOptions, noCache: noCache) else {
+      guard let svg = try getSVG(
+        for: component, inputOptions: inputOptions, noCache: noCache,
+        lineBreaking: lineBreaking, displayAlignment: displayAlignment,
+        speechLocale: speechLocale, speechStyle: speechStyle
+      ) else {
         renderedComponents.append(component)
         continue
       }
 
-      // Get the image
       guard let image = getImage(for: svg, xHeight: xHeight, displayScale: displayScale, renderingMode: renderingMode, noCache: noCache) else {
         renderedComponents.append(Component(text: component.text, type: component.type, notationHint: component.notationHint, svg: svg))
         continue
       }
 
-      // Save the rendered component
       renderedComponents.append(Component(
         text: component.text,
         type: component.type,
@@ -603,7 +719,6 @@ extension Renderer {
       ))
     }
 
-    // All done
     return renderedComponents
   }
 
@@ -618,25 +733,48 @@ extension Renderer {
   nonisolated func getSVG(
     for component: Component,
     inputOptions: InputOptions,
-    noCache: Bool = false
+    noCache: Bool = false,
+    lineBreaking: LaTeX.LineBreaking? = nil,
+    displayAlignment: LaTeX.DisplayAlignment = .center,
+    speechLocale: String = "en",
+    speechStyle: LaTeX.SpeechStyle = .default
   ) throws -> SVG? {
     // Create our SVG cache key
     let svgCacheKey = Cache.SVGCacheKey(
       componentText: component.text,
       conversionOptions: component.conversionOptions,
-      inputOptions: inputOptions)
+      inputOptions: inputOptions,
+      speechLocale: speechLocale,
+      speechStyle: speechStyle.rawValue)
 
     if noCache {
-      // Evict any previously cached entry
       Cache.shared.removeDataCacheValue(for: svgCacheKey)
     } else if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
       return try SVG(data: svgData)
     }
 
-    // Make sure we have a MathJax instance!
     guard let mathjax = Self.mathjax else {
       return nil
     }
+
+    // Build SVG output options
+    let svgOutputOptions = SVGOutputProcessorOptions()
+    svgOutputOptions.displayAlign = displayAlignment.rawValue
+    if let lb = lineBreaking {
+      let lbOpts = LinebreakOptions()
+      lbOpts.width = lb.width.description
+      lbOpts.inline = lb.inline
+      lbOpts.lineleading = lb.lineleading.description
+      svgOutputOptions.linebreaks = lbOpts
+    }
+
+    // Build document options for speech
+    let sreOptions = SREOptions()
+    sreOptions.locale = speechLocale
+    sreOptions.style = speechStyle.rawValue
+    sreOptions.domain = "mathspeak"
+    let documentOptions = DocumentOptions()
+    documentOptions.sre = sreOptions
 
     // Perform the conversion
     var conversionError: Error?
@@ -648,33 +786,32 @@ extension Renderer {
       svgString = mathjax.tex2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.tex2speech(
         component.text, conversionOptions: component.conversionOptions,
-        inputOptions: opts)
+        documentOptions: documentOptions, inputOptions: opts)
     case .mml(let opts):
       svgString = mathjax.mml2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.mml2speech(component.text)
     case .am(let opts):
       svgString = mathjax.am2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.am2speech(
         component.text, conversionOptions: component.conversionOptions,
-        inputOptions: opts)
+        documentOptions: documentOptions, inputOptions: opts)
     }
 
-    // Check for a conversion error
     let errorText = try getErrorText(from: conversionError)
-
-    // Create the SVG
     let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
 
-    // Cache unless disabled
     if !noCache {
       Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
     }
@@ -864,12 +1001,13 @@ extension Renderer {
   ///   - processEscapes: Whether to process escape sequences.
   ///   - errorMode: The error mode.
   /// - Returns: Whether the blocks are in the renderer's cache.
-  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode) -> Bool {
+  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode, texPackages: Set<String>? = nil) -> Bool {
     for block in blocks {
       for component in block.components where component.type.isEquation {
         let inputOptions = Self.makeInputOptions(
           notation: component.notationHint ?? notation,
-          processEscapes: processEscapes, errorMode: errorMode)
+          processEscapes: processEscapes, errorMode: errorMode,
+          texPackages: texPackages)
         let dataCacheKey = Cache.SVGCacheKey(
           componentText: component.text,
           conversionOptions: component.conversionOptions,
