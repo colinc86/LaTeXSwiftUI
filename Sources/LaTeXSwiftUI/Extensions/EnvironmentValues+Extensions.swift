@@ -90,6 +90,10 @@ private struct ImageAccessibilityModeKey: EnvironmentKey {
   static let defaultValue: LaTeX.ImageAccessibilityMode = .sre
 }
 
+private struct NoCacheKey: EnvironmentKey {
+  static let defaultValue: Bool = false
+}
+
 private struct PlatformFontKey: EnvironmentKey {
   static let defaultValue: _Font? = nil // leave this as static let
 }
@@ -190,6 +194,12 @@ extension EnvironmentValues {
   var imageAccessibilityMode: LaTeX.ImageAccessibilityMode {
     get { self[ImageAccessibilityModeKey.self] }
     set { self[ImageAccessibilityModeKey.self] = newValue }
+  }
+
+  /// Whether caching is disabled for this environment.
+  var noCache: Bool {
+    get { self[NoCacheKey.self] }
+    set { self[NoCacheKey.self] = newValue }
   }
 
   /// The specified UI/NSFont font to use, if any.

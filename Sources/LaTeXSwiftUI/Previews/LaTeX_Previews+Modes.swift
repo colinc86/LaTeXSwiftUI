@@ -79,6 +79,14 @@ struct LaTeX_Previews_Modes: PreviewProvider {
         .blockMode(.alwaysInline)
     }
     .previewDisplayName("Block Mode")
+
+    VStack {
+      LaTeX("$x^2 + y^2 = z^2$")
+
+      LaTeX("$x^2 + y^2 = z^2$")
+        .noCache()
+    }
+    .previewDisplayName("No Cache")
   }
-  
+
 }

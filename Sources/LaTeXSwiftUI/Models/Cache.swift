@@ -126,5 +126,15 @@ extension Cache {
   func setImageCacheValue(_ value: _Image, for key: ImageCacheKey) {
     imageCache.setObject(value, forKey: key.key() as NSString)
   }
-  
+
+  /// Removes the cached data for the given key.
+  func removeDataCacheValue(for key: SVGCacheKey) {
+    dataCache.removeObject(forKey: key.key() as NSString)
+  }
+
+  /// Removes the cached image for the given key.
+  func removeImageCacheValue(for key: ImageCacheKey) {
+    imageCache.removeObject(forKey: key.key() as NSString)
+  }
+
 }

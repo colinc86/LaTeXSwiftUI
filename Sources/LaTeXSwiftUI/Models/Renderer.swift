@@ -169,6 +169,7 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
+    noCache: Bool = false,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -191,14 +192,15 @@ extension Renderer {
         renderingMode: renderingMode,
         notation: notation,
         processEscapes: processEscapes,
-        errorMode: errorMode)
+        errorMode: errorMode,
+        noCache: noCache)
     }
 
     isRendering = false
     syncRendered = true
     return blocks
   }
-  
+
   /// Renders the view's components asynchronously.
   ///
   /// - Parameters:
@@ -208,6 +210,7 @@ extension Renderer {
   ///   - notation: The `notation` environment variable.
   ///   - processEscapes: The `processEscapes` environment variable.
   ///   - errorMode: The `errorMode` environment variable.
+  ///   - noCache: Whether to bypass and evict cached data.
   ///   - xHeight: The font's x-height.
   ///   - displayScale: The `displayScale` environment variable.
   ///   - renderingMode: The `renderingMode` environment variable.
@@ -218,6 +221,7 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
+    noCache: Bool = false,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -232,6 +236,7 @@ extension Renderer {
       notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
+      noCache: noCache,
       xHeight: xHeight,
       displayScale: displayScale,
       renderingMode: renderingMode)
@@ -249,6 +254,7 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
+    noCache: Bool,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -264,7 +270,8 @@ extension Renderer {
           renderingMode: renderingMode,
           notation: notation,
           processEscapes: processEscapes,
-          errorMode: errorMode)
+          errorMode: errorMode,
+          noCache: noCache)
         continuation.resume(returning: result)
       }
     }
@@ -517,7 +524,8 @@ extension Renderer {
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
     notation: LaTeX.Notation,
     processEscapes: Bool,
-    errorMode: LaTeX.ErrorMode
+    errorMode: LaTeX.ErrorMode,
+    noCache: Bool = false
   ) -> [ComponentBlock] {
     var newBlocks = [ComponentBlock]()
     for block in blocks {
@@ -529,7 +537,8 @@ extension Renderer {
           renderingMode: renderingMode,
           notation: notation,
           processEscapes: processEscapes,
-          errorMode: errorMode)
+          errorMode: errorMode,
+          noCache: noCache)
 
         newBlocks.append(ComponentBlock(components: newComponents))
       }
@@ -545,16 +554,6 @@ extension Renderer {
 
   /// Renders the components and stores the new images in a new set of
   /// components.
-  ///
-  /// - Parameters:
-  ///   - components: The components to render.
-  ///   - xHeight: The font's x-height.
-  ///   - displayScale: The current display scale.
-  ///   - renderingMode: The image rendering mode.
-  ///   - notation: The environment notation.
-  ///   - processEscapes: Whether to process escape sequences.
-  ///   - errorMode: The error mode.
-  /// - Returns: An array of components.
   nonisolated private func render(
     _ components: [Component],
     xHeight: CGFloat,
@@ -562,7 +561,8 @@ extension Renderer {
     renderingMode: SwiftUI.Image.TemplateRenderingMode,
     notation: LaTeX.Notation,
     processEscapes: Bool,
-    errorMode: LaTeX.ErrorMode
+    errorMode: LaTeX.ErrorMode,
+    noCache: Bool
   ) throws -> [Component] {
     // Iterate through the input components and render
     var renderedComponents = [Component]()
@@ -579,13 +579,13 @@ extension Renderer {
         processEscapes: processEscapes, errorMode: errorMode)
 
       // Get the svg
-      guard let svg = try getSVG(for: component, inputOptions: inputOptions) else {
+      guard let svg = try getSVG(for: component, inputOptions: inputOptions, noCache: noCache) else {
         renderedComponents.append(component)
         continue
       }
 
       // Get the image
-      guard let image = getImage(for: svg, xHeight: xHeight, displayScale: displayScale, renderingMode: renderingMode) else {
+      guard let image = getImage(for: svg, xHeight: xHeight, displayScale: displayScale, renderingMode: renderingMode, noCache: noCache) else {
         renderedComponents.append(Component(text: component.text, type: component.type, notationHint: component.notationHint, svg: svg))
         continue
       }
@@ -617,7 +617,8 @@ extension Renderer {
   /// - Returns: An SVG.
   nonisolated func getSVG(
     for component: Component,
-    inputOptions: InputOptions
+    inputOptions: InputOptions,
+    noCache: Bool = false
   ) throws -> SVG? {
     // Create our SVG cache key
     let svgCacheKey = Cache.SVGCacheKey(
@@ -625,8 +626,10 @@ extension Renderer {
       conversionOptions: component.conversionOptions,
       inputOptions: inputOptions)
 
-    // Do we have the SVG in the cache?
-    if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
+    if noCache {
+      // Evict any previously cached entry
+      Cache.shared.removeDataCacheValue(for: svgCacheKey)
+    } else if let svgData = Cache.shared.dataCacheValue(for: svgCacheKey) {
       return try SVG(data: svgData)
     }
 
@@ -671,13 +674,15 @@ extension Renderer {
     // Create the SVG
     let svg = try SVG(svgString: svgString, errorText: errorText, speechText: speechText)
 
-    // Set the SVG in the cache
-    Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
+    // Cache unless disabled
+    if !noCache {
+      Cache.shared.setDataCacheValue(try svg.encoded(), for: svgCacheKey)
+    }
 
     // Finish up
     return svg
   }
-  
+
   /// Gets the component's image, if possible.
   ///
   /// The image cache is checked first.
@@ -687,18 +692,21 @@ extension Renderer {
   ///   - xHeight: The current font's x-height.
   ///   - displayScale: The display scale.
   ///   - renderingMode: The image rendering mode.
+  ///   - noCache: Whether to bypass and evict cached data.
   /// - Returns: The image.
   nonisolated func getImage(
     for svg: SVG,
     xHeight: CGFloat,
     displayScale: CGFloat,
-    renderingMode: SwiftUI.Image.TemplateRenderingMode
+    renderingMode: SwiftUI.Image.TemplateRenderingMode,
+    noCache: Bool = false
   ) -> SwiftUI.Image? {
     // Create our cache key
     let cacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight)
 
-    // Check the cache for an image
-    if let image = Cache.shared.imageCacheValue(for: cacheKey) {
+    if noCache {
+      Cache.shared.removeImageCacheValue(for: cacheKey)
+    } else if let image = Cache.shared.imageCacheValue(for: cacheKey) {
       return Image(image: image)
         .renderingMode(renderingMode)
         .antialiased(true)
@@ -713,8 +721,10 @@ extension Renderer {
       return nil
     }
 
-    // Set the image in the cache
-    Cache.shared.setImageCacheValue(image, for: cacheKey)
+    // Cache unless disabled
+    if !noCache {
+      Cache.shared.setImageCacheValue(image, for: cacheKey)
+    }
 
     // Finish up
     return Image(image: image, scale: displayScale)

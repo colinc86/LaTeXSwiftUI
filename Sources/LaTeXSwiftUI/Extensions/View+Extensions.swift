@@ -195,6 +195,19 @@ public extension View {
     environment(\.imageAccessibilityMode, mode)
   }
 
+  /// Disables caching and evicts any previously cached data for the
+  /// equations in this view.
+  ///
+  /// The rendering cache is shared across all `LaTeX` views in the
+  /// process. Evicting an entry here may affect other views that rely
+  /// on the same cached equation data.
+  ///
+  /// - Parameter noCache: Whether to disable caching (default: `true`).
+  /// - Returns: A view that does not cache its rendered equations.
+  func noCache(_ noCache: Bool = true) -> some View {
+    environment(\.noCache, noCache)
+  }
+
   /// Sets the view's UI/NSFont font, if any.
   /// - Parameter font: The UI/NSFont font to use.
   /// - Returns: A view that uses the provided font.

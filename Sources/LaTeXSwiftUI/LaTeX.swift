@@ -199,6 +199,9 @@ public struct LaTeX: View {
   /// The input notation format.
   @Environment(\.notation) private var notation
 
+  /// Whether caching is disabled.
+  @Environment(\.noCache) private var noCache
+
   /// What to do in the case of an error.
   @Environment(\.errorMode) private var errorMode
   
@@ -425,7 +428,8 @@ extension LaTeX {
   /// - Returns: A boolean indicating whether the components to the view are
   ///   cached.
   private func isCached() -> Bool {
-    renderer.isCached(
+    guard !noCache else { return false }
+    return renderer.isCached(
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
@@ -435,7 +439,7 @@ extension LaTeX {
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale)
   }
-  
+
   /// Renders the view's components.
   private func renderAsync() async {
     await renderer.render(
@@ -445,11 +449,12 @@ extension LaTeX {
       notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
+      noCache: noCache,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
   }
-  
+
   /// Renders the view's components synchronously.
   ///
   /// - Returns: The rendered components.
@@ -461,6 +466,7 @@ extension LaTeX {
       notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
+      noCache: noCache,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
