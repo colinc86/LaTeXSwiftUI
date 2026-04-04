@@ -30,21 +30,6 @@ internal extension Image {
 #if os(iOS) || os(visionOS)
     self.init(uiImage: image)
 #else
-    if scale > 1.0 {
-      let scaledSize = NSSize(
-          width: image.size.width / scale,
-          height: image.size.height / scale
-      )
-      
-      let scaledImage = image.resized(to: scaledSize)
-      if let representation = image.representations.first {
-        scaledImage.addRepresentation(representation)
-      }
-      
-      self.init(nsImage: scaledImage)
-      return
-    }
-    
     self.init(nsImage: image)
 #endif
   }
