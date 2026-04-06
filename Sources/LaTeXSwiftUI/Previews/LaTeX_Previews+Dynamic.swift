@@ -34,7 +34,11 @@ struct LaTeX_Previews_Dynamic: PreviewProvider {
     var body: some View {
       VStack(spacing: 16) {
         TextField("Enter LaTeX", text: $text)
+          #if os(tvOS)
+          .textFieldStyle(.plain)
+          #else
           .textFieldStyle(.roundedBorder)
+          #endif
 
         LaTeX("$\(text)$")
       }
