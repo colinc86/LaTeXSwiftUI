@@ -26,7 +26,7 @@
 import Foundation
 import SwiftUI
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
 import UIKit
 #else
 import Cocoa
@@ -37,7 +37,12 @@ internal extension Font {
   /// The font's text style.
   func textStyle() -> _Font.TextStyle? {
     switch self {
-    case .largeTitle, .largeTitle.bold(), .largeTitle.italic(), .largeTitle.monospaced(): return .largeTitle
+    case .largeTitle, .largeTitle.bold(), .largeTitle.italic(), .largeTitle.monospaced():
+      #if os(tvOS)
+      return .title1
+      #else
+      return .largeTitle
+      #endif
     case .title, .title.bold(), .title.italic(), .title.monospaced(): return .title1
     case .title2, .title2.bold(), .title2.italic(), .title.monospaced(): return .title2
     case .title3, .title3.bold(), .title3.italic(), .title.monospaced(): return .title3
@@ -95,7 +100,7 @@ internal extension _Font {
         .caption2.bold(),
         .footnote.bold(),
         .body.bold():
-#if os(iOS)
+#if os(iOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitBold) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -118,7 +123,7 @@ internal extension _Font {
         .caption2.monospaced(),
         .footnote.monospaced(),
         .body.monospaced():
-#if os(iOS)
+#if os(iOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitMonoSpace) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -141,7 +146,7 @@ internal extension _Font {
         .caption2.italic(),
         .footnote.italic(),
         .body.italic():
-#if os(iOS)
+#if os(iOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitItalic) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
