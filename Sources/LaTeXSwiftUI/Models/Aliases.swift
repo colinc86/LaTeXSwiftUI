@@ -25,7 +25,7 @@
 
 import Foundation
 
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
 import UIKit
 internal typealias _Image = UIImage
 internal typealias _Font = UIFont

@@ -26,5 +26,5 @@
 import SwiftUI
 
 /// Marks a text run as containing a rendered equation image.
-@available(iOS 18.0, macOS 15.0, *)
+@available(iOS 18.0, macOS 15.0, tvOS 18.0, *)
 internal struct EquationMarker: TextAttribute {}

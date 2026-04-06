@@ -103,7 +103,7 @@ internal struct ComponentBlocksViews: View {
             blockRenderingMode: blockMode,
             ignoreStringFormatting: ignoreStringFormatting,
             imageAccessibilityMode: imageAccessibilityMode)
-          if #available(iOS 18.0, macOS 15.0, *) {
+          if #available(iOS 18.0, macOS 15.0, tvOS 18.0, *) {
             textView.textRenderer(LineSpacingNormalizer())
           } else {
             textView

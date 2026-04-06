@@ -247,7 +247,7 @@ extension Component {
         let offset = svg.geometry.verticalAlignment.toPoints(xHeight)
         let baselineOffset = blockRenderingMode == .alwaysInline || !isInEquationBlock ? offset : 0
         var imageText: Text
-        if #available(iOS 18.0, macOS 15.0, *) {
+        if #available(iOS 18.0, macOS 15.0, tvOS 18.0, *) {
           imageText = Text(imageContainer.image)
             .baselineOffset(baselineOffset)
             .customAttribute(EquationMarker())

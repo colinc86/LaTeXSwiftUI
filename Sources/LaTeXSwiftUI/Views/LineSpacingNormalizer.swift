@@ -31,7 +31,7 @@ import SwiftUI
 /// Works by computing baseline-to-baseline distances between adjacent lines,
 /// finding the minimum (the natural text-only spacing), and shifting inflated
 /// lines closer while clamping to prevent overlap.
-@available(iOS 18.0, macOS 15.0, *)
+@available(iOS 18.0, macOS 15.0, tvOS 18.0, *)
 internal struct LineSpacingNormalizer: TextRenderer {
 
   func draw(layout: Text.Layout, in context: inout GraphicsContext) {

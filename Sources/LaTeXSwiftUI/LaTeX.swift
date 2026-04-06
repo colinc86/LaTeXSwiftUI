@@ -271,7 +271,7 @@ extension LaTeX {
     Task { await preloadTask?.value }
   }
   
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
   public func font(_ font: UIFont) -> some View {
     self
       .platformFont(font)
@@ -300,7 +300,7 @@ extension LaTeX {
   ///   - processEscapes: Whether to process escape sequences (default: false).
   ///   - errorMode: The error mode (default: `.rendered`).
   /// - Returns: An array of rendered images, one per equation.
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
   public static func renderToImages(
     _ latex: String,
     xHeight: CGFloat? = nil,

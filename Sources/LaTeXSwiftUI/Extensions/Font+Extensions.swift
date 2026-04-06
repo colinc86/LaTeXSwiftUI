@@ -26,7 +26,7 @@
 import Foundation
 import SwiftUI
 
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
 import UIKit
 #else
 import Cocoa
@@ -90,7 +90,7 @@ internal extension _Font {
   /// - Returns: The preferred font.
   class func preferredFont(from font: Font, sizeCategory: DynamicTypeSize? = nil) -> _Font {
     guard let textStyle = font.textStyle() else {
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
       if let sizeCategory {
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
         return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
@@ -98,7 +98,7 @@ internal extension _Font {
 #endif
       return _Font.preferredFont(forTextStyle: .body)
     }
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
     let _font: _Font
     if let sizeCategory {
       let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
@@ -135,7 +135,7 @@ internal extension _Font {
         .caption2.bold(),
         .footnote.bold(),
         .body.bold():
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitBold) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -158,7 +158,7 @@ internal extension _Font {
         .caption2.monospaced(),
         .footnote.monospaced(),
         .body.monospaced():
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitMonoSpace) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -181,7 +181,7 @@ internal extension _Font {
         .caption2.italic(),
         .footnote.italic(),
         .body.italic():
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
       if let descriptor = _font.fontDescriptor.withSymbolicTraits(.traitItalic) {
         return _Font(descriptor: descriptor, size: _font.pointSize)
       }
@@ -194,7 +194,7 @@ internal extension _Font {
 #endif
       
     default:
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
       if let sizeCategory {
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(sizeCategory))
         return _Font.preferredFont(forTextStyle: .body, compatibleWith: traits)
@@ -206,7 +206,7 @@ internal extension _Font {
 
 }
 
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
 extension UIContentSizeCategory {
 
   /// Creates a `UIContentSizeCategory` from a SwiftUI `DynamicTypeSize`.
