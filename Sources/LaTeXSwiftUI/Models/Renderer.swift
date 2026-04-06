@@ -28,7 +28,7 @@ import MathJaxSwift
 import SwiftDraw
 import SwiftUI
 
-#if os(iOS) || os(visionOS)
+#if os(iOS) || os(visionOS) || os(tvOS)
 import UIKit
 #else
 import Cocoa
@@ -605,7 +605,7 @@ extension Renderer {
 
     guard let cgImage = ctx.makeImage() else { return nil }
 
-    #if os(iOS) || os(visionOS)
+    #if os(iOS) || os(visionOS) || os(tvOS)
     return UIImage(cgImage: cgImage, scale: scale, orientation: .up)
     #else
     return NSImage(cgImage: cgImage, size: size)

@@ -74,7 +74,7 @@ internal struct ComponentBlocksText: View {
       Text("\n") + text(for: block) + Text("\n") :
       text(for: block)
     }.reduce(Text(""), +)
-    if #available(iOS 18.0, macOS 15.0, *) {
+    if #available(iOS 18.0, macOS 15.0, tvOS 18.0, *) {
       textView.textRenderer(LineSpacingNormalizer())
     } else {
       textView
