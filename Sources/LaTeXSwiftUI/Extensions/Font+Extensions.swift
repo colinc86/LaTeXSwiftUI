@@ -49,6 +49,7 @@ internal extension Font {
     case .caption, .caption.bold(), .caption.italic(), .caption.monospaced(): return .caption1
     case .caption2, .caption2.bold(), .caption2.italic(), .caption2.monospaced(): return .caption2
     case .footnote, .footnote.bold(), .footnote.italic(), .footnote.monospaced(): return .footnote
+    case .body, .body.bold(), .body.italic(), .body.monospaced(): return .body
     default: return nil
     }
   }

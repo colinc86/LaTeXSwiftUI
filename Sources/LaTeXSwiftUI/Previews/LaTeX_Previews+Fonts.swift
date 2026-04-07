@@ -54,5 +54,5 @@ struct LaTeX_Previews_Fonts: PreviewProvider {
     }
     .previewDisplayName("Fonts")
   }
-  
+
 }

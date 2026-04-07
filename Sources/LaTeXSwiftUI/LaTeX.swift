@@ -174,6 +174,33 @@ public struct LaTeX: View {
 
     /// Align equations to the right.
     case right = "right"
+
+    /// The corresponding SwiftUI alignment.
+    internal var swiftUIAlignment: Alignment {
+      switch self {
+      case .left: return .leading
+      case .center: return .center
+      case .right: return .trailing
+      }
+    }
+  }
+
+  /// A TeX package available in MathJax.
+  public enum TeXPackage: String, CaseIterable, Hashable, Sendable {
+    case action, ams, amscd, autoload
+    case base, bbox, boldsymbol, braket, bussproofs
+    case cancel, cases, centernot, color, colortbl, colorv2, configmacros
+    case empheq, enclose, extpfeil
+    case gensymb
+    case html
+    case mathtools, mhchem
+    case newcommand, noerrors, noundefined
+    case physics
+    case require
+    case setoptions
+    case tagformat, textcomp, textmacros
+    case unicode, upgreek
+    case verb
   }
 
   /// The view's equation number mode.
@@ -293,11 +320,17 @@ public struct LaTeX: View {
   
   // MARK: Package sets
 
-  /// TeX packages for chemistry notation (e.g. `\ce{H2O}`).
-  public static let chemistryPackages: Set<String> = ["base", "ams", "mhchem", "newcommand", "autoload"]
+  /// TeX packages for chemistry notation (e.g. `\ce{H2O}`, `\unit{kg}`).
+  public static let chemistryPackages: Set<TeXPackage> = [.base, .ams, .mhchem, .newcommand, .autoload]
 
   /// TeX packages for physics notation (e.g. `\bra{\psi}`, `\braket`).
-  public static let physicsPackages: Set<String> = ["base", "ams", "physics", "braket", "newcommand", "autoload"]
+  public static let physicsPackages: Set<TeXPackage> = [.base, .ams, .physics, .braket, .newcommand, .autoload]
+
+  /// TeX packages for general math (cancel, boldsymbol, mathtools, etc.).
+  public static let mathPackages: Set<TeXPackage> = [.base, .ams, .mathtools, .cancel, .boldsymbol, .newcommand, .autoload]
+
+  /// TeX packages for logic and proof trees.
+  public static let logicPackages: Set<TeXPackage> = [.base, .ams, .bussproofs, .newcommand, .autoload]
 
   // MARK: Public properties
 
@@ -368,6 +401,9 @@ public struct LaTeX: View {
 
   /// TeX packages to load.
   @Environment(\.texPackages) private var texPackages
+
+  /// Whether TeX autoload is enabled.
+  @Environment(\.texAutoload) private var texAutoload
 
   // MARK: Private properties
   
@@ -600,6 +636,7 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       texPackages: texPackages,
+      texAutoload: texAutoload,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale)
   }
@@ -614,11 +651,10 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
-      lineBreaking: lineBreaking,
-      displayAlignment: displayAlignment,
       speechLocale: speechLocale.rawValue,
       speechStyle: speechStyle,
       texPackages: texPackages,
+      texAutoload: texAutoload,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)
@@ -628,7 +664,7 @@ extension LaTeX {
   ///
   /// - Returns: The rendered components.
   private func renderSync() -> [ComponentBlock] {
-    renderer.renderSync(
+    return renderer.renderSync(
       latex: latex,
       unencodeHTML: unencodeHTML,
       parsingMode: parsingMode,
@@ -636,11 +672,10 @@ extension LaTeX {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
-      lineBreaking: lineBreaking,
-      displayAlignment: displayAlignment,
       speechLocale: speechLocale.rawValue,
       speechStyle: speechStyle,
       texPackages: texPackages,
+      texAutoload: texAutoload,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale,
       renderingMode: imageRenderingMode)

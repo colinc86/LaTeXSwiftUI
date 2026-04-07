@@ -35,13 +35,13 @@ extension TeXInputProcessorOptions {
   ///   - processEscapes: Whether or not escapes should be processed.
   ///   - errorMode: The view's error mode.
   ///   - packages: A specific set of package names to load, or `nil` to use all.
-  convenience init(processEscapes: Bool, errorMode: LaTeX.ErrorMode, packages customPackages: Set<String>? = nil) {
+  convenience init(processEscapes: Bool, errorMode: LaTeX.ErrorMode, packages customPackages: Set<LaTeX.TeXPackage>? = nil, autoload: Bool = true) {
     self.init()
     self.processEscapes = processEscapes
 
     var packages: [String]
     if let customPackages {
-      packages = Array(customPackages)
+      packages = customPackages.map(\.rawValue)
     } else {
       packages = TeXInputProcessorOptions.Packages.all
     }
@@ -54,6 +54,13 @@ extension TeXInputProcessorOptions {
         packages.remove(at: noUndefinedIndex)
       }
     }
+
+    if !autoload, let idx = packages.firstIndex(of: LaTeX.TeXPackage.autoload.rawValue) {
+      packages.remove(at: idx)
+    } else if autoload, !packages.contains(LaTeX.TeXPackage.autoload.rawValue) {
+      packages.append(LaTeX.TeXPackage.autoload.rawValue)
+    }
+
     loadPackages = packages
 
     // The default inlineMath for MathJax is set to [["\\(", "\\)"]] which isn't

@@ -71,20 +71,6 @@ struct LaTeX_Previews_Features: PreviewProvider {
     .padding()
     .previewDisplayName("Speech Locale & Style")
 
-    // MARK: Line Breaking
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Without line breaking")
-        .font(.caption)
-      LaTeX("$$a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p$$")
-
-      Text("With line breaking (20em)")
-        .font(.caption)
-      LaTeX("$$a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p$$")
-        .lineBreaking(LaTeX.LineBreaking(width: .em(20)))
-    }
-    .padding()
-    .previewDisplayName("Line Breaking")
-
     // MARK: Display Alignment
     VStack(alignment: .leading, spacing: 12) {
       LaTeX("$$x^2 + y^2 = z^2$$")
@@ -101,18 +87,43 @@ struct LaTeX_Previews_Features: PreviewProvider {
 
     // MARK: TeX Packages
     VStack(alignment: .leading, spacing: 12) {
-      Text("Chemistry (mhchem)")
+      Text("Chemistry")
         .font(.caption)
-      LaTeX("$\\ce{H2O}$, $\\ce{CO2 + H2O -> H2CO3}$")
+      LaTeX("$\\ce{2H2 + O2 -> 2H2O}$")
         .texPackages(LaTeX.chemistryPackages)
 
       Text("Physics")
         .font(.caption)
       LaTeX("$\\bra{\\psi}\\ket{\\phi}$")
         .texPackages(LaTeX.physicsPackages)
+
+      Text("Math (cancel)")
+        .font(.caption)
+      LaTeX("$\\cancel{x} + \\bcancel{y} = z$")
+        .texPackages(LaTeX.mathPackages)
+
+      Text("Logic")
+        .font(.caption)
+      LaTeX("$A \\implies B$")
+        .texPackages(LaTeX.logicPackages)
     }
     .padding()
     .previewDisplayName("TeX Packages")
+
+    // MARK: Autoload
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Autoload enabled (default)")
+        .font(.caption)
+      LaTeX("$\\ce{H2O + CO2 -> H2CO3}$")
+
+      Text("Autoload disabled + explicit packages")
+        .font(.caption)
+      LaTeX("$\\ce{H2O}$")
+        .texPackages([.base, .ams, .mhchem])
+        .texAutoload(false)
+    }
+    .padding()
+    .previewDisplayName("Autoload")
   }
 
 }

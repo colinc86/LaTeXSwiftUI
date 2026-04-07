@@ -65,16 +65,19 @@ internal struct ComponentBlocksViews: View {
 
   /// The accessibility mode for equation images.
   @Environment(\.imageAccessibilityMode) private var imageAccessibilityMode
-  
+
+  /// Display alignment for block equations.
+  @Environment(\.displayAlignment) private var displayAlignment
+
   // MARK: View body
-  
+
   var body: some View {
     VStack(alignment: .leading, spacing: lineSpacing + 4) {
       ForEach(blocks, id: \.self) { block in
         if block.isEquationBlock, let container = block.container, let svg = block.svg {
           HStack(spacing: 0) {
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .left)
-            
+
             if let errorText = svg.errorText, errorMode != .rendered {
               switch errorMode {
               case .error:
@@ -90,9 +93,10 @@ internal struct ComponentBlocksViews: View {
                 image: container.image,
                 height: container.size.size.height)
             }
-            
+
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
           }
+          .frame(maxWidth: .infinity, alignment: displayAlignment.swiftUIAlignment)
         }
         else {
           let textView = block.toText(

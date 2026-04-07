@@ -54,6 +54,13 @@ internal struct SVG: Codable, Hashable, Sendable {
     self = try JSONDecoder().decode(Self.self, from: data)
   }
   
+  // MARK: Precompiled regex patterns
+
+  private nonisolated static let dataAttrRegex = try! NSRegularExpression(pattern: #"(data-\w+=")((?:[^"\\]|\\.)*)(")"#)
+  private nonisolated static let dataLineRegex = try! NSRegularExpression(pattern: #"(<line\b[^>]*\bdata-line\b[^>]*?)(\/?>)"#)
+  private nonisolated static let borderLineRegex = try! NSRegularExpression(pattern: #"(<line\b(?![^>]*\bdata-line\b)(?![^>]*\bstroke=")[^>]*?\bstroke-width="[^"]*"[^>]*?)(\/?>)"#)
+  private nonisolated static let dataFrameRegex = try! NSRegularExpression(pattern: #"(<rect\b[^>]*\bdata-frame\b(?![^>]*\bstroke=")[^>]*?)(\/?>)"#)
+
   /// Initializes a new SVG.
   ///
   /// - Parameters:
@@ -63,11 +70,16 @@ internal struct SVG: Codable, Hashable, Sendable {
     self.errorText = errorText
     self.speechText = speechText
 
+    // Fix invalid XML: MathJax emits unescaped `<` and `>` in
+    // `data-latex` attribute values (e.g. `data-latex="x < 0"`).
+    // These must be escaped for SwiftDraw's XML parser.
+    let escapedSVG = Self.escapeDataAttributes(svgString)
+
     // Patch SVG elements that rely on CSS for stroke styling.
     // SwiftDraw doesn't apply CSS stylesheets, so we inline the
     // stroke attributes that MathJax's CSS would normally provide
     // for array borders and horizontal rules.
-    let patchedSVG = Self.patchStrokeAttributes(svgString)
+    let patchedSVG = Self.patchStrokeAttributes(escapedSVG)
 
     // Get the SVG's geometry
     geometry = try SVGGeometry(svg: patchedSVG)
@@ -94,6 +106,31 @@ extension SVG {
     try JSONEncoder().encode(self)
   }
   
+  /// Escapes invalid XML characters in `data-*` attribute values.
+  ///
+  /// MathJax v4 emits `data-latex` attributes containing the raw TeX
+  /// input, which may include `<` and `>` characters (e.g.
+  /// `data-latex="x < 0"`). These are invalid in XML attribute values
+  /// and cause SwiftDraw's XML parser to fail. This method escapes
+  /// them to `&lt;` and `&gt;`.
+  private static func escapeDataAttributes(_ svgString: String) -> String {
+    let mutable = NSMutableString(string: svgString)
+    let matches = dataAttrRegex.matches(in: svgString, range: NSRange(location: 0, length: mutable.length))
+    // Process in reverse to maintain range validity
+    for match in matches.reversed() {
+      let valueRange = match.range(at: 2)
+      let value = mutable.substring(with: valueRange)
+      if value.contains("<") || value.contains(">") {
+        let escaped = value
+          .replacingOccurrences(of: "&", with: "&amp;")
+          .replacingOccurrences(of: "<", with: "&lt;")
+          .replacingOccurrences(of: ">", with: "&gt;")
+        mutable.replaceCharacters(in: valueRange, with: escaped)
+      }
+    }
+    return mutable as String
+  }
+
   /// Patches SVG elements that rely on MathJax CSS for stroke styling.
   ///
   /// MathJax renders array borders and horizontal rules using `<line>` and
@@ -109,53 +146,25 @@ extension SVG {
   /// - Parameter svgString: The raw SVG string from MathJax.
   /// - Returns: The patched SVG string.
   private static func patchStrokeAttributes(_ svgString: String) -> String {
-    // MathJax uses <line> for array column separators and horizontal
-    // rules, and <rect data-frame> for outer table borders. These
-    // elements rely on parent <g> inheritance or CSS for stroke color,
-    // but SwiftDraw doesn't support either. We inline the stroke
-    // attribute on these elements so they render correctly.
     var result = svgString
 
-    // Patch <line> elements that have data-line (internal separators
-    // and horizontal rules). These have neither stroke nor stroke-width.
-    // MathJax's CSS uses 70 SVG units for their stroke width.
-    if let dataLineRegex = try? NSRegularExpression(
-      pattern: #"(<line\b[^>]*\bdata-line\b[^>]*?)(\/?>)"#) {
-      let mutable = NSMutableString(string: result)
-      dataLineRegex.replaceMatches(
-        in: mutable, options: [],
-        range: NSRange(location: 0, length: mutable.length),
-        withTemplate: ##"$1 stroke="#000" stroke-width="70" $2"##)
-      result = mutable as String
-    }
+    // Inline stroke on <line data-line> (array separators/rules)
+    result = replaceAll(dataLineRegex, in: result, template: ##"$1 stroke="#000" stroke-width="70" $2"##)
 
-    // Patch <line> elements that have stroke-width but no stroke color
-    // (outer border lines). These already have the correct width.
-    if let borderLineRegex = try? NSRegularExpression(
-      pattern: #"(<line\b(?![^>]*\bdata-line\b)(?![^>]*\bstroke=")[^>]*?\bstroke-width="[^"]*"[^>]*?)(\/?>)"#) {
-      let mutable = NSMutableString(string: result)
-      borderLineRegex.replaceMatches(
-        in: mutable, options: [],
-        range: NSRange(location: 0, length: mutable.length),
-        withTemplate: ##"$1 stroke="#000" $2"##)
-      result = mutable as String
-    }
+    // Inline stroke on border <line> elements (have stroke-width but no stroke color)
+    result = replaceAll(borderLineRegex, in: result, template: ##"$1 stroke="#000" $2"##)
 
-    // Patch <rect> elements with data-frame (outer table borders).
-    // These need stroke, stroke-width, and fill="none" to render as
-    // borders. We don't patch other <rect> elements because MathJax
-    // uses those for filled regions (fraction bars, etc.).
-    if let rectRegex = try? NSRegularExpression(
-      pattern: #"(<rect\b[^>]*\bdata-frame\b(?![^>]*\bstroke=")[^>]*?)(\/?>)"#) {
-      let mutable = NSMutableString(string: result)
-      rectRegex.replaceMatches(
-        in: mutable, options: [],
-        range: NSRange(location: 0, length: mutable.length),
-        withTemplate: ##"$1 stroke="#000" stroke-width="70" fill="none" $2"##)
-      result = mutable as String
-    }
+    // Inline stroke on <rect data-frame> (table borders)
+    result = replaceAll(dataFrameRegex, in: result, template: ##"$1 stroke="#000" stroke-width="70" fill="none" $2"##)
 
     return result
+  }
+
+  /// Applies a regex replacement to all matches in a string.
+  private static func replaceAll(_ regex: NSRegularExpression, in string: String, template: String) -> String {
+    let mutable = NSMutableString(string: string)
+    regex.replaceMatches(in: mutable, range: NSRange(location: 0, length: mutable.length), withTemplate: template)
+    return mutable as String
   }
 
   /// The size of the SVG based on the current font's x-height.

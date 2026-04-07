@@ -138,7 +138,8 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    texPackages: Set<String>?,
+    texPackages: Set<LaTeX.TeXPackage>?,
+    texAutoload: Bool = true,
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> Bool {
@@ -149,7 +150,8 @@ extension Renderer {
       notation: notation,
       processEscapes: processEscapes,
       errorMode: errorMode,
-      texPackages: texPackages)
+      texPackages: texPackages,
+      texAutoload: texAutoload)
   }
   
   /// Renders the view's components synchronously.
@@ -172,11 +174,10 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool = false,
-    lineBreaking: LaTeX.LineBreaking? = nil,
-    displayAlignment: LaTeX.DisplayAlignment = .center,
     speechLocale: String = "en",
     speechStyle: LaTeX.SpeechStyle = .default,
-    texPackages: Set<String>? = nil,
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -199,11 +200,10 @@ extension Renderer {
         processEscapes: processEscapes,
         errorMode: errorMode,
         noCache: noCache,
-        lineBreaking: lineBreaking,
-        displayAlignment: displayAlignment,
         speechLocale: speechLocale,
         speechStyle: speechStyle,
-        texPackages: texPackages)
+        texPackages: texPackages,
+        texAutoload: texAutoload)
     }
 
     isRendering = false
@@ -219,11 +219,10 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool = false,
-    lineBreaking: LaTeX.LineBreaking? = nil,
-    displayAlignment: LaTeX.DisplayAlignment = .center,
     speechLocale: String = "en",
     speechStyle: LaTeX.SpeechStyle = .default,
-    texPackages: Set<String>? = nil,
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -239,11 +238,10 @@ extension Renderer {
       processEscapes: processEscapes,
       errorMode: errorMode,
       noCache: noCache,
-      lineBreaking: lineBreaking,
-      displayAlignment: displayAlignment,
       speechLocale: speechLocale,
       speechStyle: speechStyle,
       texPackages: texPackages,
+      texAutoload: texAutoload,
       xHeight: xHeight,
       displayScale: displayScale,
       renderingMode: renderingMode)
@@ -261,11 +259,10 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool,
-    lineBreaking: LaTeX.LineBreaking?,
-    displayAlignment: LaTeX.DisplayAlignment,
     speechLocale: String,
     speechStyle: LaTeX.SpeechStyle,
-    texPackages: Set<String>?,
+    texPackages: Set<LaTeX.TeXPackage>?,
+    texAutoload: Bool,
     xHeight: CGFloat,
     displayScale: CGFloat,
     renderingMode: SwiftUI.Image.TemplateRenderingMode
@@ -283,11 +280,10 @@ extension Renderer {
           processEscapes: processEscapes,
           errorMode: errorMode,
           noCache: noCache,
-          lineBreaking: lineBreaking,
-          displayAlignment: displayAlignment,
           speechLocale: speechLocale,
           speechStyle: speechStyle,
-          texPackages: texPackages)
+          texPackages: texPackages,
+          texAutoload: texAutoload)
         continuation.resume(returning: result)
       }
     }
@@ -315,10 +311,14 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true,
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> [_Image] {
     renderQueue.sync {
+      let svgOutputOptions = SVGOutputProcessorOptions()
+
       let input = unencodeHTML ? latex.htmlUnescape() : latex
       let blocks = Parser.parse(input, mode: parsingMode)
       var images = [_Image]()
@@ -327,8 +327,9 @@ extension Renderer {
         for component in block.components where component.type.isEquation {
           let inputOptions = resolveInputOptions(
             for: component, notation: notation,
-            processEscapes: processEscapes, errorMode: errorMode)
-          guard let svg = try? getSVGStatic(for: component, inputOptions: inputOptions) else {
+            processEscapes: processEscapes, errorMode: errorMode,
+            texPackages: texPackages, texAutoload: texAutoload)
+          guard let svg = try? getSVGStatic(for: component, inputOptions: inputOptions, svgOutputOptions: svgOutputOptions) else {
             continue
           }
           let imageSize = svg.size(for: xHeight)
@@ -446,7 +447,7 @@ extension Renderer {
       let effective = notation == .auto ? sniffNotation(input) : notation
       if effective == .mml { return input }
 
-      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error)
+      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error, forNonSVGOutput: true)
 
       var err: Error?
       let result: String
@@ -493,7 +494,7 @@ extension Renderer {
       }
 
       let effective = notation == .auto ? sniffNotation(input) : notation
-      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error)
+      let inputOptions = makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: .error, forNonSVGOutput: true)
 
       let sreOptions = SREOptions()
       sreOptions.locale = locale
@@ -542,20 +543,41 @@ extension Renderer {
     return blocks
   }
   
+  /// Packages that require an SVG output jax and cannot be loaded for
+  /// non-SVG conversions (e.g. tex2mml, tex2speech).
+  private nonisolated static let svgOnlyPackages: Set<String> = ["bussproofs"]
+
+  /// Creates TeX input options safe for non-SVG output (speech).
+  private nonisolated static func makeSpeechInputOptions(from opts: TeXInputProcessorOptions) -> TeXInputProcessorOptions {
+    let speechOpts = TeXInputProcessorOptions()
+    speechOpts.loadPackages = opts.loadPackages.filter { !svgOnlyPackages.contains($0) }
+    speechOpts.processEscapes = opts.processEscapes
+    speechOpts.inlineMath = opts.inlineMath
+    return speechOpts
+  }
+
   /// Creates the appropriate input options for the given notation.
   ///
   /// - Note: `.auto` is resolved to `.latex` here. For actual auto-detection,
   ///   use ``resolveInputOptions(for:notation:processEscapes:errorMode:)``.
+  /// - Parameter forNonSVGOutput: When `true`, packages that require an SVG
+  ///   output jax (e.g. `bussproofs`) are excluded from the loaded set.
   nonisolated static func makeInputOptions(
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     display: Bool = true,
-    texPackages: Set<String>? = nil
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true,
+    forNonSVGOutput: Bool = false
   ) -> InputOptions {
     switch notation {
     case .latex, .auto:
-      return .tex(TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode, packages: texPackages))
+      let opts = TeXInputProcessorOptions(processEscapes: processEscapes, errorMode: errorMode, packages: texPackages, autoload: texAutoload)
+      if forNonSVGOutput {
+        opts.loadPackages = opts.loadPackages.filter { !svgOnlyPackages.contains($0) }
+      }
+      return .tex(opts)
     case .mml:
       return .mml(MMLInputProcessorOptions())
     case .am:
@@ -573,16 +595,17 @@ extension Renderer {
     notation: LaTeX.Notation,
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
-    texPackages: Set<String>? = nil
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true
   ) -> InputOptions {
     let display = !component.type.inline
     let effective = component.notationHint ?? notation
     guard effective == .auto else {
-      return makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages)
+      return makeInputOptions(notation: effective, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages, texAutoload: texAutoload)
     }
 
     let detected = sniffNotation(component.text)
-    return makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages)
+    return makeInputOptions(notation: detected, processEscapes: processEscapes, errorMode: errorMode, display: display, texPackages: texPackages, texAutoload: texAutoload)
   }
 
   /// Sniffs the content to guess the notation.
@@ -630,11 +653,10 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool = false,
-    lineBreaking: LaTeX.LineBreaking? = nil,
-    displayAlignment: LaTeX.DisplayAlignment = .center,
     speechLocale: String = "en",
     speechStyle: LaTeX.SpeechStyle = .default,
-    texPackages: Set<String>? = nil
+    texPackages: Set<LaTeX.TeXPackage>? = nil,
+    texAutoload: Bool = true
   ) -> [ComponentBlock] {
     var newBlocks = [ComponentBlock]()
     for block in blocks {
@@ -648,11 +670,10 @@ extension Renderer {
           processEscapes: processEscapes,
           errorMode: errorMode,
           noCache: noCache,
-          lineBreaking: lineBreaking,
-          displayAlignment: displayAlignment,
           speechLocale: speechLocale,
           speechStyle: speechStyle,
-          texPackages: texPackages)
+          texPackages: texPackages,
+          texAutoload: texAutoload)
 
         newBlocks.append(ComponentBlock(components: newComponents))
       }
@@ -675,11 +696,10 @@ extension Renderer {
     processEscapes: Bool,
     errorMode: LaTeX.ErrorMode,
     noCache: Bool,
-    lineBreaking: LaTeX.LineBreaking?,
-    displayAlignment: LaTeX.DisplayAlignment,
     speechLocale: String,
     speechStyle: LaTeX.SpeechStyle,
-    texPackages: Set<String>?
+    texPackages: Set<LaTeX.TeXPackage>?,
+    texAutoload: Bool
   ) throws -> [Component] {
     var renderedComponents = [Component]()
     for component in components {
@@ -691,11 +711,10 @@ extension Renderer {
       let inputOptions = Self.resolveInputOptions(
         for: component, notation: notation,
         processEscapes: processEscapes, errorMode: errorMode,
-        texPackages: texPackages)
+        texPackages: texPackages, texAutoload: texAutoload)
 
       guard let svg = try getSVG(
         for: component, inputOptions: inputOptions, noCache: noCache,
-        lineBreaking: lineBreaking, displayAlignment: displayAlignment,
         speechLocale: speechLocale, speechStyle: speechStyle
       ) else {
         renderedComponents.append(component)
@@ -734,8 +753,6 @@ extension Renderer {
     for component: Component,
     inputOptions: InputOptions,
     noCache: Bool = false,
-    lineBreaking: LaTeX.LineBreaking? = nil,
-    displayAlignment: LaTeX.DisplayAlignment = .center,
     speechLocale: String = "en",
     speechStyle: LaTeX.SpeechStyle = .default
   ) throws -> SVG? {
@@ -759,14 +776,6 @@ extension Renderer {
 
     // Build SVG output options
     let svgOutputOptions = SVGOutputProcessorOptions()
-    svgOutputOptions.displayAlign = displayAlignment.rawValue
-    if let lb = lineBreaking {
-      let lbOpts = LinebreakOptions()
-      lbOpts.width = lb.width.description
-      lbOpts.inline = lb.inline
-      lbOpts.lineleading = lb.lineleading.description
-      svgOutputOptions.linebreaks = lbOpts
-    }
 
     // Build document options for speech
     let sreOptions = SREOptions()
@@ -790,7 +799,7 @@ extension Renderer {
         error: &conversionError)
       speechText = try? mathjax.tex2speech(
         component.text, conversionOptions: component.conversionOptions,
-        documentOptions: documentOptions, inputOptions: opts)
+        documentOptions: documentOptions, inputOptions: Self.makeSpeechInputOptions(from: opts))
     case .mml(let opts):
       svgString = mathjax.mml2svg(
         component.text, styles: false,
@@ -880,7 +889,9 @@ extension Renderer {
   /// - Returns: An SVG.
   nonisolated private static func getSVGStatic(
     for component: Component,
-    inputOptions: InputOptions
+    inputOptions: InputOptions,
+    svgOutputOptions: SVGOutputProcessorOptions = SVGOutputProcessorOptions(),
+    documentOptions: DocumentOptions = DocumentOptions()
   ) throws -> SVG? {
     let svgCacheKey = Cache.SVGCacheKey(
       componentText: component.text,
@@ -904,24 +915,27 @@ extension Renderer {
       svgString = mathjax.tex2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.tex2speech(
         component.text, conversionOptions: component.conversionOptions,
-        inputOptions: opts)
+        documentOptions: documentOptions, inputOptions: makeSpeechInputOptions(from: opts))
     case .mml(let opts):
       svgString = mathjax.mml2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.mml2speech(component.text)
     case .am(let opts):
       svgString = mathjax.am2svg(
         component.text, styles: false,
         conversionOptions: component.conversionOptions,
-        inputOptions: opts, error: &conversionError)
+        inputOptions: opts, outputOptions: svgOutputOptions,
+        error: &conversionError)
       speechText = try? mathjax.am2speech(
         component.text, conversionOptions: component.conversionOptions,
-        inputOptions: opts)
+        documentOptions: documentOptions, inputOptions: opts)
     }
 
     var errorText: String?
@@ -1001,13 +1015,14 @@ extension Renderer {
   ///   - processEscapes: Whether to process escape sequences.
   ///   - errorMode: The error mode.
   /// - Returns: Whether the blocks are in the renderer's cache.
-  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode, texPackages: Set<String>? = nil) -> Bool {
+  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode, texPackages: Set<LaTeX.TeXPackage>? = nil, texAutoload: Bool = true) -> Bool {
     for block in blocks {
       for component in block.components where component.type.isEquation {
         let inputOptions = Self.makeInputOptions(
           notation: component.notationHint ?? notation,
           processEscapes: processEscapes, errorMode: errorMode,
-          texPackages: texPackages)
+          texPackages: texPackages,
+          texAutoload: texAutoload)
         let dataCacheKey = Cache.SVGCacheKey(
           componentText: component.text,
           conversionOptions: component.conversionOptions,

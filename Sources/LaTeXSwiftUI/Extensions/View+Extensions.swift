@@ -233,10 +233,22 @@ public extension View {
   /// When `nil` (the default), all available packages are loaded. Only
   /// applies to `.latex` notation.
   ///
-  /// - Parameter packages: The set of package names to load.
+  /// - Parameter packages: The set of packages to load.
   /// - Returns: A view that uses the specified TeX packages.
-  func texPackages(_ packages: Set<String>) -> some View {
+  func texPackages(_ packages: Set<LaTeX.TeXPackage>) -> some View {
     environment(\.texPackages, packages)
+  }
+
+  /// Controls whether TeX packages are auto-loaded when their macros are
+  /// encountered.
+  ///
+  /// Enabled by default. When disabled alongside `.texPackages()`, only the
+  /// explicitly listed packages are available.
+  ///
+  /// - Parameter enabled: Whether autoload is enabled.
+  /// - Returns: A view with the specified autoload behavior.
+  func texAutoload(_ enabled: Bool) -> some View {
+    environment(\.texAutoload, enabled)
   }
 
   /// Disables caching and evicts any previously cached data for the

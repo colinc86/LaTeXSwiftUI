@@ -99,7 +99,11 @@ private struct SpeechStyleKey: EnvironmentKey {
 }
 
 private struct TeXPackagesKey: EnvironmentKey {
-  static let defaultValue: Set<String>? = nil
+  static let defaultValue: Set<LaTeX.TeXPackage>? = nil
+}
+
+private struct TeXAutoloadKey: EnvironmentKey {
+  static let defaultValue: Bool = true
 }
 
 private struct ScriptKey: EnvironmentKey {
@@ -234,8 +238,14 @@ extension EnvironmentValues {
     set { self[SpeechStyleKey.self] = newValue }
   }
 
+  /// Whether TeX autoload is enabled.
+  var texAutoload: Bool {
+    get { self[TeXAutoloadKey.self] }
+    set { self[TeXAutoloadKey.self] = newValue }
+  }
+
   /// The TeX packages to load, or `nil` to use all.
-  var texPackages: Set<String>? {
+  var texPackages: Set<LaTeX.TeXPackage>? {
     get { self[TeXPackagesKey.self] }
     set { self[TeXPackagesKey.self] = newValue }
   }

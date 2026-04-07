@@ -66,8 +66,6 @@ struct LaTeX_Previews_Notation: PreviewProvider {
       Text("Auto-detect MathML")
         .font(.caption)
       LaTeX("Hello, [auto]$\\LaTeX$ [auto]$<math><mfrac><mn>1</mn><mn>2</mn></mfrac></math>$")
-      
-      LaTeX("Hello, [auto]$\\LaTeX$ [auto]$<math><mfrac><mn>A</mn><mn>2</mn></mfrac></math>$")
     }
     .padding()
     .previewDisplayName("Auto Detection")
