@@ -62,7 +62,7 @@ public struct LaTeX: View {
   }
 
   /// The view's block rendering mode.
-  public enum BlockMode: Sendable {
+  public enum BlockMode: Hashable, Sendable {
     
     /// Block equations are ignored and always rendered inline.
     case alwaysInline
@@ -226,7 +226,7 @@ public struct LaTeX: View {
   }
 
   /// The view's error mode.
-  public enum ErrorMode: Sendable {
+  public enum ErrorMode: Hashable, Sendable {
     
     /// The rendered image should be displayed (if available).
     case rendered
@@ -239,7 +239,7 @@ public struct LaTeX: View {
   }
   
   /// The view's rendering mode.
-  public enum ParsingMode: Sendable {
+  public enum ParsingMode: Hashable, Sendable {
     
     /// Render the entire text as the equation.
     case all
@@ -250,7 +250,7 @@ public struct LaTeX: View {
   
   /// The script type used to determine equation scaling relative to
   /// surrounding text.
-  public enum Script: Sendable {
+  public enum Script: Hashable, Sendable {
 
     /// Latin and similar scripts — uses font x-height.
     case latin
@@ -263,7 +263,7 @@ public struct LaTeX: View {
   }
 
   /// The view's rendering style.
-  public enum RenderingStyle: Sendable {
+  public enum RenderingStyle: Hashable, Sendable {
     
     /// The view remains empty until its finished rendering.
     case empty
@@ -283,7 +283,7 @@ public struct LaTeX: View {
   }
 
   /// The accessibility mode for rendered equation images.
-  public enum ImageAccessibilityMode: Sendable {
+  public enum ImageAccessibilityMode: Hashable, Sendable {
 
     /// No accessibility label applied (default SwiftUI behavior).
     case none
@@ -406,24 +406,47 @@ public struct LaTeX: View {
   @Environment(\.texAutoload) private var texAutoload
 
   // MARK: Private properties
-  
+
   /// The view's renderer.
   @StateObject private var renderer = Renderer()
-  
+
   /// The view's preload task, if any.
   @State private var preloadTask: Task<(), Never>?
-  
+
+  /// A key that captures all environment values that affect rendering.
+  /// When any of these change, the renderer must be reset.
+  private var renderingKey: Int {
+    var hasher = Hasher()
+    hasher.combine(latex)
+    hasher.combine(notation)
+    hasher.combine(noCache)
+    hasher.combine(errorMode)
+    hasher.combine(unencodeHTML)
+    hasher.combine(parsingMode)
+    hasher.combine(processEscapes)
+    hasher.combine(imageRenderingMode)
+    hasher.combine(displayScale)
+    hasher.combine(font)
+    hasher.combine(script)
+    hasher.combine(dynamicTypeSize)
+    hasher.combine(speechLocale)
+    hasher.combine(speechStyle)
+    hasher.combine(texPackages)
+    hasher.combine(texAutoload)
+    return hasher.finalize()
+  }
+
   // MARK: Initializers
-  
+
   /// Initializes a view with a LaTeX input string.
   ///
   /// - Parameter latex: The LaTeX input.
   public init(_ latex: String) {
     self.latex = latex
   }
-  
+
   // MARK: View body
-  
+
   public var body: some View {
     VStack(spacing: 0) {
       if renderer.rendered || renderer.syncRendered {
@@ -449,10 +472,7 @@ public struct LaTeX: View {
       }
     }
     .animation(renderingAnimation, value: renderer.rendered)
-    .onChange(of: latex) { _ in
-      renderer.reset()
-    }
-    .onChange(of: dynamicTypeSize) { _ in
+    .onChange(of: renderingKey) { _ in
       renderer.reset()
     }
     .onDisappear(perform: preloadTask?.cancel)
@@ -468,7 +488,6 @@ extension LaTeX {
   public func preload() {
     preloadTask?.cancel()
     preloadTask = Task { await renderAsync() }
-    Task { await preloadTask?.value }
   }
   
 #if os(iOS) || os(visionOS)
@@ -502,7 +521,7 @@ extension LaTeX {
   ///   - errorMode: The error mode (default: `.rendered`).
   /// - Returns: An array of rendered images, one per equation.
 #if os(iOS) || os(visionOS)
-  public static func renderToImages(
+  nonisolated public static func renderToImages(
     _ latex: String,
     xHeight: CGFloat? = nil,
     displayScale: CGFloat = 2.0,
@@ -523,7 +542,7 @@ extension LaTeX {
       displayScale: displayScale)
   }
 #else
-  public static func renderToImages(
+  nonisolated public static func renderToImages(
     _ latex: String,
     xHeight: CGFloat? = nil,
     displayScale: CGFloat = 2.0,
@@ -557,7 +576,7 @@ extension LaTeX {
   ///   - processEscapes: Whether to process escape sequences (default: false,
   ///     only applies to `.latex` notation).
   /// - Throws: ``ValidationError`` if the input is not valid.
-  public static func validate(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) throws {
+  nonisolated public static func validate(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) throws {
     try Renderer.validate(latex: latex, notation: notation, processEscapes: processEscapes)
   }
 
@@ -571,7 +590,7 @@ extension LaTeX {
   ///   - processEscapes: Whether to process escape sequences (default: false,
   ///     only applies to `.latex` notation).
   /// - Returns: `true` if the input is valid, `false` otherwise.
-  public static func isValid(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) -> Bool {
+  nonisolated public static func isValid(_ latex: String, notation: Notation = .latex, processEscapes: Bool = false) -> Bool {
     (try? validate(latex, notation: notation, processEscapes: processEscapes)) != nil
   }
 
@@ -583,7 +602,7 @@ extension LaTeX {
   ///   - processEscapes: Whether to process escape sequences (default: false,
   ///     only applies to `.latex` notation).
   /// - Returns: The MathML string.
-  public static func toMathML(
+  nonisolated public static func toMathML(
     _ input: String,
     notation: Notation = .latex,
     processEscapes: Bool = false
@@ -601,7 +620,7 @@ extension LaTeX {
   ///   - locale: The speech locale (default: `"en"`).
   ///   - style: The speech style (default: `.default`).
   /// - Returns: The speech text.
-  public static func toSpeech(
+  nonisolated public static func toSpeech(
     _ input: String,
     notation: Notation = .latex,
     processEscapes: Bool = false,
@@ -637,6 +656,8 @@ extension LaTeX {
       errorMode: errorMode,
       texPackages: texPackages,
       texAutoload: texAutoload,
+      speechLocale: speechLocale.rawValue,
+      speechStyle: speechStyle.rawValue,
       xHeight: (platformFont?.effectiveXHeight(for: script) ?? font?.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize)) ?? Font.body.effectiveXHeight(for: script, sizeCategory: dynamicTypeSize),
       displayScale: displayScale)
   }

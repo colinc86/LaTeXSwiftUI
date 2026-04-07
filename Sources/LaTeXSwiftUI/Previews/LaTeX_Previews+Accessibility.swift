@@ -61,7 +61,32 @@ struct LaTeX_Previews_Accessibility: PreviewProvider {
       }
     }
     .padding()
-    .previewDisplayName("Accessibility Modes")
+    .previewDisplayName("Accessibility Modes (Inline)")
+
+    // Block equations with accessibility labels
+    VStack(alignment: .leading, spacing: 20) {
+      Group {
+        Text("Block .sre (default)")
+          .font(.caption)
+        LaTeX("$$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$")
+      }
+
+      Group {
+        Text("Block .input")
+          .font(.caption)
+        LaTeX("$$\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$$")
+          .imageAccessibility(.input)
+      }
+
+      Group {
+        Text("Block .custom")
+          .font(.caption)
+        LaTeX("$$E = mc^2$$")
+          .imageAccessibility(.custom("Einstein's mass-energy equivalence, displayed"))
+      }
+    }
+    .padding()
+    .previewDisplayName("Accessibility Modes (Block)")
   }
 
 }

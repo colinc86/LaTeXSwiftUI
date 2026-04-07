@@ -41,8 +41,8 @@ internal extension Font {
     switch self {
     case .largeTitle, .largeTitle.bold(), .largeTitle.italic(), .largeTitle.monospaced(): return .largeTitle
     case .title, .title.bold(), .title.italic(), .title.monospaced(): return .title1
-    case .title2, .title2.bold(), .title2.italic(), .title.monospaced(): return .title2
-    case .title3, .title3.bold(), .title3.italic(), .title.monospaced(): return .title3
+    case .title2, .title2.bold(), .title2.italic(), .title2.monospaced(): return .title2
+    case .title3, .title3.bold(), .title3.italic(), .title3.monospaced(): return .title3
     case .headline, .headline.bold(), .headline.italic(), .headline.monospaced(): return .headline
     case .subheadline, .subheadline.bold(), .subheadline.italic(), .subheadline.monospaced(): return .subheadline
     case .callout, .callout.bold(), .callout.italic(), .callout.monospaced(): return .callout

@@ -42,7 +42,9 @@ extension CacheKey {
   /// The key to use in the cache.
   func key() -> String {
     do {
-      let data = try JSONEncoder().encode(self)
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = .sortedKeys
+      let data = try encoder.encode(self)
       let hashedData = SHA256.hash(data: data)
       return hashedData.compactMap { String(format: "%02x", $0) }.joined() + "-" + Self.keyType
     }
@@ -73,6 +75,7 @@ internal final class Cache: @unchecked Sendable {
     static let keyType: String = "image"
     let svg: SVG
     let xHeight: CGFloat
+    let displayScale: CGFloat
     internal var fallbackKey: String { String(data: svg.data, encoding: .utf8) ?? "" }
   }
   

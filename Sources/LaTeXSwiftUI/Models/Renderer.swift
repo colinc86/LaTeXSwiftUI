@@ -140,6 +140,8 @@ extension Renderer {
     errorMode: LaTeX.ErrorMode,
     texPackages: Set<LaTeX.TeXPackage>?,
     texAutoload: Bool = true,
+    speechLocale: String = "en",
+    speechStyle: String = "default",
     xHeight: CGFloat,
     displayScale: CGFloat
   ) -> Bool {
@@ -151,7 +153,9 @@ extension Renderer {
       processEscapes: processEscapes,
       errorMode: errorMode,
       texPackages: texPackages,
-      texAutoload: texAutoload)
+      texAutoload: texAutoload,
+      speechLocale: speechLocale,
+      speechStyle: speechStyle)
   }
   
   /// Renders the view's components synchronously.
@@ -848,7 +852,7 @@ extension Renderer {
     noCache: Bool = false
   ) -> SwiftUI.Image? {
     // Create our cache key
-    let cacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight)
+    let cacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight, displayScale: displayScale)
 
     if noCache {
       Cache.shared.removeImageCacheValue(for: cacheKey)
@@ -1015,18 +1019,20 @@ extension Renderer {
   ///   - processEscapes: Whether to process escape sequences.
   ///   - errorMode: The error mode.
   /// - Returns: Whether the blocks are in the renderer's cache.
-  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode, texPackages: Set<LaTeX.TeXPackage>? = nil, texAutoload: Bool = true) -> Bool {
+  nonisolated func blocksExistInCache(_ blocks: [ComponentBlock], xHeight: CGFloat, displayScale: CGFloat, notation: LaTeX.Notation, processEscapes: Bool, errorMode: LaTeX.ErrorMode, texPackages: Set<LaTeX.TeXPackage>? = nil, texAutoload: Bool = true, speechLocale: String = "en", speechStyle: String = "default") -> Bool {
     for block in blocks {
       for component in block.components where component.type.isEquation {
-        let inputOptions = Self.makeInputOptions(
-          notation: component.notationHint ?? notation,
+        let inputOptions = Self.resolveInputOptions(
+          for: component, notation: notation,
           processEscapes: processEscapes, errorMode: errorMode,
           texPackages: texPackages,
           texAutoload: texAutoload)
         let dataCacheKey = Cache.SVGCacheKey(
           componentText: component.text,
           conversionOptions: component.conversionOptions,
-          inputOptions: inputOptions)
+          inputOptions: inputOptions,
+          speechLocale: speechLocale,
+          speechStyle: speechStyle)
         guard let svgData = Cache.shared.dataCacheValue(for: dataCacheKey) else {
           return false
         }
@@ -1035,7 +1041,7 @@ extension Renderer {
           return false
         }
         
-        let imageCacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight)
+        let imageCacheKey = Cache.ImageCacheKey(svg: svg, xHeight: xHeight, displayScale: displayScale)
         guard Cache.shared.imageCacheValue(for: imageCacheKey) != nil else {
           return false
         }

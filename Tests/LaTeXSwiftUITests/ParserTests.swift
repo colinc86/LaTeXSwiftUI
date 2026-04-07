@@ -639,4 +639,135 @@ final class ParserTests: XCTestCase {
     XCTAssertEqual(component.notationHint, .mml)
   }
 
+  // MARK: - Real-world user input edge cases
+
+  func testWhitespaceOnlyEquation() {
+    let input = "$ $"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, " ", .inlineEquation)
+  }
+
+  func testConsecutiveBlockEquations() {
+    let input = "$$a$$$$b$$"
+    let blocks = Parser.parse(input, mode: .onlyEquations)
+    XCTAssertEqual(blocks.count, 2)
+    XCTAssertTrue(blocks[0].isEquationBlock)
+    XCTAssertTrue(blocks[1].isEquationBlock)
+  }
+
+  func testNewlinesInEquation() {
+    let input = "$$\n x^2 \n$$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "\n x^2 \n", .texEquation)
+  }
+
+  func testUnicodeInEquation() {
+    let input = "$α + β = γ$"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "α + β = γ", .inlineEquation)
+  }
+
+  func testMixedInlineAndBlockEquations() {
+    let input = "Inline $a$ then block $$b$$ then inline $c$"
+    let blocks = Parser.parse(input, mode: .onlyEquations)
+    // Block 0: ["Inline " (text), a (inline eq), " then block " (text)]
+    // Block 1: [b (block eq)]
+    // Block 2: [" then inline " (text), c (inline eq)]
+    XCTAssertEqual(blocks.count, 3)
+    XCTAssertFalse(blocks[0].isEquationBlock)
+    XCTAssertTrue(blocks[1].isEquationBlock)
+    XCTAssertFalse(blocks[2].isEquationBlock)
+  }
+
+  func testParenthesesDelimiters() {
+    let input = "Result: \\(x^2\\) is positive"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "Result: ", .text)
+    assertComponent(components, 1, "x^2", .inlineParenthesesEquation)
+    assertComponent(components, 2, " is positive", .text)
+  }
+
+  func testBracketDelimiters() {
+    let input = "Display: \\[x^2\\]"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 2)
+    assertComponent(components, 0, "Display: ", .text)
+    assertComponent(components, 1, "x^2", .blockEquation)
+  }
+
+  func testParsingModeAll() {
+    let blocks = Parser.parse("x^2 + y^2", mode: .all)
+    XCTAssertEqual(blocks.count, 1)
+    XCTAssertEqual(blocks[0].components.count, 1)
+    XCTAssertEqual(blocks[0].components[0].type, .inlineEquation)
+    XCTAssertEqual(blocks[0].components[0].text, "x^2 + y^2")
+  }
+
+  func testEquationStarNotNumbered() {
+    let input = "\\begin{equation*}E = mc^2\\end{equation*}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    assertComponent(components, 0, "E = mc^2", .namedNoNumberEquation)
+  }
+
+  func testLongInputWithManyEquations() {
+    // Simulate a paragraph with many inline equations
+    var input = ""
+    for i in 0..<50 {
+      input += "text $x_{\(i)}$ "
+    }
+    let components = Parser.parse(input)
+    // 50 equations + 50 text gaps (including trailing space) - but last text gap is "text " before last eq
+    // Actually: text0 $x_0$ text1 $x_1$ ... -> text, eq, text, eq, ... text
+    // 50 text + 50 equations = 100 components, but the first text is " text" wait...
+    // Input starts with "text $x_0$ text $x_1$ ..."
+    // Parse: "text " (text), "x_0" (eq), " text " (text), "x_1" (eq), ...
+    // = 50 equations + 50 text pieces (first is "text ", rest are " text ") + trailing " "
+    // Wait, last iteration adds "text $x_49$ " so after last equation there's " "
+    // So: text, eq, text, eq, ..., text, eq, text
+    // = 50 equations + 51 text? No: "text " eq " text " eq ... " text " eq " "
+    // First text is "text ", then alternating eq and " text ", then trailing " "
+    // = 51 text + 50 eq = 101 components
+    XCTAssertEqual(components.count, 101)
+  }
+
+  func testBlockEquationWithBeginEnd() {
+    let input = "\\begin{equation}x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\end{equation}"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 1)
+    XCTAssertEqual(components[0].type, .namedEquation)
+  }
+
+  func testMultipleLinesOfText() {
+    let input = "Line one\nLine two with $x$\nLine three"
+    let components = Parser.parse(input)
+    XCTAssertEqual(components.count, 3)
+    assertComponent(components, 0, "Line one\nLine two with ", .text)
+    assertComponent(components, 1, "x", .inlineEquation)
+    assertComponent(components, 2, "\nLine three", .text)
+  }
+
+  func testComponentOriginalText() {
+    let comp = Component(text: "$x^2$", type: .inlineEquation)
+    XCTAssertEqual(comp.text, "x^2")
+    XCTAssertEqual(comp.originalText, "$x^2$")
+  }
+
+  func testComponentBlockIsEquationBlock() {
+    let inline = ComponentBlock(components: [
+      Component(text: "hello", type: .text),
+      Component(text: "$x$", type: .inlineEquation)
+    ])
+    XCTAssertFalse(inline.isEquationBlock)
+
+    let block = ComponentBlock(components: [
+      Component(text: "$$x$$", type: .texEquation)
+    ])
+    XCTAssertTrue(block.isEquationBlock)
+  }
+
 }

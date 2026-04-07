@@ -89,9 +89,19 @@ internal struct ComponentBlocksViews: View {
               }
             }
             else {
-              HorizontalImageScroller(
+              let scroller = HorizontalImageScroller(
                 image: container.image,
                 height: container.size.size.height)
+              switch imageAccessibilityMode {
+              case .none:
+                scroller
+              case .input:
+                scroller.accessibilityLabel(block.components.first?.text ?? "")
+              case .sre:
+                scroller.accessibilityLabel(svg.speechText ?? block.components.first?.text ?? "")
+              case .custom(let label):
+                scroller.accessibilityLabel(label)
+              }
             }
 
             EquationNumber(blockIndex: blocks.filter({ $0.isEquationBlock }).firstIndex(of: block) ?? 0, side: .right)
